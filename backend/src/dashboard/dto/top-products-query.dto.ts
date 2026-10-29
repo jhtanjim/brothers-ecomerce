@@ -1,0 +1,12 @@
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
+
+/** ?limit=1..20 (default 5). */
+export class TopProductsQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  limit: number = 5;
+}

@@ -1,0 +1,493 @@
+// E-Commerce Platform - Prisma schema (Phase 2)
+//
+// Conventions
+// - Money: Decimal(12,2), BDT, half-up rounding is done in application code (PricingService).
+// - Timestamps: stored UTC. "Today"/daily charts use Asia/Dhaka in application code.
+// - IDs: cuid (non-guessable). Orders also carry a human-readable orderNumber.
+// - Products are ARCHIVED (never hard-deleted) once referenced by an order.
+// - Some rules Prisma cannot express (CHECK constraints, partial unique indexes,
+//   pg_trgm extension) live in the raw SQL added to the initial migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+    shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ActiveStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PROCESSING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// UNPAID  = no proof submitted yet
+// PENDING = proof submitted, awaiting admin review
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentMethod {
+  BKASH
+  NAGAD
+}
+
+// Future gateways (SSLCOMMERZ, STRIPE, ...) are added here later.
+enum PaymentProvider {
+  MANUAL
+}
+
+// ---------------------------------------------------------------------------
+// Users & auth
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  phone        String?    @unique
+  passwordHash String
+  role         Role       @default(CUSTOMER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  passwordResetTokens  PasswordResetToken[]
+  refreshTokens        RefreshToken[]
+  addresses            Address[]
+  cart                 Cart?
+  orders               Order[]
+  couponUsages         CouponUsage[]
+  activityLogs         ActivityLog[]
+  orderStatusChanges   OrderStatusHistory[]  @relation("OrderStatusChanger")
+  reviewedTransactions PaymentTransaction[]  @relation("TransactionReviewer")
+
+  // Admin customer list: filter by role, newest first.
+  @@index([role, createdAt])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  familyId  String
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  fullName    String
+  phone       String
+  addressLine String
+  city        String
+  area        String
+  postalCode  String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model Category {
+  id            String       @id @default(cuid())
+  name          String       @unique
+  slug          String       @unique
+  description   String?
+  imageUrl      String?
+  imagePublicId String?
+  status        ActiveStatus @default(ACTIVE)
+  sortOrder     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  products Product[]
+
+  @@index([status, sortOrder])
+  @@map("categories")
+}
+
+model Product {
+  id               String        @id @default(cuid())
+  categoryId       String
+  name             String
+  slug             String        @unique
+  sku              String        @unique
+  shortDescription String?       @db.VarChar(500)
+  description      String?       @db.Text
+  price            Decimal       @db.Decimal(12, 2)
+  discountPrice    Decimal?      @db.Decimal(12, 2)
+  // Derived from price/discountPrice by the service layer; enables DB-level "discount" sorting.
+  discountPercent  Int           @default(0)
+  stockQuantity    Int           @default(0)
+  lowStockThreshold Int          @default(5)
+  status           ProductStatus @default(ACTIVE)
+  featured         Boolean       @default(false)
+  // Incremented by the order flow; enables DB-level "popular" sorting.
+  soldCount        Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  category   Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images     ProductImage[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  // Storefront listing: newest, per category, featured, popular, discount, price sort.
+  @@index([status, createdAt])
+  @@index([categoryId, status, createdAt])
+  @@index([status, featured])
+  @@index([status, soldCount])
+  @@index([status, discountPercent])
+  @@index([status, price])
+  // Fast ILIKE '%term%' search. Requires pg_trgm (created in the migration).
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_name_trgm_idx")
+  @@index([sku(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_sku_trgm_idx")
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  publicId  String
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+// ---------------------------------------------------------------------------
+// Cart
+// ---------------------------------------------------------------------------
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+// ---------------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------------
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique
+  userId      String
+
+  // Money (all calculated by the backend)
+  subtotal       Decimal @db.Decimal(12, 2) // sum of regular price x qty
+  discountAmount Decimal @db.Decimal(12, 2) @default(0) // product-level discounts
+  couponDiscount Decimal @db.Decimal(12, 2) @default(0)
+  deliveryCharge Decimal @db.Decimal(12, 2) @default(0)
+  totalAmount    Decimal @db.Decimal(12, 2)
+  couponCode     String? // snapshot of the coupon code used
+
+  status        OrderStatus   @default(PENDING_PAYMENT)
+  // Denormalized mirror of Payment.status so order lists can filter/sort without a join.
+  // Must be updated in the same transaction as Payment.status.
+  paymentStatus PaymentStatus @default(UNPAID)
+
+  // Shipping snapshot (never read from the current Address for history)
+  shippingName       String
+  shippingPhone      String
+  shippingEmail      String
+  shippingAddress    String
+  shippingCity       String
+  shippingArea       String
+  shippingPostalCode String
+  notes              String?
+
+  cancellationReason String?
+  cancelledAt        DateTime?
+  // When an unpaid order is auto-cancelled and its stock restored.
+  expiresAt          DateTime?
+  // Client-supplied Idempotency-Key for POST /orders.
+  idempotencyKey     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+  payment       Payment?
+  couponUsages  CouponUsage[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([paymentStatus, createdAt])
+  @@index([createdAt])
+  // Auto-cancel job: status = PENDING_PAYMENT AND expiresAt < now()
+  @@index([status, expiresAt])
+  @@map("orders")
+}
+
+// Snapshot of the product at purchase time.
+// unitPrice       = regular price per unit at purchase
+// discountAmount  = total product-level discount for this line
+// totalPrice      = unitPrice * quantity - discountAmount
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  productId      String
+  productName    String
+  productSku     String
+  productImageUrl String?
+  unitPrice      Decimal @db.Decimal(12, 2)
+  quantity       Int
+  discountAmount Decimal @db.Decimal(12, 2) @default(0)
+  totalPrice     Decimal @db.Decimal(12, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id         String       @id @default(cuid())
+  orderId    String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  note       String?
+  // null = system action (e.g. auto-cancel job)
+  changedById String?
+  createdAt  DateTime     @default(now())
+
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  changedBy User? @relation("OrderStatusChanger", fields: [changedById], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+  @@map("order_status_history")
+}
+
+// ---------------------------------------------------------------------------
+// Payments (provider-agnostic; V1 provider is MANUAL)
+// ---------------------------------------------------------------------------
+
+model Payment {
+  id           String          @id @default(cuid())
+  orderId      String          @unique
+  provider     PaymentProvider @default(MANUAL)
+  method       PaymentMethod
+  amount       Decimal         @db.Decimal(12, 2)
+  status       PaymentStatus   @default(UNPAID)
+  // Submissions used so far (max allowed is a Setting, default 3).
+  attemptCount Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  order        Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  transactions PaymentTransaction[]
+
+  @@map("payments")
+}
+
+// One row per customer submission (transaction ID + optional screenshot).
+model PaymentTransaction {
+  id                   String        @id @default(cuid())
+  paymentId            String
+  method               PaymentMethod
+  transactionId        String
+  senderPhone          String?
+  screenshotUrl        String?
+  screenshotPublicId   String?
+  status               PaymentStatus @default(PENDING)
+  reviewedById         String?
+  reviewedAt           DateTime?
+  rejectionReason      String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  payment    Payment @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  reviewedBy User?   @relation("TransactionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  // Admin "Pending payments" queue.
+  @@index([status, createdAt])
+  @@index([paymentId])
+  // NOT declared here (Prisma cannot express partial indexes); added in the migration:
+  // UNIQUE (method, transactionId) WHERE status <> 'REJECTED'
+  @@map("payment_transactions")
+}
+
+// ---------------------------------------------------------------------------
+// Coupons
+// ---------------------------------------------------------------------------
+
+model Coupon {
+  id                 String       @id @default(cuid())
+  code               String       @unique
+  type               CouponType
+  value              Decimal      @db.Decimal(12, 2)
+  minimumOrderAmount Decimal?     @db.Decimal(12, 2)
+  maximumDiscount    Decimal?     @db.Decimal(12, 2)
+  usageLimit         Int?
+  usedCount          Int          @default(0)
+  perUserLimit       Int?
+  startsAt           DateTime?
+  expiresAt          DateTime?
+  status             ActiveStatus @default(ACTIVE)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  usages CouponUsage[]
+
+  @@index([status, expiresAt])
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id             String   @id @default(cuid())
+  couponId       String
+  userId         String
+  orderId        String
+  discountAmount Decimal  @db.Decimal(12, 2)
+  createdAt      DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@unique([couponId, userId, orderId])
+  // Per-customer limit check.
+  @@index([couponId, userId])
+  @@index([orderId])
+  @@map("coupon_usages")
+}
+
+// ---------------------------------------------------------------------------
+// Admin activity & settings
+// ---------------------------------------------------------------------------
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String // e.g. PRODUCT_CREATED, PAYMENT_APPROVED
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+  @@index([adminId, createdAt])
+  @@index([entityType, entityId])
+  @@map("activity_logs")
+}
+
+// Key/value business settings (merchant numbers, delivery charges, limits).
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

@@ -1,0 +1,78 @@
+# Decisions
+
+Confirmed decisions only, as implemented in code (recorded 2026-10-29 from the initial audit).
+Add new entries at the bottom with a date. Unresolved items go under "Open questions".
+
+## Architecture
+
+- **D1 — Modular monolith, no Docker.** npm workspaces `backend/` + `frontend/`; local PostgreSQL. (`README.md`, root `package.json`)
+- **D2 — Same-origin API proxy.** The browser calls `/api/v1/*` on the Next.js origin; `next.config.ts` rewrites to
+  NestJS. Keeps HTTP-only cookies simple and avoids CORS/CSRF complexity.
+- **D3 — Secure by default.** Global JwtAuthGuard + RolesGuard; routes opt out with `@Public()`, admin routes use
+  `@Roles(ADMIN)` under `/admin/*` controllers. Frontend admin gating is UX-only. (`app.module.ts`, `AdminShell.tsx`)
+- **D4 — API envelope.** Success `{ success, data, message, meta? }`, error `{ success:false, message, code, details? }`;
+  stable UPPER_SNAKE error codes; raw DB errors never reach clients. (`response.interceptor.ts`, `all-exceptions.filter.ts`)
+- **D5 — Env validated at boot.** App refuses to start on missing/invalid config; JWT secrets ≥ 32 chars and distinct;
+  Cloudinary keys required. (`config/env.validation.ts`)
+
+## Auth
+
+- **D6 — Cookie-based JWT.** Access token (15 min) in `access_token` cookie (path `/`); refresh token (30 days) in
+  `refresh_token` cookie scoped to `/api/v1/auth/refresh`. Both HTTP-only, SameSite=lax, Secure in production.
+- **D7 — Refresh rotation with reuse detection.** Refresh tokens are stored hashed, grouped by `familyId`; reusing a
+  rotated token revokes the whole family. The frontend shares one in-flight refresh call. (`auth.service.ts`, `lib/api/client.ts`)
+- **D8 — Argon2id** for passwords; password reset tokens are random, stored as SHA-256 hashes, 30-min TTL, single use;
+  a reset revokes all sessions.
+
+## Money and pricing
+
+- **D9 — BDT, integer cents.** All calculations in integer cents (`common/utils/money.ts`); DB `Decimal(12,2)`;
+  API returns decimal strings like `"1250.00"`. Single pricing source: `orders/order-pricing.ts`.
+- **D10 — Prices come from the server.** Order DTO accepts shipping details, payment method and coupon code only;
+  products/quantities/prices are read from the server-side cart and locked product rows.
+- **D11 — Delivery charge by city.** Home city (default Dhaka) vs other cities, optional free-shipping threshold;
+  values are DB settings with code fallbacks. Current values are seed placeholders (see open questions).
+- **D12 — Coupons.** PERCENTAGE or FIXED, optional min order / max discount / usage limit / per-user limit / date window;
+  applied after product discounts, before delivery; re-validated under a row lock at order time. (`coupon-calculator.ts`)
+
+## Orders, inventory, payments
+
+- **D13 — Stock reserved at order creation** with a conditional decrement (cannot oversell); restored on cancel.
+  Lock order: cart → coupon → products (by productId); order/payment changes lock the ORDER row first.
+- **D14 — Idempotent checkout.** `POST /orders` requires an `Idempotency-Key` header; repeats return the same order.
+- **D15 — Order lifecycle.** PENDING_PAYMENT → (payment approval only) PROCESSING → CONFIRMED → SHIPPED → DELIVERED;
+  CANCELLED allowed from PENDING_PAYMENT/PROCESSING/CONFIRMED. DELIVERED and CANCELLED are final. (`order-transitions.ts`)
+- **D16 — One cancellation path.** Customer, admin and expiry cancels all go through `OrderCancellationService`
+  (restores stock, frees coupon use, closes pending submissions, writes history). Customers can cancel only
+  PENDING_PAYMENT orders whose payment is not under review.
+- **D17 — Manual bKash/Nagad payments (V1).** Customer submits transaction ID (+ optional private screenshot);
+  admin approves (order → PROCESSING, soldCount incremented) or rejects (order stays PENDING_PAYMENT with a fresh
+  expiry window). Max attempts is a setting (default 3). Transaction IDs are unique per method except rejected ones.
+- **D18 — Unpaid orders expire** after a setting (default 24 h); expiry is paused while a payment is under review.
+- **D19 — Refunds are manual in V1.** Cancelling a paid order only reports `refundNeeded`.
+- **D20 — Snapshots.** Order items snapshot product name/SKU/image/price; orders snapshot the shipping address.
+- **D21 — Products referenced by orders are never hard-deleted**; they are archived. Order numbers are human-readable
+  (prefix + Dhaka date + random suffix); IDs are cuids.
+
+## Data and testing
+
+- **D22 — DB-level safety nets.** CHECK constraints and partial unique indexes in migration `20260928120000`.
+- **D23 — Integration tests use a separate `_test` database** and refuse to run otherwise (`src/test/db.ts`).
+- **D24 — Admin actions are logged in the same transaction** as the change (`activity-logs.service.ts`).
+
+## Workflow (owner answers, 2026-10-29)
+
+- **D25 — Git:** initialize a local repo with a baseline commit of the existing state; no remote yet. Pushing still needs approval.
+- **D26 — Prettier:** fix the existing drift in ONE format-only commit right after the baseline; afterwards keep all files formatted.
+- **D27 — `backend/scripts/tmp-coupon-cancel.ts`:** delete it (its scenario is covered by integration specs).
+- **D28 — Integration specs** may be run against `ecommerce_dev_test` (they truncate that DB only) without asking each time.
+
+## Open questions (unresolved — ask the owner)
+
+- Q5 — Guest checkout needed?
+- Q6 — Real delivery charges, home city, free-shipping threshold?
+- Q7 — Email provider (Resend / SMTP / other)?
+- Q8 — Deployment target and production database setup?
+- Q9 — When (if ever) to add a payment gateway?
+- Q10 — Is there a phase plan or requirements document (README mentions Phases 1–3)?
+- Q11 — How to handle `pg_trgm` for fresh databases (new migration vs documented manual step)?

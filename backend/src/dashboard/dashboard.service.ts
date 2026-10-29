@@ -1,0 +1,185 @@
+import { Injectable } from '@nestjs/common';
+import { OrderStatus, PaymentStatus, Prisma, ProductStatus, Role } from '@prisma/client';
+import { formatCents, toCents } from '../common/utils/money';
+import { PrismaService } from '../prisma/prisma.service';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Asia/Dhaka is UTC+6 all year (no daylight saving). */
+const DHAKA_OFFSET_MS = 6 * 60 * 60 * 1000;
+const LIST_SIZE = 5;
+
+/** A sale is a paid order that was not cancelled. */
+const SALE_WHERE: Prisma.OrderWhereInput = {
+  paymentStatus: PaymentStatus.APPROVED,
+  status: { not: OrderStatus.CANCELLED },
+};
+
+function money(value: Prisma.Decimal | null): string {
+  return formatCents(value === null ? 0 : toCents(value));
+}
+
+/** Start of the current Dhaka calendar day, as a UTC instant. */
+function dhakaDayStart(now: Date = new Date()): Date {
+  const shifted = now.getTime() + DHAKA_OFFSET_MS;
+  return new Date(Math.floor(shifted / DAY_MS) * DAY_MS - DHAKA_OFFSET_MS);
+}
+
+function dhakaDayLabel(dayStart: Date): string {
+  return new Date(dayStart.getTime() + DHAKA_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+@Injectable()
+export class DashboardService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  /** Cards plus three short lists. Every number is a database aggregate or a small LIMITed query. */
+  async overview() {
+    const todayStart = dhakaDayStart();
+
+    const [
+      totalSales,
+      todaySales,
+      totalOrders,
+      pendingOrders,
+      pendingPayments,
+      totalCustomers,
+      totalProducts,
+      lowStock,
+      recentOrders,
+      pendingPaymentOrders,
+      lowStockProducts,
+    ] = await Promise.all([
+      this.prisma.order.aggregate({ where: SALE_WHERE, _sum: { totalAmount: true } }),
+      this.prisma.order.aggregate({
+        where: { ...SALE_WHERE, createdAt: { gte: todayStart } },
+        _sum: { totalAmount: true },
+      }),
+      this.prisma.order.count(),
+      this.prisma.order.count({ where: { status: OrderStatus.PENDING_PAYMENT } }),
+      this.prisma.order.count({ where: { paymentStatus: PaymentStatus.PENDING } }),
+      this.prisma.user.count({ where: { role: Role.CUSTOMER } }),
+      this.prisma.product.count({ where: { status: ProductStatus.ACTIVE } }),
+      this.prisma.$queryRaw<{ count: number }[]>`
+        SELECT COUNT(*)::int AS count FROM "products"
+        WHERE "status" = 'ACTIVE' AND "stockQuantity" <= "lowStockThreshold"`,
+      this.prisma.order.findMany({
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: LIST_SIZE,
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          paymentStatus: true,
+          totalAmount: true,
+          shippingName: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.order.findMany({
+        where: { paymentStatus: PaymentStatus.PENDING },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        take: LIST_SIZE,
+        select: {
+          id: true,
+          orderNumber: true,
+          totalAmount: true,
+          shippingName: true,
+          createdAt: true,
+          payment: { select: { id: true, method: true } },
+        },
+      }),
+      this.prisma.$queryRaw<
+        {
+          id: string;
+          name: string;
+          sku: string;
+          stockQuantity: number;
+          lowStockThreshold: number;
+        }[]
+      >`
+        SELECT "id", "name", "sku", "stockQuantity", "lowStockThreshold" FROM "products"
+        WHERE "status" = 'ACTIVE' AND "stockQuantity" <= "lowStockThreshold"
+        ORDER BY "stockQuantity" ASC, "name" ASC
+        LIMIT ${LIST_SIZE}`,
+    ]);
+
+    return {
+      cards: {
+        totalSales: money(totalSales._sum.totalAmount),
+        todaySales: money(todaySales._sum.totalAmount),
+        totalOrders,
+        pendingOrders,
+        pendingPayments,
+        totalCustomers,
+        totalProducts,
+        lowStockProducts: lowStock[0]?.count ?? 0,
+      },
+      recentOrders: recentOrders.map((order) => ({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        totalAmount: money(order.totalAmount),
+        customerName: order.shippingName,
+        createdAt: order.createdAt,
+      })),
+      pendingPayments: pendingPaymentOrders.map((order) => ({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        paymentId: order.payment?.id ?? null,
+        method: order.payment?.method ?? null,
+        totalAmount: money(order.totalAmount),
+        customerName: order.shippingName,
+        createdAt: order.createdAt,
+      })),
+      lowStock: lowStockProducts,
+    };
+  }
+
+  /** Daily sales for the last `days` Dhaka days (today included). Days without sales are 0. */
+  async sales(days: number) {
+    const todayStart = dhakaDayStart();
+    const since = new Date(todayStart.getTime() - (days - 1) * DAY_MS);
+
+    const rows = await this.prisma.$queryRaw<{ day: string; total: string; orders: number }[]>`
+      SELECT
+        to_char((("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Dhaka')::date, 'YYYY-MM-DD') AS day,
+        COALESCE(SUM("totalAmount"), 0)::text AS total,
+        COUNT(*)::int AS orders
+      FROM "orders"
+      WHERE "paymentStatus" = 'APPROVED' AND "status" <> 'CANCELLED' AND "createdAt" >= ${since}
+      GROUP BY 1
+      ORDER BY 1`;
+    const byDay = new Map(rows.map((row) => [row.day, row]));
+
+    const points = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const label = dhakaDayLabel(new Date(todayStart.getTime() - i * DAY_MS));
+      const row = byDay.get(label);
+      points.push({
+        date: label,
+        sales: row ? formatCents(toCents(row.total)) : '0.00',
+        orders: row ? row.orders : 0,
+      });
+    }
+    return { days, points };
+  }
+
+  /** Best sellers by units sold (Product.soldCount, indexed). */
+  async topProducts(limit: number) {
+    const rows = await this.prisma.product.findMany({
+      where: { status: ProductStatus.ACTIVE, soldCount: { gt: 0 } },
+      orderBy: [{ soldCount: 'desc' }, { name: 'asc' }],
+      take: limit,
+      select: { id: true, name: true, slug: true, sku: true, soldCount: true, price: true },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      sku: row.sku,
+      soldCount: row.soldCount,
+      price: money(row.price),
+    }));
+  }
+}
