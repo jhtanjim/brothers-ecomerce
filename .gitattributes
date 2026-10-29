@@ -1,0 +1,2 @@
+# Normalize text files to LF in the repo and the working tree (matches .editorconfig and Prettier).
+* text=auto eol=lf
