@@ -10,6 +10,9 @@ export const ACTIVITY_ACTIONS = {
   couponUpdated: 'COUPON_UPDATED',
   couponStatusChanged: 'COUPON_STATUS_CHANGED',
   couponDeleted: 'COUPON_DELETED',
+  settingsUpdated: 'SETTINGS_UPDATED',
+  customerSuspended: 'CUSTOMER_SUSPENDED',
+  customerReactivated: 'CUSTOMER_REACTIVATED',
 } as const;
 
 export interface ActivityLogEntry {
