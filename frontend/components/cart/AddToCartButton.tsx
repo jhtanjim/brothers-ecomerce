@@ -21,7 +21,7 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
   const { status: authStatus } = useAuth();
   const { add } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<'add' | 'buy' | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   if (stockQuantity <= 0) {
@@ -29,7 +29,7 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
       <button
         type="button"
         disabled
-        className="mt-6 w-full cursor-not-allowed rounded-lg bg-slate-200 px-6 py-3 text-sm font-semibold text-slate-500 sm:w-auto"
+        className="mt-4 h-12 w-full cursor-not-allowed rounded-full bg-slate-200 px-6 text-sm font-semibold text-slate-500"
       >
         Out of stock
       </button>
@@ -38,15 +38,19 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
 
   const max = Math.min(stockQuantity, MAX_QUANTITY);
 
-  async function onAdd() {
+  async function onAdd(mode: 'add' | 'buy') {
     if (authStatus === 'unauthenticated') {
       router.push(`/login?next=${encodeURIComponent(`/products/${slug}`)}`);
       return;
     }
-    setBusy(true);
+    setBusy(mode);
     setMessage(null);
     try {
       await add(productId, quantity);
+      if (mode === 'buy') {
+        router.push('/checkout');
+        return;
+      }
       setMessage({ type: 'success', text: 'Added to cart' });
     } catch (err) {
       setMessage({
@@ -57,20 +61,20 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
             : 'Could not add this item right now. Please try again.',
       });
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   return (
-    <div className="mt-6">
+    <div className="mt-4">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center rounded-lg border border-slate-300">
+        <div className="flex h-12 items-center rounded-full border border-slate-300">
           <button
             type="button"
             aria-label="Decrease quantity"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             disabled={quantity <= 1}
-            className="px-3 py-2 text-lg text-slate-700 hover:text-indigo-600 disabled:opacity-40"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
           >
             -
           </button>
@@ -82,7 +86,7 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
             aria-label="Increase quantity"
             onClick={() => setQuantity((q) => Math.min(max, q + 1))}
             disabled={quantity >= max}
-            className="px-3 py-2 text-lg text-slate-700 hover:text-indigo-600 disabled:opacity-40"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
           >
             +
           </button>
@@ -90,11 +94,19 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
 
         <button
           type="button"
-          onClick={onAdd}
-          disabled={busy || authStatus === 'loading'}
-          className="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+          onClick={() => void onAdd('add')}
+          disabled={busy !== null || authStatus === 'loading'}
+          className="h-12 flex-1 rounded-full bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 sm:flex-none"
         >
-          {busy ? 'Adding...' : 'Add to cart'}
+          {busy === 'add' ? 'Adding...' : 'Add to cart'}
+        </button>
+        <button
+          type="button"
+          onClick={() => void onAdd('buy')}
+          disabled={busy !== null || authStatus === 'loading'}
+          className="h-12 w-full rounded-full border border-slate-900 px-6 text-sm font-semibold text-slate-900 hover:bg-slate-900 hover:text-white disabled:opacity-60 sm:w-auto"
+        >
+          {busy === 'buy' ? 'Adding...' : 'Buy now'}
         </button>
       </div>
 

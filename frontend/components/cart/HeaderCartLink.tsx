@@ -11,7 +11,7 @@ export function HeaderCartLink() {
     <Link
       href="/cart"
       aria-label={label}
-      className="relative rounded-lg p-2 text-slate-700 hover:text-indigo-600"
+      className="relative flex h-11 w-11 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 hover:text-brand-700"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -29,7 +29,7 @@ export function HeaderCartLink() {
         <path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.7a1.5 1.5 0 0 0 1.5-1.1L21 7H6" />
       </svg>
       {itemCount > 0 ? (
-        <span className="absolute -right-0.5 -top-0.5 flex min-w-[1.25rem] items-center justify-center rounded-full bg-indigo-600 px-1 text-xs font-semibold leading-5 text-white">
+        <span className="absolute right-0.5 top-0.5 flex min-w-[1.25rem] items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-semibold leading-5 text-white">
           {itemCount > 99 ? '99+' : itemCount}
         </span>
       ) : null}

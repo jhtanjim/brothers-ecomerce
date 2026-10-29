@@ -53,7 +53,7 @@ export function Pagination({ page, totalPages, hrefFor }: PaginationProps) {
               {entry === page ? (
                 <span
                   aria-current="page"
-                  className={`${itemClass} border-indigo-600 bg-indigo-600 text-white`}
+                  className={`${itemClass} border-brand-600 bg-brand-600 text-white`}
                 >
                   {entry}
                 </span>

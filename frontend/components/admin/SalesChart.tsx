@@ -57,7 +57,7 @@ export function SalesChart() {
               onClick={() => setDays(option)}
               className={`rounded-lg border px-3 py-1 text-sm font-medium ${
                 days === option
-                  ? 'border-indigo-600 bg-indigo-600 text-white'
+                  ? 'border-brand-600 bg-brand-600 text-white'
                   : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
@@ -77,7 +77,7 @@ export function SalesChart() {
             <button
               type="button"
               onClick={() => setAttempt((count) => count + 1)}
-              className="font-medium text-indigo-600 underline"
+              className="font-medium text-brand-600 underline"
             >
               Try again
             </button>

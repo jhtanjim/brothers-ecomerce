@@ -24,13 +24,13 @@ export function HeaderActions() {
       <div className="ml-auto flex items-center gap-2 md:ml-0">
         <Link
           href={`/login${next}`}
-          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600"
+          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-brand-600"
         >
           Sign in
         </Link>
         <Link
           href={`/register${next}`}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-600 hover:text-indigo-600"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:border-brand-600 hover:text-brand-600"
         >
           Create account
         </Link>
@@ -53,8 +53,8 @@ export function HeaderActions() {
 
   return (
     <details className="relative ml-auto md:ml-0">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 [&::-webkit-details-marker]:hidden">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold uppercase text-indigo-700">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-brand-600 [&::-webkit-details-marker]:hidden">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold uppercase text-brand-700">
           {firstName.charAt(0)}
         </span>
         <span className="max-w-[8rem] truncate">{firstName}</span>
@@ -70,6 +70,13 @@ export function HeaderActions() {
           className="mt-1 block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
         >
           My orders
+        </Link>
+        <Link
+          href="/account/addresses"
+          onClick={(event) => event.currentTarget.closest('details')?.removeAttribute('open')}
+          className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+        >
+          Addresses
         </Link>
         <button
           type="button"

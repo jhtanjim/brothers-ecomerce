@@ -10,7 +10,7 @@ export function CheckoutField({ label, name, error, ...inputProps }: CheckoutFie
   const errorId = `${name}-error`;
   const borderClass = error
     ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100'
-    : 'border-slate-300 focus:border-indigo-600 focus:ring-indigo-100';
+    : 'border-slate-300 focus:border-brand-600 focus:ring-brand-100';
 
   return (
     <div>
@@ -22,7 +22,7 @@ export function CheckoutField({ label, name, error, ...inputProps }: CheckoutFie
         name={name}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 ${borderClass}`}
+        className={`h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2 ${borderClass}`}
         {...inputProps}
       />
       {error ? (

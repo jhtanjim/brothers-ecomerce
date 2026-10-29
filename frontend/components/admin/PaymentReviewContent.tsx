@@ -153,7 +153,7 @@ export function PaymentReviewContent({ paymentId }: { paymentId: string }) {
       <div className="space-y-4">
         <EmptyState title="Payment not found" message="This payment does not exist." />
         <div className="text-center">
-          <Link href={LIST_PATH} className="font-medium text-indigo-600 hover:text-indigo-700">
+          <Link href={LIST_PATH} className="font-medium text-brand-600 hover:text-brand-700">
             Back to payments
           </Link>
         </div>
@@ -172,7 +172,7 @@ export function PaymentReviewContent({ paymentId }: { paymentId: string }) {
           <button
             type="button"
             onClick={() => setAttempt((count) => count + 1)}
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Try again
           </button>
@@ -188,7 +188,7 @@ export function PaymentReviewContent({ paymentId }: { paymentId: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <Link href={LIST_PATH} className="text-sm text-slate-600 hover:text-indigo-600">
+        <Link href={LIST_PATH} className="text-sm text-slate-600 hover:text-brand-600">
           &larr; Back to payments
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -246,7 +246,7 @@ export function PaymentReviewContent({ paymentId }: { paymentId: string }) {
                 href={payment.screenshotUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-indigo-600 underline hover:text-indigo-700"
+                className="font-medium text-brand-600 underline hover:text-brand-700"
               >
                 Open screenshot (new tab)
               </a>
@@ -297,7 +297,7 @@ export function PaymentReviewContent({ paymentId }: { paymentId: string }) {
                 <p className="font-mono text-slate-900">
                   {entry.transactionId}
                   {entry.id === payment.id ? (
-                    <span className="ml-2 rounded bg-indigo-50 px-1.5 py-0.5 font-sans text-xs text-indigo-700">
+                    <span className="ml-2 rounded bg-brand-50 px-1.5 py-0.5 font-sans text-xs text-brand-700">
                       this submission
                     </span>
                   ) : null}
@@ -387,7 +387,7 @@ export function PaymentReviewContent({ paymentId }: { paymentId: string }) {
                 className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 ${
                   reasonError
                     ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100'
-                    : 'border-slate-300 focus:border-indigo-600 focus:ring-indigo-100'
+                    : 'border-slate-300 focus:border-brand-600 focus:ring-brand-100'
                 }`}
               />
               <div className="mt-1 flex justify-between text-xs">

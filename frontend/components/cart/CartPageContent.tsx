@@ -89,7 +89,7 @@ export function CartPageContent() {
           <button
             type="button"
             onClick={() => void reload()}
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Try again
           </button>
@@ -117,7 +117,7 @@ export function CartPageContent() {
         <div className="text-center">
           <Link
             href="/products"
-            className="inline-block rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="inline-block rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Continue shopping
           </Link>
@@ -159,14 +159,14 @@ export function CartPageContent() {
           type="button"
           onClick={onClear}
           disabled={busy}
-          className="text-sm font-medium text-slate-600 hover:text-rose-600 disabled:opacity-40"
+          className="min-h-11 text-sm font-medium text-slate-600 hover:text-rose-600 disabled:opacity-40"
         >
           {busyKey === CLEAR_KEY ? 'Clearing...' : 'Clear cart'}
         </button>
       </div>
 
-      <aside className="rounded-xl border border-slate-200 bg-white p-5 lg:sticky lg:top-6">
-        <h2 className="text-lg font-semibold text-slate-900">Order summary</h2>
+      <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card lg:sticky lg:top-36">
+        <h2 className="text-lg font-bold text-slate-900">Order summary</h2>
         <dl className="mt-4 flex items-baseline justify-between text-sm">
           <dt className="text-slate-600">
             Subtotal ({cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'})
@@ -174,19 +174,28 @@ export function CartPageContent() {
           <dd className="text-base font-semibold text-slate-900">{formatPrice(cart.subtotal)}</dd>
         </dl>
         <p className="mt-2 text-xs text-slate-500">
-          Delivery charge and coupons are applied at checkout.
+          The delivery charge for your city and any coupon are shown at checkout, before you order.
         </p>
 
-        <Link
-          href="/checkout"
-          className="mt-5 block w-full rounded-lg bg-indigo-600 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-indigo-700"
-        >
-          Proceed to checkout
-        </Link>
+        {cart.hasIssues ? (
+          <p
+            role="status"
+            className="mt-5 rounded-full bg-slate-100 px-6 py-3 text-center text-sm font-semibold text-slate-500"
+          >
+            Fix the items above to check out
+          </p>
+        ) : (
+          <Link
+            href="/checkout"
+            className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Proceed to checkout
+          </Link>
+        )}
 
         <Link
           href="/products"
-          className="mt-4 block text-center text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          className="mt-2 flex min-h-11 items-center justify-center text-sm font-medium text-brand-700 hover:text-brand-800"
         >
           Continue shopping
         </Link>

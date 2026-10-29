@@ -21,6 +21,22 @@ export function refreshSession(): Promise<AuthUser> {
   return apiFetch<AuthUser>('/auth/refresh', { method: 'POST' });
 }
 
+/** Always answers the same way, whether or not the email has an account. */
+export function forgotPassword(email: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+/** Sets a new password with the single-use token from the reset link. Ends every session of the account. */
+export function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
+
 /** The current user, or an ApiError with status 401 when signed out. */
 export function getMe(): Promise<UserProfile> {
   return apiFetch<UserProfile>('/auth/me');

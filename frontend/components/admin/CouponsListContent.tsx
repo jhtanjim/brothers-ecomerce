@@ -153,7 +153,7 @@ export function CouponsListContent() {
                 aria-current={active ? 'page' : undefined}
                 className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
                   active
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                    ? 'border-brand-600 bg-brand-600 text-white'
                     : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -164,7 +164,7 @@ export function CouponsListContent() {
         </nav>
         <Link
           href={`${LIST_PATH}/new`}
-          className="rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-lg bg-brand-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
         >
           New coupon
         </Link>
@@ -182,11 +182,11 @@ export function CouponsListContent() {
             maxLength={50}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Coupon code"
-            className="w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+            className="w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
           />
           <button
             type="submit"
-            className="rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-brand-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
           >
             Search
           </button>
@@ -194,7 +194,7 @@ export function CouponsListContent() {
         {filtered ? (
           <Link
             href={LIST_PATH}
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+            className="text-sm font-medium text-brand-600 hover:text-brand-700"
           >
             Clear filters
           </Link>
@@ -225,7 +225,7 @@ export function CouponsListContent() {
               <button
                 type="button"
                 onClick={() => setAttempt((count) => count + 1)}
-                className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
               >
                 Try again
               </button>
@@ -337,7 +337,7 @@ export function CouponsListContent() {
                             <span className="inline-flex items-center gap-4">
                               <Link
                                 href={`${LIST_PATH}/${encodeURIComponent(coupon.id)}/edit`}
-                                className="font-medium text-indigo-600 hover:text-indigo-700"
+                                className="font-medium text-brand-600 hover:text-brand-700"
                               >
                                 Edit
                               </Link>

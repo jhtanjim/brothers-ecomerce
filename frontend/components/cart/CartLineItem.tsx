@@ -37,7 +37,7 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
   const linkable = line.issue !== 'PRODUCT_UNAVAILABLE';
 
   const nameNode = linkable ? (
-    <Link href={`/products/${line.slug}`} className="hover:text-indigo-600">
+    <Link href={`/products/${line.slug}`} className="hover:text-brand-600">
       {line.name}
     </Link>
   ) : (
@@ -46,15 +46,18 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
 
   return (
     <li
-      className={`rounded-xl border bg-white p-4 ${line.issue ? 'border-amber-300' : 'border-slate-200'}`}
+      className={`rounded-2xl border bg-white p-4 ${line.issue ? 'border-amber-300' : 'border-slate-200'}`}
     >
       <div className="flex gap-4">
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-24 sm:w-24">
           {line.imageUrl ? (
             <Image src={line.imageUrl} alt={line.name} fill sizes="96px" className="object-cover" />
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-slate-400">
-              No image
+            <div
+              aria-hidden="true"
+              className="flex h-full items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-xl font-bold text-slate-400"
+            >
+              {line.name.charAt(0)}
             </div>
           )}
         </div>
@@ -72,19 +75,19 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
           <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
             <span className="text-slate-700">{formatPrice(line.unitPrice)}</span>
             {hasDiscount ? (
-              <span className="text-slate-400 line-through">{formatPrice(line.regularPrice)}</span>
+              <span className="text-slate-500 line-through">{formatPrice(line.regularPrice)}</span>
             ) : null}
             <span className="text-slate-500">each</span>
           </div>
 
           <div className="mt-auto flex flex-wrap items-center gap-3">
-            <div className="flex items-center rounded-lg border border-slate-300">
+            <div className="flex h-12 items-center rounded-full border border-slate-300">
               <button
                 type="button"
                 aria-label={`Decrease quantity of ${line.name}`}
                 onClick={() => onChangeQuantity(line, Math.min(line.quantity - 1, max))}
                 disabled={!canDecrease}
-                className="px-3 py-1.5 text-lg text-slate-700 hover:text-indigo-600 disabled:opacity-40"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
               >
                 -
               </button>
@@ -99,7 +102,7 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
                 aria-label={`Increase quantity of ${line.name}`}
                 onClick={() => onChangeQuantity(line, line.quantity + 1)}
                 disabled={!canIncrease}
-                className="px-3 py-1.5 text-lg text-slate-700 hover:text-indigo-600 disabled:opacity-40"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
               >
                 +
               </button>
@@ -109,7 +112,7 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
               type="button"
               onClick={() => onRemove(line)}
               disabled={busy}
-              className="text-sm font-medium text-rose-600 hover:text-rose-700 disabled:opacity-40"
+              className="flex h-11 items-center px-2 text-sm font-medium text-rose-600 hover:text-rose-700 disabled:opacity-40"
             >
               Remove
             </button>

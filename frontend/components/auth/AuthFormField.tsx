@@ -14,7 +14,7 @@ export function AuthFormField({ label, hint, id, ...inputProps }: AuthFormFieldP
       </label>
       <input
         id={fieldId}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+        className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
         {...inputProps}
       />
       {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}

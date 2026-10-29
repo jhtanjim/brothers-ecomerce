@@ -482,6 +482,20 @@ export interface ValidateCouponResult {
   estimatedTotal: string | null;
 }
 
+/** Returned by POST /orders/quote: a read-only checkout preview priced by the backend. */
+export interface OrderQuote {
+  subtotal: string;
+  discount: string;
+  couponCode: string | null;
+  couponDiscount: string;
+  couponError: { code: string; message: string } | null;
+  /** null until a city is known. */
+  deliveryCharge: string | null;
+  /** null until a city is known. */
+  total: string | null;
+  freeDeliveryThreshold: string | null;
+}
+
 export interface AdminCouponFilters {
   status?: CouponStatus;
   search?: string;
@@ -530,6 +544,174 @@ export interface UpdateCouponInput {
   startsAt?: string | null;
   expiresAt?: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Admin categories (matches /admin/categories responses)
+// ---------------------------------------------------------------------------
+
+export type CategoryStatus = 'ACTIVE' | 'INACTIVE';
+export type AdminCategorySort = 'sort_order' | 'name_asc' | 'name_desc' | 'newest';
+
+export interface AdminCategoryFilters {
+  status?: CategoryStatus;
+  search?: string;
+  sort?: AdminCategorySort;
+}
+
+export interface AdminCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+  imagePublicId: string | null;
+  status: CategoryStatus;
+  sortOrder: number;
+  /** All products in the category, any status. Delete is only possible at 0. */
+  productCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Body of POST /admin/categories. The slug is generated from the name when omitted. */
+export interface CreateCategoryInput {
+  name: string;
+  slug?: string;
+  description?: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  status?: CategoryStatus;
+}
+
+/** Body of PATCH /admin/categories/:id. null clears description or imageUrl. Renaming keeps the slug. */
+export interface UpdateCategoryInput {
+  name?: string;
+  slug?: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  sortOrder?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Admin products (matches /admin/products responses; money values are decimal strings)
+// ---------------------------------------------------------------------------
+
+export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+
+export interface AdminProductFilters {
+  status?: ProductStatus;
+  categoryId?: string;
+  search?: string;
+  sort?: ProductSort;
+}
+
+export interface AdminProductImage {
+  id: string;
+  url: string;
+  publicId: string;
+  sortOrder: number;
+  /** The API returns images primary first, then by sortOrder. */
+  isPrimary: boolean;
+}
+
+export interface AdminProduct {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  sku: string;
+  shortDescription: string | null;
+  description: string | null;
+  price: string;
+  discountPrice: string | null;
+  discountPercent: number;
+  stockQuantity: number;
+  lowStockThreshold: number;
+  status: ProductStatus;
+  featured: boolean;
+  soldCount: number;
+  createdAt: string;
+  updatedAt: string;
+  category: { id: string; name: string; slug: string; status: CategoryStatus };
+  images: AdminProductImage[];
+}
+
+/** Body of POST /admin/products. Prices are numbers with up to 2 decimals; slug is generated when omitted. */
+export interface CreateProductInput {
+  categoryId: string;
+  name: string;
+  slug?: string;
+  sku: string;
+  shortDescription?: string;
+  description?: string;
+  price: number;
+  discountPrice?: number;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  status?: 'ACTIVE' | 'INACTIVE';
+  featured?: boolean;
+}
+
+/** Body of PATCH /admin/products/:id. null clears the descriptions or the discount. Status has its own endpoint. */
+export interface UpdateProductInput {
+  categoryId?: string;
+  name?: string;
+  slug?: string;
+  sku?: string;
+  shortDescription?: string | null;
+  description?: string | null;
+  price?: number;
+  discountPrice?: number | null;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  featured?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Admin customers (matches /admin/customers)
+// ---------------------------------------------------------------------------
+
+export type CustomerStatus = 'ACTIVE' | 'SUSPENDED';
+
+export interface AdminCustomerFilters {
+  status?: CustomerStatus;
+  search?: string;
+}
+
+export interface AdminCustomer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  status: CustomerStatus;
+  createdAt: string;
+  orderCount: number;
+  lastOrderAt: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Admin settings (matches /admin/settings; values are the effective ones customers get)
+// ---------------------------------------------------------------------------
+
+export interface AdminSettings {
+  deliveryHomeCity: string;
+  deliveryHomeCityCharge: number;
+  deliveryOtherCityCharge: number;
+  deliveryFreeThreshold: number | null;
+  /** Stored text, even when it is not a usable number (for example a placeholder). */
+  bkashNumber: string | null;
+  bkashNumberValid: boolean;
+  nagadNumber: string | null;
+  nagadNumberValid: boolean;
+  screenshotEnabled: boolean;
+  maxPaymentAttempts: number;
+  unpaidExpiryHours: number;
+}
+
+/** Body of PATCH /admin/settings: only changed fields. null clears the threshold or a merchant number. */
+export type UpdateSettingsInput = Partial<
+  Omit<AdminSettings, 'bkashNumberValid' | 'nagadNumberValid'>
+>;
 
 // ---------------------------------------------------------------------------
 // Admin dashboard (matches /admin/dashboard responses; money values are decimal strings)

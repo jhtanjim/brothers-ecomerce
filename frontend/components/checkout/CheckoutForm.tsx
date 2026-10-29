@@ -9,15 +9,19 @@ import { CheckoutSummary } from '@/components/checkout/CheckoutSummary';
 import { CouponBox } from '@/components/checkout/CouponBox';
 import { createAddress, getAddresses } from '@/lib/api/addresses';
 import { ApiError } from '@/lib/api/client';
-import { createOrder } from '@/lib/api/orders';
+import { createOrder, getOrderQuote } from '@/lib/api/orders';
 import type {
   AddressView,
   AuthUser,
   CartView,
   CreateOrderInput,
+  OrderQuote,
   PaymentMethod,
   ValidateCouponResult,
 } from '@/lib/api/types';
+
+/** Wait for a pause in typing before asking the backend for a new delivery quote. */
+const QUOTE_DELAY_MS = 400;
 
 const NOTES_MAX = 500;
 /** Same rule as the backend DTOs (the backend stays the authority). */
@@ -173,6 +177,37 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
   const [formError, setFormError] = useState<FormError | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [coupon, setCoupon] = useState<ValidateCouponResult | null>(null);
+  const [quote, setQuote] = useState<OrderQuote | null>(null);
+  const [quoteState, setQuoteState] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  const quoteCity = values.city.trim();
+  const quoteCoupon = coupon?.code ?? '';
+  // Re-quote when the cart itself changes (quantities, prices).
+  const cartKey = `${cart.itemCount}:${cart.subtotal}`;
+  useEffect(() => {
+    if (quoteCity.length < 2) {
+      setQuote(null);
+      setQuoteState('idle');
+      return;
+    }
+    let cancelled = false;
+    setQuoteState('loading');
+    const timer = setTimeout(() => {
+      getOrderQuote({ city: quoteCity, ...(quoteCoupon ? { couponCode: quoteCoupon } : {}) })
+        .then((result) => {
+          if (cancelled) return;
+          setQuote(result);
+          setQuoteState('idle');
+        })
+        .catch(() => {
+          if (!cancelled) setQuoteState('error');
+        });
+    }, QUOTE_DELAY_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [quoteCity, quoteCoupon, cartKey]);
 
   // True once the customer has typed or chosen something, so late-arriving saved addresses never overwrite it.
   const touchedRef = useRef(false);
@@ -316,7 +351,7 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
                 id="savedAddress"
                 value={selectedId}
                 onChange={onSelectAddress}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
               >
                 {addresses.map((address) => (
                   <option key={address.id} value={address.id}>
@@ -411,7 +446,7 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
               maxLength={NOTES_MAX}
               value={values.notes}
               onChange={onChange}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
             />
           </div>
 
@@ -421,7 +456,7 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
                 type="checkbox"
                 checked={saveAddress}
                 onChange={(event) => setSaveAddress(event.target.checked)}
-                className="h-4 w-4 accent-indigo-600"
+                className="h-4 w-4 accent-brand-600"
               />
               Save this address for next time
             </label>
@@ -440,7 +475,7 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
                 key={option.value}
                 className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium ${
                   paymentMethod === option.value
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-900'
+                    ? 'border-brand-600 bg-brand-50 text-brand-900'
                     : 'border-slate-300 text-slate-700 hover:border-slate-400'
                 }`}
               >
@@ -453,7 +488,7 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
                     setPaymentMethod(option.value);
                     clearFieldError('paymentMethod');
                   }}
-                  className="h-4 w-4 accent-indigo-600"
+                  className="h-4 w-4 accent-brand-600"
                 />
                 {option.label}
               </label>
@@ -491,13 +526,19 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
         <button
           type="submit"
           disabled={submitting || cart.hasIssues}
-          className="w-full rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="w-full rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {submitting ? 'Placing order...' : 'Place order'}
         </button>
       </div>
 
-      <CheckoutSummary cart={cart} coupon={coupon} />
+      <CheckoutSummary
+        cart={cart}
+        coupon={coupon}
+        quote={quote}
+        quoteState={quoteState}
+        city={values.city}
+      />
     </form>
   );
 }

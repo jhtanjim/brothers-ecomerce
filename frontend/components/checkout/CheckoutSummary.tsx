@@ -1,18 +1,68 @@
 import Image from 'next/image';
-import type { CartView, ValidateCouponResult } from '@/lib/api/types';
+import type { CartView, OrderQuote, ValidateCouponResult } from '@/lib/api/types';
 import { formatPrice } from '@/lib/format';
 
 interface CheckoutSummaryProps {
   cart: CartView;
   /** Preview of an applied coupon; the backend recalculates when the order is placed. */
   coupon?: ValidateCouponResult | null;
+  /** Backend price preview for the entered city; null while unknown or loading. */
+  quote?: OrderQuote | null;
+  quoteState?: 'idle' | 'loading' | 'error';
+  /** The city typed in the form ('' when none yet). */
+  city?: string;
+}
+
+function Row({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className={strong ? 'font-semibold text-slate-900' : 'text-slate-600'}>{label}</dt>
+      <dd
+        className={strong ? 'text-lg font-extrabold text-slate-900' : 'font-medium text-slate-900'}
+      >
+        {value}
+      </dd>
+    </div>
+  );
 }
 
 /** Read-only view of the server-side cart. Every amount shown here comes from the backend. */
-export function CheckoutSummary({ cart, coupon = null }: CheckoutSummaryProps) {
+export function CheckoutSummary({
+  cart,
+  coupon = null,
+  quote = null,
+  quoteState = 'idle',
+  city = '',
+}: CheckoutSummaryProps) {
+  const couponDiscount = quote ? quote.couponDiscount : coupon?.discount;
+  const couponCode = quote ? quote.couponCode : (coupon?.code ?? null);
+  const hasCity = city.trim().length >= 2;
+
+  let delivery: string;
+  if (!hasCity) delivery = 'Enter your city';
+  else if (quoteState === 'loading' || (!quote && quoteState === 'idle'))
+    delivery = 'Calculating...';
+  else if (quoteState === 'error' || !quote || quote.deliveryCharge === null)
+    delivery = 'Shown on your order';
+  else delivery = Number(quote.deliveryCharge) === 0 ? 'Free' : formatPrice(quote.deliveryCharge);
+
+  const total = hasCity && quoteState === 'idle' && quote?.total ? quote.total : null;
+
+  // "Add X more for free delivery", computed from backend amounts only.
+  let freeDeliveryGap: number | null = null;
+  if (
+    quote?.freeDeliveryThreshold &&
+    quote.deliveryCharge !== null &&
+    Number(quote.deliveryCharge) > 0
+  ) {
+    const payable = Number(quote.subtotal) - Number(quote.discount) - Number(quote.couponDiscount);
+    const gap = Number(quote.freeDeliveryThreshold) - payable;
+    if (gap > 0) freeDeliveryGap = gap;
+  }
+
   return (
-    <aside className="rounded-xl border border-slate-200 bg-white p-5 lg:sticky lg:top-6">
-      <h2 className="text-lg font-semibold text-slate-900">Order summary</h2>
+    <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card lg:sticky lg:top-36">
+      <h2 className="text-lg font-bold text-slate-900">Order summary</h2>
       <ul className="mt-4 divide-y divide-slate-100">
         {cart.items.map((line) => (
           <li key={line.id} className="flex gap-3 py-3">
@@ -42,29 +92,38 @@ export function CheckoutSummary({ cart, coupon = null }: CheckoutSummaryProps) {
           </li>
         ))}
       </ul>
-      <dl className="mt-2 flex items-baseline justify-between border-t border-slate-200 pt-4 text-sm">
-        <dt className="text-slate-600">
-          Subtotal ({cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'})
-        </dt>
-        <dd className="text-base font-semibold text-slate-900">{formatPrice(cart.subtotal)}</dd>
+
+      <dl className="mt-2 space-y-2 border-t border-slate-200 pt-4 text-sm">
+        <Row
+          label={`Subtotal (${cart.itemCount} ${cart.itemCount === 1 ? 'item' : 'items'})`}
+          value={formatPrice(cart.subtotal)}
+        />
+        {couponCode && couponDiscount && Number(couponDiscount) > 0 ? (
+          <div className="flex items-baseline justify-between gap-3">
+            <dt className="text-slate-600">Coupon ({couponCode})</dt>
+            <dd className="font-medium text-emerald-700">-{formatPrice(couponDiscount)}</dd>
+          </div>
+        ) : null}
+        <Row label={hasCity ? `Delivery to ${city.trim()}` : 'Delivery'} value={delivery} />
+        <div className="border-t border-slate-200 pt-3">
+          <Row label="Total" value={total ? formatPrice(total) : '-'} strong />
+        </div>
       </dl>
-      {coupon ? (
-        <dl className="mt-2 space-y-1 text-sm">
-          <div className="flex items-baseline justify-between">
-            <dt className="text-slate-600">Coupon ({coupon.code})</dt>
-            <dd className="font-medium text-emerald-700">-{formatPrice(coupon.discount)}</dd>
-          </div>
-          <div className="flex items-baseline justify-between border-t border-slate-200 pt-2">
-            <dt className="text-slate-600">Before delivery</dt>
-            <dd className="text-base font-semibold text-slate-900">
-              {formatPrice(coupon.payable)}
-            </dd>
-          </div>
-        </dl>
-      ) : null}{' '}
-      <p className="mt-2 text-xs text-slate-500">
-        The delivery charge is added when you place the order and depends on your city. The final
-        total is shown on your order.
+
+      {quote?.couponError && coupon ? (
+        <p role="status" className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Coupon {coupon.code}: {quote.couponError.message}
+        </p>
+      ) : null}
+      {freeDeliveryGap !== null ? (
+        <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-800">
+          Add {formatPrice(freeDeliveryGap.toFixed(2))} more to get free delivery.
+        </p>
+      ) : null}
+      <p className="mt-3 text-xs text-slate-500" aria-live="polite">
+        {total
+          ? 'This is the amount to pay. It is confirmed when you place the order.'
+          : 'The delivery charge depends on your city. Enter it to see the total.'}
       </p>
     </aside>
   );

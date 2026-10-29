@@ -223,7 +223,7 @@ export function PaymentPanel({
               href={latest.screenshotUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-indigo-600 underline hover:text-indigo-700"
+              className="font-medium text-brand-600 underline hover:text-brand-700"
             >
               View your screenshot
             </a>
@@ -394,7 +394,7 @@ export function PaymentPanel({
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="w-full rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {submitting ? 'Submitting...' : 'Submit payment details'}
         </button>

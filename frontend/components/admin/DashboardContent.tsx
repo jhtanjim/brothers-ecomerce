@@ -26,7 +26,7 @@ function Card({ label, value, href, highlight = false }: CardProps) {
     <div
       className={`h-full rounded-xl border bg-white p-4 ${
         highlight ? 'border-amber-300' : 'border-slate-200'
-      } ${href ? 'hover:border-indigo-300' : ''}`}
+      } ${href ? 'hover:border-brand-300' : ''}`}
     >
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
@@ -57,7 +57,7 @@ function Section({
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
         <h2 className="text-base font-semibold text-slate-900">{title}</h2>
         {href && linkLabel ? (
-          <Link href={href} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+          <Link href={href} className="text-sm font-medium text-brand-600 hover:text-brand-700">
             {linkLabel}
           </Link>
         ) : null}
@@ -116,7 +116,7 @@ export function DashboardContent() {
           <button
             type="button"
             onClick={() => setAttempt((count) => count + 1)}
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Try again
           </button>
@@ -188,7 +188,7 @@ export function DashboardContent() {
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <Link
                         href={`/admin/orders/${encodeURIComponent(order.id)}`}
-                        className="font-medium text-indigo-600 hover:text-indigo-700"
+                        className="font-medium text-brand-600 hover:text-brand-700"
                       >
                         Manage
                       </Link>
@@ -228,7 +228,7 @@ export function DashboardContent() {
                     </span>
                     <Link
                       href="/admin/payments"
-                      className="font-medium text-indigo-600 hover:text-indigo-700"
+                      className="font-medium text-brand-600 hover:text-brand-700"
                     >
                       Review
                     </Link>

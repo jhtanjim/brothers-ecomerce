@@ -8,7 +8,7 @@ interface ProductFiltersProps {
 }
 
 const fieldClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100';
 const labelClass = 'mb-1 block text-xs font-medium text-slate-600';
 
 /** A plain GET form: no JavaScript needed. Submitting it resets to page 1. */
@@ -18,7 +18,7 @@ export function ProductFilters({ query, categories }: ProductFiltersProps) {
       action="/products"
       method="get"
       aria-label="Filter products"
-      className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <div className="lg:col-span-2">
@@ -110,20 +110,20 @@ export function ProductFilters({ query, categories }: ProductFiltersProps) {
             name="inStock"
             value="true"
             defaultChecked={query.inStock === true}
-            className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+            className="h-4 w-4 rounded border-slate-300 text-brand-600"
           />
           In stock only
         </label>
         <div className="ml-auto flex items-center gap-3">
           <Link
             href="/products"
-            className="text-sm font-medium text-slate-600 hover:text-indigo-600"
+            className="text-sm font-medium text-slate-600 hover:text-brand-600"
           >
             Clear
           </Link>
           <button
             type="submit"
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Apply
           </button>

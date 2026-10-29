@@ -1,4 +1,6 @@
+import Image from 'next/image';
 import Link from 'next/link';
+import { PriceDisplay } from '@/components/product/PriceDisplay';
 import { ProductGrid } from '@/components/product/ProductGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -8,6 +10,7 @@ import { getProducts, type ProductListParams } from '@/lib/api/products';
 import type { CategorySummary, ProductListItem } from '@/lib/api/types';
 
 const SECTION_SIZE = 8;
+const HERO_PICKS = 3;
 
 type Loaded<T> = { ok: true; data: T } | { ok: false };
 
@@ -42,7 +45,7 @@ function ProductSection({
   if (result.ok && result.data.length === 0 && hideWhenEmpty) return null;
 
   return (
-    <section className="mt-12 sm:mt-16">
+    <section className="mt-14 sm:mt-20">
       <SectionHeading title={title} href={href} />
       {!result.ok ? (
         <ErrorState />
@@ -59,8 +62,8 @@ function CategorySection({ result }: { result: Loaded<CategorySummary[]> }) {
   if (result.ok && result.data.length === 0) return null;
 
   return (
-    <section className="mt-12 sm:mt-16">
-      <SectionHeading title="Shop by category" />
+    <section className="mt-14 sm:mt-20">
+      <SectionHeading title="Shop by category" href="/products" linkLabel="All products" />
       {!result.ok ? (
         <ErrorState />
       ) : (
@@ -69,17 +72,125 @@ function CategorySection({ result }: { result: Loaded<CategorySummary[]> }) {
             <li key={category.id}>
               <Link
                 href={`/products?category=${encodeURIComponent(category.slug)}`}
-                className="flex h-full flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-indigo-300 hover:bg-white hover:shadow-sm"
+                className="group flex h-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-brand-300 hover:shadow-card"
               >
-                <span className="font-medium text-slate-900">{category.name}</span>
-                <span className="mt-3 text-xs text-slate-500">
-                  {category.productCount} {category.productCount === 1 ? 'product' : 'products'}
+                <span
+                  aria-hidden="true"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-lg font-bold text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white"
+                >
+                  {category.name.charAt(0)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-slate-900">
+                    {category.name}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {category.productCount} {category.productCount === 1 ? 'product' : 'products'}
+                  </span>
                 </span>
               </Link>
             </li>
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+/** Real featured products with live prices; falls back to newest when nothing is featured. */
+function HeroPicks({ products }: { products: ProductListItem[] }) {
+  if (products.length === 0) return null;
+  return (
+    <div className="rounded-2xl border border-brand-100 bg-white/80 p-4 shadow-card sm:p-5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Popular picks</p>
+      <ul className="mt-3 divide-y divide-slate-100">
+        {products.map((product) => (
+          <li key={product.id}>
+            <Link
+              href={`/products/${product.slug}`}
+              className="flex items-center gap-3 rounded-lg py-3 hover:bg-slate-50"
+            >
+              <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                {product.primaryImage ? (
+                  <Image
+                    src={product.primaryImage.url}
+                    alt=""
+                    fill
+                    sizes="56px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="flex h-full items-center justify-center text-lg font-bold text-slate-400"
+                  >
+                    {product.name.charAt(0)}
+                  </span>
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-slate-900">
+                  {product.name}
+                </span>
+                <span className="block text-xs text-slate-500">{product.category.name}</span>
+              </span>
+              <PriceDisplay
+                price={product.price}
+                discountPrice={product.discountPrice}
+                discountPercent={product.discountPercent}
+                showPercent={false}
+              />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const STEPS = [
+  {
+    title: 'Place your order',
+    text: 'Add products to your cart, enter your delivery address and choose bKash or Nagad.',
+  },
+  {
+    title: 'Send the payment',
+    text: 'Pay the order total to our merchant number, then submit your transaction ID on the order page.',
+  },
+  {
+    title: 'We verify and deliver',
+    text: 'We confirm your payment, pack your order and you can follow every step from My orders.',
+  },
+];
+
+function HowItWorks() {
+  return (
+    <section
+      aria-labelledby="howItWorks"
+      className="mt-14 rounded-2xl bg-slate-50 p-6 sm:mt-20 sm:p-10"
+    >
+      <h2
+        id="howItWorks"
+        className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl"
+      >
+        How ordering works
+      </h2>
+      <ol className="mt-6 grid gap-6 sm:grid-cols-3">
+        {STEPS.map((step, index) => (
+          <li key={step.title} className="flex gap-4">
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white"
+            >
+              {index + 1}
+            </span>
+            <div>
+              <h3 className="font-semibold text-slate-900">{step.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
@@ -97,21 +208,53 @@ export default async function HomePage() {
     ? { ok: true, data: deals.data.filter((product) => product.discountPercent > 0) }
     : deals;
 
+  const pickSource = featured.ok && featured.data.length > 0 ? featured : newest;
+  const picks = pickSource.ok
+    ? pickSource.data.filter((product) => product.stockQuantity > 0).slice(0, HERO_PICKS)
+    : [];
+
   return (
     <main className="mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 lg:px-8">
-      <section className="rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-800 px-6 py-12 text-white sm:px-12 sm:py-20">
-        <h1 className="max-w-xl text-3xl font-bold tracking-tight sm:text-5xl">
-          Everything you need, delivered to your door
-        </h1>
-        <p className="mt-4 max-w-lg text-indigo-100 sm:text-lg">
-          Browse our catalog, find great prices and order in a few clicks.
-        </p>
-        <Link
-          href="/products"
-          className="mt-8 inline-block rounded-lg bg-white px-6 py-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
-        >
-          Shop all products
-        </Link>
+      <section className="overflow-hidden rounded-3xl border border-brand-100 bg-brand-50 px-6 py-10 sm:px-10 sm:py-14 lg:px-14">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
+          <div>
+            <p className="text-sm font-semibold text-brand-700">Online shopping, made simple</p>
+            <h1 className="mt-3 max-w-xl text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
+              Order online, pay with bKash or Nagad
+            </h1>
+            <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
+              Browse the catalog, place your order in minutes and follow it from payment to
+              delivery.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/products"
+                className="inline-flex h-12 items-center rounded-full bg-brand-600 px-7 text-sm font-semibold text-white hover:bg-brand-700"
+              >
+                Shop all products
+              </Link>
+              {discounted.ok && discounted.data.length > 0 ? (
+                <Link
+                  href="/products?sort=discount"
+                  className="inline-flex h-12 items-center rounded-full border border-slate-300 bg-white px-7 text-sm font-semibold text-slate-800 hover:border-slate-400"
+                >
+                  See today&apos;s deals
+                </Link>
+              ) : null}
+            </div>
+            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
+              <li className="flex items-center gap-2">
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-600" />
+                All prices in Taka
+              </li>
+              <li className="flex items-center gap-2">
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-600" />
+                Order tracking in your account
+              </li>
+            </ul>
+          </div>
+          <HeroPicks products={picks} />
+        </div>
       </section>
 
       <CategorySection result={categories} />
@@ -122,17 +265,18 @@ export default async function HomePage() {
         hideWhenEmpty
       />
       <ProductSection
-        title="New arrivals"
-        href="/products?sort=newest"
-        result={newest}
-        emptyTitle="No products yet"
-      />
-      <ProductSection
         title="Deals"
         href="/products?sort=discount"
         result={discounted}
         hideWhenEmpty
       />
+      <ProductSection
+        title="New arrivals"
+        href="/products?sort=newest"
+        result={newest}
+        emptyTitle="No products yet"
+      />
+      <HowItWorks />
     </main>
   );
 }

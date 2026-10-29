@@ -11,12 +11,15 @@ export function Footer() {
         <nav aria-label="Footer">
           <ul className="flex gap-5">
             <li>
-              <Link href="/" className="hover:text-indigo-600">
+              <Link href="/" className="inline-flex min-h-11 items-center hover:text-brand-600">
                 Home
               </Link>
             </li>
             <li>
-              <Link href="/products" className="hover:text-indigo-600">
+              <Link
+                href="/products"
+                className="inline-flex min-h-11 items-center hover:text-brand-600"
+              >
                 Products
               </Link>
             </li>

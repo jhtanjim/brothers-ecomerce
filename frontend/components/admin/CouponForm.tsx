@@ -18,7 +18,7 @@ const LIST_PATH = '/admin/coupons';
 const CODE_PATTERN = /^[A-Z0-9_-]{3,50}$/;
 const MONEY_PATTERN = /^\d{1,10}(\.\d{1,2})?$/;
 const INPUT_CLASS =
-  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-500';
+  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-100 disabled:text-slate-500';
 
 interface Values {
   code: string;
@@ -367,7 +367,7 @@ export function CouponForm({ coupon }: { coupon: AdminCoupon | null }) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? 'Saving...' : editing ? 'Save changes' : 'Create coupon'}
         </button>

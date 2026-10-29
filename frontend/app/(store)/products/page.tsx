@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { FiltersDisclosure } from '@/components/product/FiltersDisclosure';
 import { ProductFilters } from '@/components/product/ProductFilters';
 import { ProductGrid } from '@/components/product/ProductGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -8,11 +9,14 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Pagination } from '@/components/ui/Pagination';
 import { getCategories } from '@/lib/api/categories';
 import { getProducts } from '@/lib/api/products';
+import type { CategorySummary } from '@/lib/api/types';
+import { formatPrice } from '@/lib/format';
 import {
   buildProductsHref,
   hasActiveFilters,
   isNonDefaultQuery,
   parseProductSearchParams,
+  type ProductQuery,
   type RawSearchParams,
 } from '@/lib/product-search';
 
@@ -46,6 +50,33 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
   };
 }
 
+/** One removable chip per active filter; each link drops just that filter. */
+function activeFilterChips(query: ProductQuery, categories: CategorySummary[]) {
+  const chips: { label: string; href: string }[] = [];
+  const drop = (overrides: Partial<ProductQuery>) =>
+    buildProductsHref(query, { ...overrides, page: 1 });
+  if (query.search) chips.push({ label: `"${query.search}"`, href: drop({ search: undefined }) });
+  if (query.category) {
+    const name = categories.find((category) => category.slug === query.category)?.name;
+    chips.push({ label: name ?? query.category, href: drop({ category: undefined }) });
+  }
+  if (query.minPrice !== undefined) {
+    chips.push({
+      label: `From ${formatPrice(query.minPrice)}`,
+      href: drop({ minPrice: undefined }),
+    });
+  }
+  if (query.maxPrice !== undefined) {
+    chips.push({
+      label: `Up to ${formatPrice(query.maxPrice)}`,
+      href: drop({ maxPrice: undefined }),
+    });
+  }
+  if (query.inStock) chips.push({ label: 'In stock', href: drop({ inStock: undefined }) });
+  if (query.featured) chips.push({ label: 'Featured', href: drop({ featured: undefined }) });
+  return chips;
+}
+
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const query = parseProductSearchParams(await searchParams);
 
@@ -70,10 +101,13 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     ? `Results for "${query.search}"`
     : (activeCategory?.name ?? 'All products');
   const filtered = hasActiveFilters(query);
+  const chips = activeFilterChips(query, categories);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{heading}</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+        {heading}
+      </h1>
       {productsResult.ok && (
         <p className="mt-1 text-sm text-slate-500" aria-live="polite">
           {productsResult.data.meta.total}{' '}
@@ -81,16 +115,71 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         </p>
       )}
 
-      <div className="mt-6">
-        {/* The key remounts the form when the URL filters change, so its fields always match the URL. */}
-        <ProductFilters
-          key={buildProductsHref(query, { page: 1 })}
-          query={query}
-          categories={categories}
-        />
+      {categories.length > 0 ? (
+        <nav aria-label="Categories" className="-mx-4 mt-5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <ul className="flex gap-2 whitespace-nowrap">
+            {[{ slug: undefined, name: 'All' }, ...categories].map((category) => {
+              const active = query.category === category.slug;
+              return (
+                <li key={category.slug ?? 'all'}>
+                  <Link
+                    href={buildProductsHref(query, { category: category.slug, page: 1 })}
+                    aria-current={active ? 'page' : undefined}
+                    className={`inline-flex h-10 items-center rounded-full border px-4 text-sm font-medium ${
+                      active
+                        ? 'border-brand-600 bg-brand-600 text-white'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                    }`}
+                  >
+                    {category.name}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      ) : null}
+
+      <div className="mt-4">
+        <FiltersDisclosure activeCount={chips.length}>
+          {/* The key remounts the form when the URL filters change, so its fields always match the URL. */}
+          <ProductFilters
+            key={buildProductsHref(query, { page: 1 })}
+            query={query}
+            categories={categories}
+          />
+        </FiltersDisclosure>
       </div>
 
-      <section className="mt-8" aria-label="Product results">
+      {chips.length > 0 ? (
+        <ul aria-label="Active filters" className="mt-4 flex flex-wrap items-center gap-2">
+          {chips.map((chip) => (
+            <li key={chip.label}>
+              <Link
+                href={chip.href}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-brand-50 px-3 text-sm font-medium text-brand-800 hover:bg-brand-100"
+              >
+                {chip.label}
+                <span aria-hidden="true">&times;</span>
+                <span className="sr-only">(remove filter)</span>
+              </Link>
+            </li>
+          ))}
+          <li>
+            <Link
+              href="/products"
+              className="text-sm font-medium text-slate-600 underline hover:text-slate-900"
+            >
+              Clear all
+            </Link>
+          </li>
+        </ul>
+      ) : null}
+
+      <section className="mt-8" aria-labelledby="results-heading">
+        <h2 id="results-heading" className="sr-only">
+          Product results
+        </h2>
         {!productsResult.ok ? (
           <ErrorState title="We could not load products" message="Please try again in a moment." />
         ) : productsResult.data.items.length === 0 ? (
@@ -107,7 +196,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               <p className="mt-4 text-center">
                 <Link
                   href="/products"
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  className="text-sm font-medium text-brand-600 hover:text-brand-700"
                 >
                   Clear all filters
                 </Link>

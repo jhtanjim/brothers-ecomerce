@@ -5,6 +5,8 @@ interface PriceDisplayProps {
   discountPrice: string | null;
   discountPercent: number;
   size?: 'sm' | 'lg';
+  /** Product cards show the percentage on the image instead. */
+  showPercent?: boolean;
 }
 
 export function PriceDisplay({
@@ -12,6 +14,7 @@ export function PriceDisplay({
   discountPrice,
   discountPercent,
   size = 'sm',
+  showPercent = true,
 }: PriceDisplayProps) {
   const hasDiscount = discountPrice !== null && discountPercent > 0;
   const current = hasDiscount ? discountPrice : price;
@@ -23,10 +26,12 @@ export function PriceDisplay({
       <span className={`${currentClass} text-slate-900`}>{formatPrice(current)}</span>
       {hasDiscount && (
         <>
-          <span className={`${oldClass} text-slate-400 line-through`}>{formatPrice(price)}</span>
-          <span className="rounded bg-rose-50 px-1.5 py-0.5 text-xs font-semibold text-rose-600">
-            -{discountPercent}%
-          </span>
+          <span className={`${oldClass} text-slate-500 line-through`}>{formatPrice(price)}</span>
+          {showPercent ? (
+            <span className="rounded bg-rose-50 px-1.5 py-0.5 text-xs font-semibold text-rose-600">
+              -{discountPercent}%
+            </span>
+          ) : null}
         </>
       )}
     </div>

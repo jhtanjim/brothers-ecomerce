@@ -59,10 +59,18 @@ export function LoginForm() {
         autoComplete="current-password"
         required
       />
+      <p className="-mt-2 text-right text-sm">
+        <Link
+          href="/forgot-password"
+          className="inline-flex min-h-11 items-center font-medium text-brand-700 hover:text-brand-800"
+        >
+          Forgot password?
+        </Link>
+      </p>
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+        className="h-11 w-full rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
       >
         {submitting ? 'Signing in...' : 'Sign in'}
       </button>
@@ -70,7 +78,7 @@ export function LoginForm() {
         New here?{' '}
         <Link
           href={`/register?next=${encodeURIComponent(next)}`}
-          className="font-medium text-indigo-600 hover:text-indigo-700"
+          className="font-medium text-brand-600 hover:text-brand-700"
         >
           Create an account
         </Link>

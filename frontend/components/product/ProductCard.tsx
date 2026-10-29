@@ -3,17 +3,44 @@ import Link from 'next/link';
 import { PriceDisplay } from '@/components/product/PriceDisplay';
 import type { ProductListItem } from '@/lib/api/types';
 
+/** Storefront display rule only: the public API does not expose each product's own threshold. */
+const LOW_STOCK_HINT_AT = 5;
+
 interface ProductCardProps {
   product: ProductListItem;
 }
 
+/** Shown when a product has no image yet: calm and clearly intentional, never a broken image. */
+function ImagePlaceholder({ name }: { name: string }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-10 w-10"
+        aria-hidden="true"
+      >
+        <path d="M6 7h12l-1 13H7L6 7z" />
+        <path d="M9 7a3 3 0 0 1 6 0" />
+      </svg>
+      <span className="sr-only">{name}</span>
+    </div>
+  );
+}
+
 export function ProductCard({ product }: ProductCardProps) {
   const outOfStock = product.stockQuantity <= 0;
+  const lowStock = !outOfStock && product.stockQuantity <= LOW_STOCK_HINT_AT;
+  const hasDiscount = product.discountPrice !== null && product.discountPercent > 0;
 
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"
+      className="group flex w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-card"
     >
       <div className="relative aspect-square overflow-hidden bg-slate-100">
         {product.primaryImage ? (
@@ -22,25 +49,31 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             fill
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-            className="object-cover transition duration-300 group-hover:scale-105"
+            className={`object-cover transition duration-300 group-hover:scale-[1.03] ${
+              outOfStock ? 'opacity-60 grayscale' : ''
+            }`}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-slate-400">
-            No image
-          </div>
+          <ImagePlaceholder name={product.name} />
         )}
-        {outOfStock && (
-          <span className="absolute left-2 top-2 rounded bg-slate-900/80 px-2 py-1 text-xs font-medium text-white">
-            Out of stock
-          </span>
-        )}
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
+          {outOfStock ? (
+            <span className="rounded-full bg-slate-900/85 px-2.5 py-1 text-xs font-semibold text-white">
+              Sold out
+            </span>
+          ) : hasDiscount ? (
+            <span className="rounded-full bg-rose-600 px-2.5 py-1 text-xs font-bold text-white">
+              -{product.discountPercent}%
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-3 sm:p-4">
-        <span className="text-xs uppercase tracking-wide text-slate-500">
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
           {product.category.name}
         </span>
-        <h3 className="line-clamp-2 text-sm font-medium text-slate-900 sm:text-base">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 group-hover:text-brand-700 sm:text-base">
           {product.name}
         </h3>
         <div className="mt-auto pt-2">
@@ -48,7 +81,13 @@ export function ProductCard({ product }: ProductCardProps) {
             price={product.price}
             discountPrice={product.discountPrice}
             discountPercent={product.discountPercent}
+            showPercent={false}
           />
+          {lowStock ? (
+            <p className="mt-1 text-xs font-medium text-amber-700">
+              Only {product.stockQuantity} left
+            </p>
+          ) : null}
         </div>
       </div>
     </Link>

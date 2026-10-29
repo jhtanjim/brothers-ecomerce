@@ -83,13 +83,13 @@ export function CouponBox({ applied, onApplied, disabled = false }: CouponBoxPro
                 setError(null);
               }}
               onKeyDown={onKeyDown}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+              className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm uppercase outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
             />
             <button
               type="button"
               disabled={disabled || busy || code.trim() === ''}
               onClick={() => void apply()}
-              className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 shrink-0 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy ? 'Checking...' : 'Apply'}
             </button>

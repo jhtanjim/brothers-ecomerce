@@ -8,7 +8,7 @@ import { PriceDisplay } from '@/components/product/PriceDisplay';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { getProductBySlug, getProducts } from '@/lib/api/products';
 import type { ProductDetail, ProductListItem } from '@/lib/api/types';
-import { getSiteUrl } from '@/lib/format';
+import { formatPrice, getSiteUrl } from '@/lib/format';
 
 const RELATED_COUNT = 4;
 /** Show an "only N left" notice at or below this many units. */
@@ -46,13 +46,49 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 function StockStatus({ stockQuantity }: { stockQuantity: number }) {
-  if (stockQuantity <= 0) {
-    return <p className="text-sm font-medium text-rose-600">Out of stock</p>;
-  }
-  if (stockQuantity <= LOW_STOCK_NOTICE_AT) {
-    return <p className="text-sm font-medium text-amber-600">Only {stockQuantity} left in stock</p>;
-  }
-  return <p className="text-sm font-medium text-emerald-600">In stock</p>;
+  const [label, className] =
+    stockQuantity <= 0
+      ? ['Out of stock', 'bg-rose-50 text-rose-700']
+      : stockQuantity <= LOW_STOCK_NOTICE_AT
+        ? [`Only ${stockQuantity} left in stock`, 'bg-amber-50 text-amber-800']
+        : ['In stock', 'bg-emerald-50 text-emerald-700'];
+  return (
+    <p
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${className}`}
+    >
+      <span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />
+      {label}
+    </p>
+  );
+}
+
+/** Only statements that are true for every order in the current (manual bKash/Nagad) workflow. */
+const ORDER_INFO = [
+  {
+    title: 'Delivery',
+    text: 'The delivery charge depends on your city and is shown at checkout before you order.',
+  },
+  {
+    title: 'Payment',
+    text: 'Pay with bKash or Nagad, then enter your transaction ID on the order page.',
+  },
+  {
+    title: 'Order tracking',
+    text: 'Follow your order from payment check to delivery in My orders. Unpaid orders are cancelled automatically after a while.',
+  },
+];
+
+function OrderInfo() {
+  return (
+    <dl className="mt-8 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-slate-50/60">
+      {ORDER_INFO.map((item) => (
+        <div key={item.title} className="px-4 py-3">
+          <dt className="text-sm font-semibold text-slate-900">{item.title}</dt>
+          <dd className="mt-0.5 text-sm leading-relaxed text-slate-600">{item.text}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 function buildJsonLd(product: ProductDetail): string {
@@ -97,6 +133,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
 
   const related = await loadRelated(product);
+  // Whole-taka strings from the API; the subtraction is display-only (the backend prices orders).
+  const saving =
+    product.discountPrice !== null && product.discountPercent > 0
+      ? (Number(product.price) - Number(product.discountPrice)).toFixed(2)
+      : null;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -108,7 +149,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <li>
-            <Link href="/" className="hover:text-indigo-600">
+            <Link href="/" className="inline-flex min-h-11 items-center hover:text-brand-600">
               Home
             </Link>
           </li>
@@ -116,7 +157,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <li>
             <Link
               href={`/products?category=${encodeURIComponent(product.category.slug)}`}
-              className="hover:text-indigo-600"
+              className="inline-flex min-h-11 items-center hover:text-brand-600"
             >
               {product.category.name}
             </Link>
@@ -128,42 +169,58 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </ol>
       </nav>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-12">
+      <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-14">
         <ProductGallery images={product.images} name={product.name} />
 
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <Link
+            href={`/products?category=${encodeURIComponent(product.category.slug)}`}
+            className="text-sm font-semibold uppercase tracking-wide text-brand-700 hover:text-brand-800"
+          >
+            {product.category.name}
+          </Link>
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             {product.name}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">SKU: {product.sku}</p>
+          <p className="mt-2 text-sm text-slate-500">SKU: {product.sku}</p>
 
-          <div className="mt-4">
+          <div className="mt-6 rounded-2xl border border-slate-200 p-4 sm:p-5">
             <PriceDisplay
               size="lg"
               price={product.price}
               discountPrice={product.discountPrice}
               discountPercent={product.discountPercent}
             />
-          </div>
+            {saving ? (
+              <p className="mt-1 text-sm font-medium text-rose-600">
+                You save {formatPrice(saving)}
+              </p>
+            ) : null}
+            <div className="mt-3">
+              <StockStatus stockQuantity={product.stockQuantity} />
+            </div>
 
-          <div className="mt-3">
-            <StockStatus stockQuantity={product.stockQuantity} />
+            <AddToCartButton
+              productId={product.id}
+              slug={product.slug}
+              stockQuantity={product.stockQuantity}
+            />
           </div>
-
-          <AddToCartButton
-            productId={product.id}
-            slug={product.slug}
-            stockQuantity={product.stockQuantity}
-          />
 
           {product.shortDescription && (
-            <p className="mt-6 text-slate-700">{product.shortDescription}</p>
+            <p className="mt-6 text-base leading-relaxed text-slate-700">
+              {product.shortDescription}
+            </p>
           )}
+
+          <OrderInfo />
 
           {product.description && (
             <section className="mt-8 border-t border-slate-200 pt-6" aria-label="Description">
               <h2 className="text-lg font-semibold text-slate-900">Description</h2>
-              <p className="mt-2 whitespace-pre-line text-slate-700">{product.description}</p>
+              <p className="mt-2 whitespace-pre-line leading-relaxed text-slate-700">
+                {product.description}
+              </p>
             </section>
           )}
         </div>

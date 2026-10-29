@@ -275,7 +275,7 @@ export function OrderDetailContent({ orderId }: { orderId: string }) {
         <div className="text-center">
           <Link
             href="/products"
-            className="inline-block rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="inline-block rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Continue shopping
           </Link>
@@ -295,7 +295,7 @@ export function OrderDetailContent({ orderId }: { orderId: string }) {
           <button
             type="button"
             onClick={() => setAttempt((count) => count + 1)}
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Try again
           </button>

@@ -2,8 +2,8 @@ import type { OrderStatus, PaymentMethod, PaymentStatus } from '@/lib/api/types'
 
 const ORDER_STATUS: Record<OrderStatus, { label: string; className: string }> = {
   PENDING_PAYMENT: { label: 'Awaiting payment', className: 'bg-amber-50 text-amber-800' },
-  PROCESSING: { label: 'Processing', className: 'bg-indigo-50 text-indigo-700' },
-  CONFIRMED: { label: 'Confirmed', className: 'bg-indigo-50 text-indigo-700' },
+  PROCESSING: { label: 'Processing', className: 'bg-brand-50 text-brand-700' },
+  CONFIRMED: { label: 'Confirmed', className: 'bg-brand-50 text-brand-700' },
   SHIPPED: { label: 'Shipped', className: 'bg-sky-50 text-sky-700' },
   DELIVERED: { label: 'Delivered', className: 'bg-emerald-50 text-emerald-700' },
   CANCELLED: { label: 'Cancelled', className: 'bg-rose-50 text-rose-700' },
@@ -11,7 +11,7 @@ const ORDER_STATUS: Record<OrderStatus, { label: string; className: string }> = 
 
 const PAYMENT_STATUS: Record<PaymentStatus, { label: string; className: string }> = {
   UNPAID: { label: 'Unpaid', className: 'bg-amber-50 text-amber-800' },
-  PENDING: { label: 'Payment under review', className: 'bg-indigo-50 text-indigo-700' },
+  PENDING: { label: 'Payment under review', className: 'bg-brand-50 text-brand-700' },
   APPROVED: { label: 'Paid', className: 'bg-emerald-50 text-emerald-700' },
   REJECTED: { label: 'Payment rejected', className: 'bg-rose-50 text-rose-700' },
 };

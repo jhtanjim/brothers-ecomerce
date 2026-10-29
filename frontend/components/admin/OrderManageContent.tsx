@@ -94,7 +94,7 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 const cardClass = 'rounded-xl border border-slate-200 bg-white p-5';
 const textareaClass =
-  'w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 border-slate-300 focus:border-indigo-600 focus:ring-indigo-100';
+  'w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 border-slate-300 focus:border-brand-600 focus:ring-brand-100';
 
 export function OrderManageContent({ orderId }: { orderId: string }) {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
@@ -211,7 +211,7 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
       <div className="space-y-4">
         <EmptyState title="Order not found" message="This order does not exist." />
         <div className="text-center">
-          <Link href={LIST_PATH} className="font-medium text-indigo-600 hover:text-indigo-700">
+          <Link href={LIST_PATH} className="font-medium text-brand-600 hover:text-brand-700">
             Back to orders
           </Link>
         </div>
@@ -230,7 +230,7 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
           <button
             type="button"
             onClick={() => setAttempt((count) => count + 1)}
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             Try again
           </button>
@@ -249,7 +249,7 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <Link href={LIST_PATH} className="text-sm text-slate-600 hover:text-indigo-600">
+        <Link href={LIST_PATH} className="text-sm text-slate-600 hover:text-brand-600">
           &larr; Back to orders
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -292,7 +292,7 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
                 {order.payment?.submissions.length ? (
                   <Link
                     href={`/admin/payments/${encodeURIComponent(order.payment.submissions[order.payment.submissions.length - 1].id)}`}
-                    className="font-medium text-indigo-600 hover:text-indigo-700"
+                    className="font-medium text-brand-600 hover:text-brand-700"
                   >
                     Review the payment
                   </Link>
@@ -331,7 +331,7 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
               type="button"
               onClick={() => onAdvance(step)}
               disabled={busy}
-              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy ? 'Working...' : step.label}
             </button>
@@ -516,7 +516,7 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
                         <div>
                           <Link
                             href={`/admin/payments/${encodeURIComponent(entry.id)}`}
-                            className="font-mono text-indigo-600 hover:text-indigo-700"
+                            className="font-mono text-brand-600 hover:text-brand-700"
                           >
                             {entry.transactionId}
                           </Link>

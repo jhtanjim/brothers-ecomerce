@@ -81,7 +81,7 @@ export function RegisterForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+        className="h-11 w-full rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
       >
         {submitting ? 'Creating account...' : 'Create account'}
       </button>
@@ -89,7 +89,7 @@ export function RegisterForm() {
         Already have an account?{' '}
         <Link
           href={`/login?next=${encodeURIComponent(next)}`}
-          className="font-medium text-indigo-600 hover:text-indigo-700"
+          className="font-medium text-brand-600 hover:text-brand-700"
         >
           Sign in
         </Link>

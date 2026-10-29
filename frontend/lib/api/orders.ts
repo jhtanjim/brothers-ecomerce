@@ -3,9 +3,15 @@ import type {
   CreateOrderInput,
   OrderDetail,
   OrderListItem,
+  OrderQuote,
   OrderView,
   PaginationMeta,
 } from './types';
+
+/** Checkout preview of delivery charge and total for the server-side cart. Nothing is reserved. */
+export function getOrderQuote(input: { city?: string; couponCode?: string }): Promise<OrderQuote> {
+  return apiFetch<OrderQuote>('/orders/quote', { method: 'POST', body: JSON.stringify(input) });
+}
 
 /**
  * Turns the server-side cart into an order. Reuse the SAME idempotencyKey when retrying the
