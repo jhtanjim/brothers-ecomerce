@@ -63,14 +63,12 @@ orders, and manage coupons. No formal requirements document exists; "Planned" it
 
 ## Known issues and technical debt
 
-1. **Git repo initialized 2026-10-29 (branch `main`, no commits yet, no remote).** Global `core.autocrlf=true`
-   while `.editorconfig`/Prettier expect LF — a `.gitattributes` (`* text=auto eol=lf`) is advisable.
-2. Backend lint error: `backend/scripts/tmp-coupon-cancel.ts:40` (`no-explicit-any`); the script is a temporary
-   manual test that reads `.env` directly.
-3. `prettier --check .` fails on 117 files (genuine formatting drift, not only line endings).
+1. Resolved 2026-10-29: Git on `main` (no remote); `.gitattributes` forces LF despite global `core.autocrlf=true`.
+2. Resolved 2026-10-29: temporary `tmp-coupon-cancel.ts` deleted (was the only lint error).
+3. Resolved 2026-10-29: whole repo Prettier-formatted; keep it that way.
 4. `pg_trgm` extension is not created by any migration; a fresh `migrate deploy` needs the manual README step first.
-5. `schema.prisma` requires `SHADOW_DATABASE_URL`, which is missing from `backend/.env.example` (likely breaks
-   `migrate dev` on fresh setups — not tested).
+5. `SHADOW_DATABASE_URL` placeholder added to `backend/.env.example` (2026-10-29). README setup still doesn't tell
+   new developers to create the shadow database.
 6. `backend/prisma/phase2-migration-extras.sql` duplicates migration `20260928120000_add_integrity_constraints`.
 7. `BKASH_NUMBER`/`NAGAD_NUMBER` env vars are read only by the seed, which never overwrites existing rows.
 8. Local `DATABASE_URL` connects as the `postgres` superuser, not a least-privilege role.
@@ -89,8 +87,8 @@ orders, and manage coupons. No formal requirements document exists; "Planned" it
 | `npm run typecheck -w backend`                                                   | Pass                                                     |
 | `npm run typecheck -w frontend`                                                  | Pass                                                     |
 | `npm run lint -w frontend`                                                       | Pass                                                     |
-| `npm run lint -w backend`                                                        | Fail — 1 pre-existing error (issue 2)                    |
-| `npx prettier --check .`                                                         | Fail — 117 files (issue 3)                               |
+| `npm run lint -w backend`                                                        | Pass (after cleanup, 2026-10-29)                         |
+| `npx prettier --check .`                                                         | Pass (after cleanup, 2026-10-29)                         |
 | Unit specs: coupon-calculator, order-pricing, order-transitions, image-signature | Pass — 4 files, 56 tests                                 |
 | Full suite `npx vitest run` in `backend/` (unit + integration, `_test` DB)       | Pass — 10 files, 112 tests, ~38 s                        |
 | `prisma validate` / `db:check` / `prisma migrate status`                         | Pass — schema valid, dev DB reachable, schema up to date |
@@ -105,9 +103,8 @@ means not exercised through the running app.
 
 See `docs/SESSION-STATE.md` for the exact next action. Roadmap order:
 
-0. Baseline commit (repo initialized 2026-10-29, nothing committed yet — needs owner confirmation of file list).
-1. Hygiene: Prettier format-only commit (D26), delete tmp script (D27), `.env.example` shadow DB key,
-   `pg_trgm` handling (Q11), consider `.gitattributes` for LF line endings.
+0. ~~Baseline commit~~ — done (`ab7087f`).
+1. ~~Hygiene~~ — done 2026-10-29 except `pg_trgm` handling (Q11) and the README shadow-DB note.
 2. ~~Run integration specs~~ — done 2026-10-29, all pass.
 3. Admin category UI, then admin product UI with images (largest feature gap).
 4. Admin settings API + UI.

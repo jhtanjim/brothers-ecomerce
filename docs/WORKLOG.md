@@ -44,3 +44,20 @@ Template:
   → 10 files, 112 tests pass.
 - Limitations: nothing committed yet; frontend build/runtime still unverified.
 - Next step: baseline commit after owner confirms the file list.
+
+## 2026-10-29 — Baseline commit
+
+- Objective: put the existing project under version control.
+- Files changed: none in the tree; commit `ab7087f` on `main` (251 files). No remote, nothing pushed.
+- Checks run: confirmed no `.env`/`.env.local`/build/`node_modules` files staged; working tree clean after commit.
+- Next step: hygiene commits (`.gitattributes`, Prettier, delete tmp script, `.env.example` shadow key).
+
+## 2026-10-29 — Repository cleanup
+
+- Objective: clear pre-existing lint/format failures and setup gaps (D26, D27).
+- Files changed: added `.gitattributes`; deleted `backend/scripts/tmp-coupon-cancel.ts`; `backend/.env.example`
+  (+ `SHADOW_DATABASE_URL` placeholder); Prettier reformatted 116 files (format only); docs updated.
+- Key decisions: LF enforced via `.gitattributes`; one format-only commit kept separate from other changes.
+- Checks run: typecheck + lint both pass; `prettier --check .` pass; backend `npx vitest run` 10 files / 112 tests pass.
+- Limitations: `next build` and runtime flows still not run; `pg_trgm` migration (Q11) and README shadow-DB note open.
+- Next step: admin category management UI.
