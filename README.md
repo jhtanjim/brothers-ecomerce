@@ -26,18 +26,25 @@ ecommerce-platform/
    CREATE ROLE ecommerce_user WITH LOGIN PASSWORD 'CHOOSE_A_STRONG_PASSWORD' CREATEDB;
    CREATE DATABASE ecommerce_dev      OWNER ecommerce_user ENCODING 'UTF8';
    CREATE DATABASE ecommerce_dev_test OWNER ecommerce_user ENCODING 'UTF8';
+   CREATE DATABASE ecommerce_dev_shadow OWNER ecommerce_user ENCODING 'UTF8';
    ```
 
-   `CREATEDB` is required: `prisma migrate dev` creates a temporary shadow database.
+   - `ecommerce_dev_shadow` is the **shadow database** that `prisma migrate dev` uses to check
+     migrations (`SHADOW_DATABASE_URL`, required by `prisma/schema.prisma`). Prisma **wipes it**, so
+     never point it at a database with data in it.
+   - `CREATEDB` lets Prisma manage that shadow database.
 
-3. Enable the trigram extension used for fast search from Phase 2. Right-click
-   **ecommerce_dev → Query Tool**, run the line below, then repeat for **ecommerce_dev_test**:
+3. **Required:** enable the trigram extension used by product search. No migration creates it, so
+   `npm run db:deploy` / `db:migrate` fail without it. Right-click **ecommerce_dev → Query Tool** and
+   run the line below, then repeat for **ecommerce_dev_test** and **ecommerce_dev_shadow**:
 
    ```sql
    CREATE EXTENSION IF NOT EXISTS pg_trgm;
    ```
 
 4. Find your port in pgAdmin: server **Properties → Connection** (default `5432`).
+
+`npm run db:check` (below) verifies all of this and prints the exact fix for anything missing.
 
 ## Install and configure
 
@@ -52,10 +59,12 @@ cd backend
 cp .env.example .env              # PowerShell: Copy-Item .env.example .env
 ```
 
-Edit `backend/.env` and set `DATABASE_URL` (and `DATABASE_URL_TEST`):
+Edit `backend/.env` and set `DATABASE_URL`, `DATABASE_URL_TEST` and `SHADOW_DATABASE_URL`:
 
 ```
 DATABASE_URL="postgresql://ecommerce_user:YOUR_PASSWORD@localhost:5432/ecommerce_dev?schema=public"
+DATABASE_URL_TEST="postgresql://ecommerce_user:YOUR_PASSWORD@localhost:5432/ecommerce_dev_test?schema=public"
+SHADOW_DATABASE_URL="postgresql://ecommerce_user:YOUR_PASSWORD@localhost:5432/ecommerce_dev_shadow?schema=public"
 ```
 
 If the password contains `@ : / ? # %`, URL-encode them (`@` → `%40`, `:` → `%3A`, `/` → `%2F`,
@@ -122,10 +131,12 @@ Run any other Prisma command with: `npx prisma <command>` inside `backend/`.
 
 ## Troubleshooting
 
-| Symptom                                           | Cause / fix                                                  |
-| ------------------------------------------------- | ------------------------------------------------------------ |
-| `ECONNREFUSED`                                    | PostgreSQL service not running, or wrong port                |
-| `password authentication failed`                  | Wrong password, or special characters not URL-encoded        |
-| `database "..." does not exist`                   | Create it in pgAdmin (step 2)                                |
-| `permission denied to create database` on migrate | Role lacks `CREATEDB`: `ALTER ROLE ecommerce_user CREATEDB;` |
-| `@prisma/client did not initialize yet`           | Run `npm run db:generate`                                    |
+| Symptom                                                           | Cause / fix                                                                                            |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `ECONNREFUSED`                                                    | PostgreSQL service not running, or wrong port                                                          |
+| `password authentication failed`                                  | Wrong password, or special characters not URL-encoded                                                  |
+| `database "..." does not exist`                                   | Create it in pgAdmin (step 2)                                                                          |
+| `permission denied to create database` on migrate                 | Role lacks `CREATEDB`: `ALTER ROLE ecommerce_user CREATEDB;`                                           |
+| `@prisma/client did not initialize yet`                           | Run `npm run db:generate`                                                                              |
+| `operator class "gin_trgm_ops" does not exist` during a migration | `pg_trgm` missing in that database: run `CREATE EXTENSION IF NOT EXISTS pg_trgm;` there (setup step 3) |
+| `Environment variable not found: SHADOW_DATABASE_URL`             | Add it to `backend/.env` (see `.env.example`) and create the shadow database (setup step 2)            |
