@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ActiveStatus, Prisma, ProductStatus } from '@prisma/client';
 import { formatCents, toCents } from '../common/utils/money';
 import { PrismaService } from '../prisma/prisma.service';
@@ -134,7 +139,10 @@ export class CartService {
       throw new NotFoundException({ message: 'Product not found', code: 'PRODUCT_NOT_FOUND' });
     }
     if (product.stockQuantity < 1) {
-      throw new ConflictException({ message: 'This product is out of stock', code: 'PRODUCT_OUT_OF_STOCK' });
+      throw new ConflictException({
+        message: 'This product is out of stock',
+        code: 'PRODUCT_OUT_OF_STOCK',
+      });
     }
 
     const cart = await this.prisma.cart.upsert({
@@ -198,14 +206,20 @@ export class CartService {
     }
 
     const product = item.product;
-    if (product.status !== ProductStatus.ACTIVE || product.category.status !== ActiveStatus.ACTIVE) {
+    if (
+      product.status !== ProductStatus.ACTIVE ||
+      product.category.status !== ActiveStatus.ACTIVE
+    ) {
       throw new ConflictException({
         message: 'This product is no longer available',
         code: 'PRODUCT_UNAVAILABLE',
       });
     }
     if (product.stockQuantity < 1) {
-      throw new ConflictException({ message: 'This product is out of stock', code: 'PRODUCT_OUT_OF_STOCK' });
+      throw new ConflictException({
+        message: 'This product is out of stock',
+        code: 'PRODUCT_OUT_OF_STOCK',
+      });
     }
     if (dto.quantity > product.stockQuantity) {
       throw new ConflictException({
@@ -219,7 +233,9 @@ export class CartService {
   }
 
   async removeItem(userId: string, itemId: string): Promise<CartView> {
-    const result = await this.prisma.cartItem.deleteMany({ where: { id: itemId, cart: { userId } } });
+    const result = await this.prisma.cartItem.deleteMany({
+      where: { id: itemId, cart: { userId } },
+    });
     if (result.count === 0) {
       throw new NotFoundException({ message: 'Cart item not found', code: 'CART_ITEM_NOT_FOUND' });
     }

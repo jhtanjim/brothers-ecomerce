@@ -71,7 +71,8 @@ export class SettingsService {
 
     return {
       homeCity:
-        asNonEmptyString(values.get(SETTING_KEYS.deliveryHomeCity)) ?? SETTING_DEFAULTS.deliveryHomeCity,
+        asNonEmptyString(values.get(SETTING_KEYS.deliveryHomeCity)) ??
+        SETTING_DEFAULTS.deliveryHomeCity,
       homeCityCharge:
         asNonNegativeNumber(values.get(SETTING_KEYS.deliveryHomeCityCharge)) ??
         SETTING_DEFAULTS.deliveryHomeCityCharge,
@@ -103,7 +104,8 @@ export class SettingsService {
       screenshotEnabled:
         asBoolean(values.get(SETTING_KEYS.screenshotEnabled)) ?? SETTING_DEFAULTS.screenshotEnabled,
       maxAttempts:
-        asPositiveInteger(values.get(SETTING_KEYS.maxPaymentAttempts)) ?? SETTING_DEFAULTS.maxPaymentAttempts,
+        asPositiveInteger(values.get(SETTING_KEYS.maxPaymentAttempts)) ??
+        SETTING_DEFAULTS.maxPaymentAttempts,
     };
   }
 }

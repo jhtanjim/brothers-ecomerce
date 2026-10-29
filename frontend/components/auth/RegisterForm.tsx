@@ -33,7 +33,8 @@ export function RegisterForm() {
 
     // Quick client checks only; the backend DTO remains the source of truth.
     if (name.length < 2) return setError('Please enter your full name.');
-    if (phone && !PHONE_PATTERN.test(phone)) return setError('Enter a valid phone number, e.g. 01712345678.');
+    if (phone && !PHONE_PATTERN.test(phone))
+      return setError('Enter a valid phone number, e.g. 01712345678.');
     if (password.length < 8) return setError('Password must be at least 8 characters.');
 
     setError(null);

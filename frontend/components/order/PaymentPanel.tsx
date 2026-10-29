@@ -37,18 +37,25 @@ function normalizePhone(value: string): string {
 }
 
 function screenshotError(file: File): string | undefined {
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return 'The screenshot must be a JPEG, PNG or WebP image';
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type))
+    return 'The screenshot must be a JPEG, PNG or WebP image';
   if (file.size > MAX_IMAGE_BYTES) return 'The screenshot must be 5 MB or smaller';
   return undefined;
 }
 
 function describeError(err: unknown): FormError {
-  if (!(err instanceof ApiError)) return { text: 'Something went wrong. Please try again.', details: [] };
+  if (!(err instanceof ApiError))
+    return { text: 'Something went wrong. Please try again.', details: [] };
   if (err.status === 0) {
-    return { text: 'Unable to reach the server. Please check your connection and try again.', details: [] };
+    return {
+      text: 'Unable to reach the server. Please check your connection and try again.',
+      details: [],
+    };
   }
-  if (err.status === 401) return { text: 'Your session has expired. Please sign in again.', details: [] };
-  if (err.status === 429) return { text: 'Too many attempts. Please wait a minute and try again.', details: [] };
+  if (err.status === 401)
+    return { text: 'Your session has expired. Please sign in again.', details: [] };
+  if (err.status === 429)
+    return { text: 'Too many attempts. Please wait a minute and try again.', details: [] };
   if (err.code === 'VALIDATION_ERROR') {
     const details = Array.isArray(err.details)
       ? err.details.filter((item): item is string => typeof item === 'string')
@@ -195,8 +202,8 @@ export function PaymentPanel({
           Payment under review
         </h2>
         <p role="status" className="mt-2 text-sm text-slate-700">
-          Thank you. We received your {methodLabel} payment details and will verify them shortly. Your
-          order will move forward as soon as the payment is approved.
+          Thank you. We received your {methodLabel} payment details and will verify them shortly.
+          Your order will move forward as soon as the payment is approved.
         </p>
         {latest ? (
           <dl className="mt-3 space-y-1 text-sm">
@@ -234,8 +241,8 @@ export function PaymentPanel({
           This order has expired
         </h2>
         <p role="status" className="mt-2 text-sm text-slate-700">
-          The payment window for this order has passed, so it can no longer be paid. Please place a new
-          order, or contact support if you already sent the money.
+          The payment window for this order has passed, so it can no longer be paid. Please place a
+          new order, or contact support if you already sent the money.
         </p>
       </section>
     );
@@ -248,8 +255,8 @@ export function PaymentPanel({
           Payment is not set up yet
         </h2>
         <p role="status" className="mt-2 text-sm text-slate-700">
-          We cannot accept {methodLabel} payments for this order right now. Please check back soon or
-          contact support. Your order is saved.
+          We cannot accept {methodLabel} payments for this order right now. Please check back soon
+          or contact support. Your order is saved.
         </p>
       </section>
     );
@@ -284,7 +291,9 @@ export function PaymentPanel({
       {rejected ? (
         <div role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
           <p className="font-medium">Your last payment was not approved.</p>
-          {latest?.rejectionReason ? <p className="mt-1">Reason: {latest.rejectionReason}</p> : null}
+          {latest?.rejectionReason ? (
+            <p className="mt-1">Reason: {latest.rejectionReason}</p>
+          ) : null}
           <p className="mt-1">
             {attemptsLeft} {attemptsLeft === 1 ? 'attempt' : 'attempts'} left.
           </p>
@@ -308,7 +317,9 @@ export function PaymentPanel({
         Amount to pay: <span className="font-semibold text-slate-900">{formatPrice(amount)}</span>
       </p>
       {expiresAt ? (
-        <p className="mt-1 text-xs text-slate-500">Your items are reserved until {formatDateTime(expiresAt)}.</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Your items are reserved until {formatDateTime(expiresAt)}.
+        </p>
       ) : null}
 
       <form onSubmit={onSubmit} noValidate className="mt-5 space-y-4">

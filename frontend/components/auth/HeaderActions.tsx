@@ -18,7 +18,8 @@ export function HeaderActions() {
   }
 
   if (status === 'unauthenticated' || !user) {
-    const next = pathname && !AUTH_PAGES.includes(pathname) ? `?next=${encodeURIComponent(pathname)}` : '';
+    const next =
+      pathname && !AUTH_PAGES.includes(pathname) ? `?next=${encodeURIComponent(pathname)}` : '';
     return (
       <div className="ml-auto flex items-center gap-2 md:ml-0">
         <Link

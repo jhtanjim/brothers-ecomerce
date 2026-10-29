@@ -70,7 +70,10 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
 
       <div className="grid gap-8 lg:grid-cols-3 lg:items-start">
         <div className="space-y-8 lg:col-span-2">
-          <section aria-labelledby="items-heading" className="rounded-xl border border-slate-200 bg-white p-5">
+          <section
+            aria-labelledby="items-heading"
+            className="rounded-xl border border-slate-200 bg-white p-5"
+          >
             <h2 id="items-heading" className="text-lg font-semibold text-slate-900">
               Items
             </h2>
@@ -79,7 +82,13 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
                 <li key={item.id} className="flex gap-4 py-4">
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
                     {item.imageUrl ? (
-                      <Image src={item.imageUrl} alt={item.name} fill sizes="64px" className="object-cover" />
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -94,13 +103,18 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
                       </p>
                     ) : null}
                   </div>
-                  <p className="shrink-0 text-sm font-semibold text-slate-900">{formatPrice(item.totalPrice)}</p>
+                  <p className="shrink-0 text-sm font-semibold text-slate-900">
+                    {formatPrice(item.totalPrice)}
+                  </p>
                 </li>
               ))}
             </ul>
           </section>
 
-          <section aria-labelledby="timeline-heading" className="rounded-xl border border-slate-200 bg-white p-5">
+          <section
+            aria-labelledby="timeline-heading"
+            className="rounded-xl border border-slate-200 bg-white p-5"
+          >
             <h2 id="timeline-heading" className="text-lg font-semibold text-slate-900">
               Order timeline
             </h2>
@@ -117,7 +131,10 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-6">
-          <section aria-labelledby="totals-heading" className="rounded-xl border border-slate-200 bg-white p-5">
+          <section
+            aria-labelledby="totals-heading"
+            className="rounded-xl border border-slate-200 bg-white p-5"
+          >
             <h2 id="totals-heading" className="text-lg font-semibold text-slate-900">
               Payment summary
             </h2>
@@ -144,7 +161,9 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
               </div>
               <div className="flex items-baseline justify-between border-t border-slate-200 pt-3">
                 <dt className="font-semibold text-slate-900">Total</dt>
-                <dd className="text-base font-bold text-slate-900">{formatPrice(order.totalAmount)}</dd>
+                <dd className="text-base font-bold text-slate-900">
+                  {formatPrice(order.totalAmount)}
+                </dd>
               </div>
             </dl>
             {order.payment ? (
@@ -152,14 +171,18 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
                 Payment method: {paymentMethodLabel(order.payment.method)}
                 {order.approvedTransactionId ? (
                   <span className="mt-1 block">
-                    Transaction ID: <span className="font-mono text-slate-700">{order.approvedTransactionId}</span>
+                    Transaction ID:{' '}
+                    <span className="font-mono text-slate-700">{order.approvedTransactionId}</span>
                   </span>
                 ) : null}
               </p>
             ) : null}
           </section>
 
-          <section aria-labelledby="shipping-heading" className="rounded-xl border border-slate-200 bg-white p-5">
+          <section
+            aria-labelledby="shipping-heading"
+            className="rounded-xl border border-slate-200 bg-white p-5"
+          >
             <h2 id="shipping-heading" className="text-lg font-semibold text-slate-900">
               Shipping
             </h2>
@@ -172,7 +195,9 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
                 {order.shipping.area}, {order.shipping.city} {order.shipping.postalCode}
               </p>
             </address>
-            {order.notes ? <p className="mt-3 text-sm text-slate-600">Notes: {order.notes}</p> : null}
+            {order.notes ? (
+              <p className="mt-3 text-sm text-slate-600">Notes: {order.notes}</p>
+            ) : null}
           </section>
         </div>
       </div>
@@ -227,7 +252,9 @@ export function OrderDetailContent({ orderId }: { orderId: string }) {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setState(err instanceof ApiError && err.status === 404 ? { kind: 'not-found' } : { kind: 'error' });
+        setState(
+          err instanceof ApiError && err.status === 404 ? { kind: 'not-found' } : { kind: 'error' },
+        );
       });
     return () => {
       cancelled = true;
@@ -241,7 +268,10 @@ export function OrderDetailContent({ orderId }: { orderId: string }) {
   if (state.kind === 'not-found') {
     return (
       <div className="space-y-4">
-        <EmptyState title="Order not found" message="We could not find this order in your account." />
+        <EmptyState
+          title="Order not found"
+          message="We could not find this order in your account."
+        />
         <div className="text-center">
           <Link
             href="/products"
@@ -257,7 +287,10 @@ export function OrderDetailContent({ orderId }: { orderId: string }) {
   if (state.kind === 'error') {
     return (
       <div className="space-y-4">
-        <ErrorState title="Could not load this order" message="Please check your connection and try again." />
+        <ErrorState
+          title="Could not load this order"
+          message="Please check your connection and try again."
+        />
         <div className="text-center">
           <button
             type="button"

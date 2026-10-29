@@ -1,5 +1,14 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { ToBoolean } from '../../common/decorators/to-boolean.decorator';
 import { Trim } from '../../common/decorators/trim.decorator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';

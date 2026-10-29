@@ -49,7 +49,10 @@ function refreshSessionOnce(): Promise<boolean> {
   return refreshInFlight;
 }
 
-async function send<T>(path: string, init: RequestInit): Promise<{ response: Response; body: ApiResponse<T> | null }> {
+async function send<T>(
+  path: string,
+  init: RequestInit,
+): Promise<{ response: Response; body: ApiResponse<T> | null }> {
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
   // FormData: the browser must set the multipart boundary itself, so no JSON header.

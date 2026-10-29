@@ -87,7 +87,10 @@ export function hasActiveFilters(query: ProductQuery): boolean {
 }
 
 /** Builds a clean /products URL, leaving out default values. */
-export function buildProductsHref(query: ProductQuery, overrides: Partial<ProductQuery> = {}): string {
+export function buildProductsHref(
+  query: ProductQuery,
+  overrides: Partial<ProductQuery> = {},
+): string {
   const next = { ...query, ...overrides };
   const params = new URLSearchParams();
   if (next.search) params.set('search', next.search);

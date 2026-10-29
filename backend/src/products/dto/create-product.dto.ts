@@ -1,19 +1,19 @@
 import { ProductStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
-    IsBoolean,
-    IsIn,
-    IsInt,
-    IsNotEmpty,
-    IsNumber,
-    IsOptional,
-    IsPositive,
-    IsString,
-    Matches,
-    Max,
-    MaxLength,
-    Min,
-    MinLength,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
 } from 'class-validator';
 import { SLUG_REGEX } from '../../categories/dto/create-category.dto';
 import { Trim } from '../../common/decorators/trim.decorator';
@@ -43,14 +43,18 @@ export class CreateProductDto {
   @Trim()
   @IsString()
   @MaxLength(120)
-  @Matches(SLUG_REGEX, { message: 'slug may contain lowercase letters, numbers and single hyphens only' })
+  @Matches(SLUG_REGEX, {
+    message: 'slug may contain lowercase letters, numbers and single hyphens only',
+  })
   slug?: string;
 
   @NormalizeSku()
   @IsString()
   @MinLength(2)
   @MaxLength(64)
-  @Matches(SKU_REGEX, { message: 'sku may contain letters, numbers, dots, underscores and hyphens only' })
+  @Matches(SKU_REGEX, {
+    message: 'sku may contain letters, numbers, dots, underscores and hyphens only',
+  })
   sku!: string;
 
   @IsOptional()

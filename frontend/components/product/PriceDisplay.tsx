@@ -7,7 +7,12 @@ interface PriceDisplayProps {
   size?: 'sm' | 'lg';
 }
 
-export function PriceDisplay({ price, discountPrice, discountPercent, size = 'sm' }: PriceDisplayProps) {
+export function PriceDisplay({
+  price,
+  discountPrice,
+  discountPercent,
+  size = 'sm',
+}: PriceDisplayProps) {
   const hasDiscount = discountPrice !== null && discountPercent > 0;
   const current = hasDiscount ? discountPrice : price;
   const currentClass = size === 'lg' ? 'text-2xl font-bold' : 'text-base font-semibold';

@@ -59,7 +59,10 @@ export class AddressesService {
       // The first address is always the default.
       const makeDefault = dto.isDefault === true || count === 0;
       if (makeDefault) {
-        await tx.address.updateMany({ where: { userId, isDefault: true }, data: { isDefault: false } });
+        await tx.address.updateMany({
+          where: { userId, isDefault: true },
+          data: { isDefault: false },
+        });
       }
 
       return tx.address.create({

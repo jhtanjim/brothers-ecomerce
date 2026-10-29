@@ -8,7 +8,9 @@ export default function AdminOrdersPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <h1 className="text-2xl font-bold tracking-tight text-slate-900">Orders</h1>
-      <p className="mt-1 text-sm text-slate-600">All customer orders. Open one to manage its status.</p>
+      <p className="mt-1 text-sm text-slate-600">
+        All customer orders. Open one to manage its status.
+      </p>
       <div className="mt-6">
         {/* useSearchParams (filters and page) requires a Suspense boundary. */}
         <Suspense fallback={null}>

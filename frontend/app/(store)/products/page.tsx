@@ -38,7 +38,8 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
 
   return {
     title: query.search ? `Results for "${query.search}"` : 'Products',
-    description: 'Browse all products. Filter by category and price, and sort to find what you need.',
+    description:
+      'Browse all products. Filter by category and price, and sort to find what you need.',
     // Only the plain listing is indexable; filter and page combinations are not.
     alternates: nonDefault ? undefined : { canonical: '/products' },
     robots: nonDefault ? { index: false, follow: true } : undefined,
@@ -65,7 +66,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   const categories = categoriesResult.ok ? categoriesResult.data : [];
   const activeCategory = categories.find((category) => category.slug === query.category);
-  const heading = query.search ? `Results for "${query.search}"` : (activeCategory?.name ?? 'All products');
+  const heading = query.search
+    ? `Results for "${query.search}"`
+    : (activeCategory?.name ?? 'All products');
   const filtered = hasActiveFilters(query);
 
   return (
@@ -73,13 +76,18 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{heading}</h1>
       {productsResult.ok && (
         <p className="mt-1 text-sm text-slate-500" aria-live="polite">
-          {productsResult.data.meta.total} {productsResult.data.meta.total === 1 ? 'product' : 'products'}
+          {productsResult.data.meta.total}{' '}
+          {productsResult.data.meta.total === 1 ? 'product' : 'products'}
         </p>
       )}
 
       <div className="mt-6">
         {/* The key remounts the form when the URL filters change, so its fields always match the URL. */}
-        <ProductFilters key={buildProductsHref(query, { page: 1 })} query={query} categories={categories} />
+        <ProductFilters
+          key={buildProductsHref(query, { page: 1 })}
+          query={query}
+          categories={categories}
+        />
       </div>
 
       <section className="mt-8" aria-label="Product results">
@@ -89,11 +97,18 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <div>
             <EmptyState
               title={filtered ? 'No products match your filters' : 'No products yet'}
-              message={filtered ? 'Try removing a filter or searching for something else.' : 'Please check back soon.'}
+              message={
+                filtered
+                  ? 'Try removing a filter or searching for something else.'
+                  : 'Please check back soon.'
+              }
             />
             {filtered && (
               <p className="mt-4 text-center">
-                <Link href="/products" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                <Link
+                  href="/products"
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                >
                   Clear all filters
                 </Link>
               </p>

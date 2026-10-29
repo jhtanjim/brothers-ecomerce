@@ -37,8 +37,12 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-3 sm:p-4">
-        <span className="text-xs uppercase tracking-wide text-slate-500">{product.category.name}</span>
-        <h3 className="line-clamp-2 text-sm font-medium text-slate-900 sm:text-base">{product.name}</h3>
+        <span className="text-xs uppercase tracking-wide text-slate-500">
+          {product.category.name}
+        </span>
+        <h3 className="line-clamp-2 text-sm font-medium text-slate-900 sm:text-base">
+          {product.name}
+        </h3>
         <div className="mt-auto pt-2">
           <PriceDisplay
             price={product.price}

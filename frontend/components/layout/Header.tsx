@@ -24,7 +24,12 @@ export async function Header() {
           {SITE_NAME}
         </Link>
 
-        <form action="/products" method="get" role="search" className="order-last flex w-full gap-2 md:order-none md:ml-auto md:w-96">
+        <form
+          action="/products"
+          method="get"
+          role="search"
+          className="order-last flex w-full gap-2 md:order-none md:ml-auto md:w-96"
+        >
           <input
             type="search"
             name="search"

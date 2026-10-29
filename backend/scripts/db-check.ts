@@ -113,10 +113,14 @@ async function main(): Promise<void> {
       );
     }
     if (!row.has_trgm) {
-      warnings.push('Extension pg_trgm is not available on this server (needed from Phase 2 for fast search).');
+      warnings.push(
+        'Extension pg_trgm is not available on this server (needed from Phase 2 for fast search).',
+      );
     }
     if (row.version_num < 130000) {
-      warnings.push('PostgreSQL 12 or older detected: pg_trgm is not a "trusted" extension there. Tell me your version before Phase 2.');
+      warnings.push(
+        'PostgreSQL 12 or older detected: pg_trgm is not a "trusted" extension there. Tell me your version before Phase 2.',
+      );
     }
 
     const testUrl = process.env.DATABASE_URL_TEST;

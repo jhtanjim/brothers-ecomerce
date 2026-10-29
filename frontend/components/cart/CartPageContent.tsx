@@ -58,7 +58,11 @@ export function CartPageContent() {
   }
 
   function onChangeQuantity(line: CartLine, quantity: number) {
-    void run(line.id, () => update(line.id, quantity), 'Could not update the quantity. Please try again.');
+    void run(
+      line.id,
+      () => update(line.id, quantity),
+      'Could not update the quantity. Please try again.',
+    );
   }
 
   function onRemove(line: CartLine) {
@@ -77,7 +81,10 @@ export function CartPageContent() {
   if (status === 'error' && !cart) {
     return (
       <div className="space-y-4">
-        <ErrorState title="Could not load your cart" message="Please check your connection and try again." />
+        <ErrorState
+          title="Could not load your cart"
+          message="Please check your connection and try again."
+        />
         <div className="text-center">
           <button
             type="button"
@@ -103,7 +110,10 @@ export function CartPageContent() {
             {notice}
           </p>
         ) : null}
-        <EmptyState title="Your cart is empty" message="Browse our products and add something you like." />
+        <EmptyState
+          title="Your cart is empty"
+          message="Browse our products and add something you like."
+        />
         <div className="text-center">
           <Link
             href="/products"

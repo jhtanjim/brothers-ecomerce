@@ -24,9 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="flex min-h-screen flex-col bg-white text-slate-900 antialiased">
         <AuthProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
+          <CartProvider>{children}</CartProvider>
         </AuthProvider>
       </body>
     </html>

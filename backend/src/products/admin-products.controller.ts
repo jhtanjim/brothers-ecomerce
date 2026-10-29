@@ -70,20 +70,15 @@ export class AdminProductsController {
     return this.products.removeImage(id, imageId);
   }
 
-  
   /** Make one image the primary image. The image must belong to the product in the URL. */
   @Patch(':id/images/:imageId/primary')
   setPrimaryImage(@Param('id') id: string, @Param('imageId') imageId: string) {
     return this.products.setPrimaryImage(id, imageId);
   }
 
-
-  
   /** Reorder the images of a product. Send every image id once, in the wanted order. */
   @Patch(':id/images/reorder')
   reorderImages(@Param('id') id: string, @Body() dto: ReorderImagesDto) {
     return this.products.reorderImages(id, dto.imageIds);
   }
-
-
 }

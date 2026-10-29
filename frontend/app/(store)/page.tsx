@@ -32,7 +32,13 @@ interface ProductSectionProps {
   emptyTitle?: string;
 }
 
-function ProductSection({ title, href, result, hideWhenEmpty = false, emptyTitle }: ProductSectionProps) {
+function ProductSection({
+  title,
+  href,
+  result,
+  hideWhenEmpty = false,
+  emptyTitle,
+}: ProductSectionProps) {
   if (result.ok && result.data.length === 0 && hideWhenEmpty) return null;
 
   return (
@@ -109,9 +115,24 @@ export default async function HomePage() {
       </section>
 
       <CategorySection result={categories} />
-      <ProductSection title="Featured products" href="/products?featured=true" result={featured} hideWhenEmpty />
-      <ProductSection title="New arrivals" href="/products?sort=newest" result={newest} emptyTitle="No products yet" />
-      <ProductSection title="Deals" href="/products?sort=discount" result={discounted} hideWhenEmpty />
+      <ProductSection
+        title="Featured products"
+        href="/products?featured=true"
+        result={featured}
+        hideWhenEmpty
+      />
+      <ProductSection
+        title="New arrivals"
+        href="/products?sort=newest"
+        result={newest}
+        emptyTitle="No products yet"
+      />
+      <ProductSection
+        title="Deals"
+        href="/products?sort=discount"
+        result={discounted}
+        hideWhenEmpty
+      />
     </main>
   );
 }

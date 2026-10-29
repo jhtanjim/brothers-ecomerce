@@ -40,7 +40,12 @@ export function ProductFilters({ query, categories }: ProductFiltersProps) {
           <label htmlFor="filter-category" className={labelClass}>
             Category
           </label>
-          <select id="filter-category" name="category" defaultValue={query.category ?? ''} className={fieldClass}>
+          <select
+            id="filter-category"
+            name="category"
+            defaultValue={query.category ?? ''}
+            className={fieldClass}
+          >
             <option value="">All categories</option>
             {categories.map((category) => (
               <option key={category.id} value={category.slug}>
@@ -110,7 +115,10 @@ export function ProductFilters({ query, categories }: ProductFiltersProps) {
           In stock only
         </label>
         <div className="ml-auto flex items-center gap-3">
-          <Link href="/products" className="text-sm font-medium text-slate-600 hover:text-indigo-600">
+          <Link
+            href="/products"
+            className="text-sm font-medium text-slate-600 hover:text-indigo-600"
+          >
             Clear
           </Link>
           <button

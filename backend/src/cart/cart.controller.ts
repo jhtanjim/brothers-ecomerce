@@ -21,7 +21,11 @@ export class CartController {
   }
 
   @Patch('items/:id')
-  updateItem(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: UpdateCartItemDto) {
+  updateItem(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateCartItemDto,
+  ) {
     return this.cart.updateItem(user.sub, id, dto);
   }
 

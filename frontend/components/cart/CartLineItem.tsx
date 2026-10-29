@@ -53,13 +53,17 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
           {line.imageUrl ? (
             <Image src={line.imageUrl} alt={line.name} fill sizes="96px" className="object-cover" />
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-slate-400">No image</div>
+            <div className="flex h-full items-center justify-center text-xs text-slate-400">
+              No image
+            </div>
           )}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex items-start justify-between gap-3">
-            <h2 className="line-clamp-2 text-sm font-medium text-slate-900 sm:text-base">{nameNode}</h2>
+            <h2 className="line-clamp-2 text-sm font-medium text-slate-900 sm:text-base">
+              {nameNode}
+            </h2>
             <p className="shrink-0 text-sm font-semibold text-slate-900 sm:text-base">
               {formatPrice(line.lineTotal)}
             </p>
@@ -84,7 +88,10 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
               >
                 -
               </button>
-              <span aria-live="polite" className="w-10 text-center text-sm font-medium text-slate-900">
+              <span
+                aria-live="polite"
+                className="w-10 text-center text-sm font-medium text-slate-900"
+              >
                 {line.quantity}
               </span>
               <button

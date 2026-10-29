@@ -73,7 +73,13 @@ function OrderCard({ order }: { order: OrderListItem }) {
                 className="relative h-12 w-12 overflow-hidden rounded-lg border-2 border-white bg-slate-100"
               >
                 {item.imageUrl ? (
-                  <Image src={item.imageUrl} alt={item.name} fill sizes="48px" className="object-cover" />
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.name}
+                    fill
+                    sizes="48px"
+                    className="object-cover"
+                  />
                 ) : null}
               </div>
             ))}
@@ -140,7 +146,10 @@ export function OrderListContent() {
   if (state.kind === 'error') {
     return (
       <div className="space-y-4">
-        <ErrorState title="Could not load your orders" message="Please check your connection and try again." />
+        <ErrorState
+          title="Could not load your orders"
+          message="Please check your connection and try again."
+        />
         <div className="text-center">
           <button
             type="button"

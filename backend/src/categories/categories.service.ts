@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ActiveStatus, Prisma, ProductStatus } from '@prisma/client';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { buildPaginationMeta, toSkipTake } from '../common/utils/pagination';
@@ -196,7 +201,11 @@ export class CategoriesService {
   }
 
   /** One query covering case-insensitive name and exact slug, excluding the record being edited. */
-  private async assertUnique(name: string | undefined, slug: string | undefined, excludeId?: string) {
+  private async assertUnique(
+    name: string | undefined,
+    slug: string | undefined,
+    excludeId?: string,
+  ) {
     const or: Prisma.CategoryWhereInput[] = [];
     if (name) or.push({ name: { equals: name, mode: 'insensitive' } });
     if (slug) or.push({ slug });

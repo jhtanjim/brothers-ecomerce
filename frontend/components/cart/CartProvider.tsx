@@ -1,15 +1,17 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
-import {
-  addCartItem,
-  clearCart,
-  getCart,
-  removeCartItem,
-  updateCartItem,
-} from '@/lib/api/cart';
+import { addCartItem, clearCart, getCart, removeCartItem, updateCartItem } from '@/lib/api/cart';
 import type { CartView } from '@/lib/api/types';
 
 type CartStatus = 'idle' | 'loading' | 'ready' | 'error';

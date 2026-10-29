@@ -109,23 +109,23 @@ npm run format:check    # Prettier (check only)
 
 ## Database commands (from the repo root)
 
-| Command | Purpose |
-| --- | --- |
-| `npm run db:check` | Verify PostgreSQL connectivity |
-| `npm run db:validate` | Validate the Prisma schema |
+| Command                               | Purpose                                               |
+| ------------------------------------- | ----------------------------------------------------- |
+| `npm run db:check`                    | Verify PostgreSQL connectivity                        |
+| `npm run db:validate`                 | Validate the Prisma schema                            |
 | `npm run db:migrate -- --name <name>` | Create + apply a dev migration (`prisma migrate dev`) |
-| `npm run db:deploy` | Apply existing migrations (`prisma migrate deploy`) |
-| `npm run db:generate` | Regenerate Prisma Client |
-| `npm run db:studio` | Open Prisma Studio |
+| `npm run db:deploy`                   | Apply existing migrations (`prisma migrate deploy`)   |
+| `npm run db:generate`                 | Regenerate Prisma Client                              |
+| `npm run db:studio`                   | Open Prisma Studio                                    |
 
 Run any other Prisma command with: `npx prisma <command>` inside `backend/`.
 
 ## Troubleshooting
 
-| Symptom | Cause / fix |
-| --- | --- |
-| `ECONNREFUSED` | PostgreSQL service not running, or wrong port |
-| `password authentication failed` | Wrong password, or special characters not URL-encoded |
-| `database "..." does not exist` | Create it in pgAdmin (step 2) |
+| Symptom                                           | Cause / fix                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| `ECONNREFUSED`                                    | PostgreSQL service not running, or wrong port                |
+| `password authentication failed`                  | Wrong password, or special characters not URL-encoded        |
+| `database "..." does not exist`                   | Create it in pgAdmin (step 2)                                |
 | `permission denied to create database` on migrate | Role lacks `CREATEDB`: `ALTER ROLE ecommerce_user CREATEDB;` |
-| `@prisma/client did not initialize yet` | Run `npm run db:generate` |
+| `@prisma/client did not initialize yet`           | Run `npm run db:generate`                                    |

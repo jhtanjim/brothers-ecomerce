@@ -1,16 +1,16 @@
 import { ActiveStatus } from '@prisma/client';
 import {
-    IsEnum,
-    IsInt,
-    IsOptional,
-    IsString,
-    IsUrl,
-    Matches,
-    Max,
-    MaxLength,
-    Min,
-    MinLength,
-    ValidateIf,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { Trim } from '../../common/decorators/trim.decorator';
 import { SLUG_REGEX } from './create-category.dto';
@@ -29,7 +29,9 @@ export class UpdateCategoryDto {
   @Trim()
   @IsString()
   @MaxLength(120)
-  @Matches(SLUG_REGEX, { message: 'slug may contain lowercase letters, numbers and single hyphens only' })
+  @Matches(SLUG_REGEX, {
+    message: 'slug may contain lowercase letters, numbers and single hyphens only',
+  })
   slug?: string;
 
   @IsOptional()

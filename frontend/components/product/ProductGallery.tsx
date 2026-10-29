@@ -48,7 +48,9 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
                 aria-label={`Show image ${index + 1} of ${images.length}`}
                 aria-current={index === activeIndex}
                 className={`relative block h-16 w-16 overflow-hidden rounded-lg border-2 bg-slate-100 sm:h-20 sm:w-20 ${
-                  index === activeIndex ? 'border-indigo-600' : 'border-transparent hover:border-slate-300'
+                  index === activeIndex
+                    ? 'border-indigo-600'
+                    : 'border-transparent hover:border-slate-300'
                 }`}
               >
                 <Image src={image.url} alt="" fill sizes="80px" className="object-cover" />

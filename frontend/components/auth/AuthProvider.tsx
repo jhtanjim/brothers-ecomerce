@@ -2,7 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { getMe, login as apiLogin, logout as apiLogout, register as apiRegister } from '@/lib/api/auth';
+import {
+  getMe,
+  login as apiLogin,
+  logout as apiLogout,
+  register as apiRegister,
+} from '@/lib/api/auth';
 import type { AuthUser, LoginInput, RegisterInput } from '@/lib/api/types';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';

@@ -31,7 +31,7 @@ export class JwtAuthGuard implements CanActivate {
       });
       if (payload.type !== 'access') throw new Error('wrong token type');
       request.user = payload;
-            return true;
+      return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired session');
     }

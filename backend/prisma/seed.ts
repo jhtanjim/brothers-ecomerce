@@ -66,10 +66,25 @@ async function seedSettings(): Promise<void> {
 }
 
 const CATEGORIES = [
-  { name: 'Electronics', slug: 'electronics', description: 'Phones, audio and gadgets.', sortOrder: 1 },
+  {
+    name: 'Electronics',
+    slug: 'electronics',
+    description: 'Phones, audio and gadgets.',
+    sortOrder: 1,
+  },
   { name: 'Fashion', slug: 'fashion', description: 'Clothing and accessories.', sortOrder: 2 },
-  { name: 'Home & Living', slug: 'home-living', description: 'Everything for your home.', sortOrder: 3 },
-  { name: 'Beauty & Care', slug: 'beauty-care', description: 'Skincare and personal care.', sortOrder: 4 },
+  {
+    name: 'Home & Living',
+    slug: 'home-living',
+    description: 'Everything for your home.',
+    sortOrder: 3,
+  },
+  {
+    name: 'Beauty & Care',
+    slug: 'beauty-care',
+    description: 'Skincare and personal care.',
+    sortOrder: 4,
+  },
   { name: 'Groceries', slug: 'groceries', description: 'Daily essentials.', sortOrder: 5 },
 ];
 
@@ -88,18 +103,124 @@ interface SampleProduct {
 }
 
 const PRODUCTS: SampleProduct[] = [
-  { category: 'electronics', name: 'Wireless Headphone X100', slug: 'wireless-headphone-x100', sku: 'ELEC-001', price: 3500, discountPrice: 2990, stock: 40, featured: true, soldCount: 120 },
-  { category: 'electronics', name: 'Bluetooth Speaker Mini', slug: 'bluetooth-speaker-mini', sku: 'ELEC-002', price: 2200, stock: 25, soldCount: 64 },
-  { category: 'electronics', name: 'Fast Charger 30W', slug: 'fast-charger-30w', sku: 'ELEC-003', price: 1200, discountPrice: 990, stock: 3, lowStock: 5, soldCount: 210 },
-  { category: 'fashion', name: 'Classic Cotton T-Shirt', slug: 'classic-cotton-t-shirt', sku: 'FASH-001', price: 850, stock: 100, featured: true, soldCount: 300 },
-  { category: 'fashion', name: 'Slim Fit Denim Jeans', slug: 'slim-fit-denim-jeans', sku: 'FASH-002', price: 2400, discountPrice: 1900, stock: 45, soldCount: 88 },
-  { category: 'fashion', name: 'Leather Wallet', slug: 'leather-wallet', sku: 'FASH-003', price: 1500, stock: 0, soldCount: 55 },
-  { category: 'home-living', name: 'Ceramic Coffee Mug Set', slug: 'ceramic-coffee-mug-set', sku: 'HOME-001', price: 1300, stock: 60, featured: true, soldCount: 40 },
-  { category: 'home-living', name: 'LED Desk Lamp', slug: 'led-desk-lamp', sku: 'HOME-002', price: 1800, discountPrice: 1500, stock: 30, soldCount: 72 },
-  { category: 'beauty-care', name: 'Vitamin C Face Serum', slug: 'vitamin-c-face-serum', sku: 'BEAU-001', price: 1600, discountPrice: 1250, stock: 50, featured: true, soldCount: 95 },
-  { category: 'beauty-care', name: 'Herbal Shampoo 400ml', slug: 'herbal-shampoo-400ml', sku: 'BEAU-002', price: 450, stock: 80, soldCount: 150 },
-  { category: 'groceries', name: 'Premium Basmati Rice 5kg', slug: 'premium-basmati-rice-5kg', sku: 'GROC-001', price: 980, stock: 200, soldCount: 410 },
-  { category: 'groceries', name: 'Discontinued Sample Item', slug: 'discontinued-sample-item', sku: 'GROC-999', price: 100, stock: 0, status: 'INACTIVE' },
+  {
+    category: 'electronics',
+    name: 'Wireless Headphone X100',
+    slug: 'wireless-headphone-x100',
+    sku: 'ELEC-001',
+    price: 3500,
+    discountPrice: 2990,
+    stock: 40,
+    featured: true,
+    soldCount: 120,
+  },
+  {
+    category: 'electronics',
+    name: 'Bluetooth Speaker Mini',
+    slug: 'bluetooth-speaker-mini',
+    sku: 'ELEC-002',
+    price: 2200,
+    stock: 25,
+    soldCount: 64,
+  },
+  {
+    category: 'electronics',
+    name: 'Fast Charger 30W',
+    slug: 'fast-charger-30w',
+    sku: 'ELEC-003',
+    price: 1200,
+    discountPrice: 990,
+    stock: 3,
+    lowStock: 5,
+    soldCount: 210,
+  },
+  {
+    category: 'fashion',
+    name: 'Classic Cotton T-Shirt',
+    slug: 'classic-cotton-t-shirt',
+    sku: 'FASH-001',
+    price: 850,
+    stock: 100,
+    featured: true,
+    soldCount: 300,
+  },
+  {
+    category: 'fashion',
+    name: 'Slim Fit Denim Jeans',
+    slug: 'slim-fit-denim-jeans',
+    sku: 'FASH-002',
+    price: 2400,
+    discountPrice: 1900,
+    stock: 45,
+    soldCount: 88,
+  },
+  {
+    category: 'fashion',
+    name: 'Leather Wallet',
+    slug: 'leather-wallet',
+    sku: 'FASH-003',
+    price: 1500,
+    stock: 0,
+    soldCount: 55,
+  },
+  {
+    category: 'home-living',
+    name: 'Ceramic Coffee Mug Set',
+    slug: 'ceramic-coffee-mug-set',
+    sku: 'HOME-001',
+    price: 1300,
+    stock: 60,
+    featured: true,
+    soldCount: 40,
+  },
+  {
+    category: 'home-living',
+    name: 'LED Desk Lamp',
+    slug: 'led-desk-lamp',
+    sku: 'HOME-002',
+    price: 1800,
+    discountPrice: 1500,
+    stock: 30,
+    soldCount: 72,
+  },
+  {
+    category: 'beauty-care',
+    name: 'Vitamin C Face Serum',
+    slug: 'vitamin-c-face-serum',
+    sku: 'BEAU-001',
+    price: 1600,
+    discountPrice: 1250,
+    stock: 50,
+    featured: true,
+    soldCount: 95,
+  },
+  {
+    category: 'beauty-care',
+    name: 'Herbal Shampoo 400ml',
+    slug: 'herbal-shampoo-400ml',
+    sku: 'BEAU-002',
+    price: 450,
+    stock: 80,
+    soldCount: 150,
+  },
+  {
+    category: 'groceries',
+    name: 'Premium Basmati Rice 5kg',
+    slug: 'premium-basmati-rice-5kg',
+    sku: 'GROC-001',
+    price: 980,
+    stock: 200,
+    soldCount: 410,
+  },
+  {
+    category: 'groceries',
+    name: 'Discontinued Sample Item',
+    slug: 'discontinued-sample-item',
+    sku: 'GROC-999',
+    price: 100,
+    stock: 0,
+    status: 'INACTIVE',
+  },
 ];
 
 async function seedCatalog(): Promise<void> {
@@ -143,7 +264,9 @@ async function seedCatalog(): Promise<void> {
       },
     });
   }
-  console.log(`Sample catalog ensured (${CATEGORIES.length} categories, ${PRODUCTS.length} products).`);
+  console.log(
+    `Sample catalog ensured (${CATEGORIES.length} categories, ${PRODUCTS.length} products).`,
+  );
 }
 
 async function main(): Promise<void> {

@@ -80,7 +80,10 @@ function buildJsonLd(product: ProductDetail): string {
 
 async function loadRelated(product: ProductDetail): Promise<ProductListItem[]> {
   try {
-    const { items } = await getProducts({ category: product.category.slug, limit: RELATED_COUNT + 1 });
+    const { items } = await getProducts({
+      category: product.category.slug,
+      limit: RELATED_COUNT + 1,
+    });
     return items.filter((item) => item.id !== product.id).slice(0, RELATED_COUNT);
   } catch {
     // Related products are optional; never fail the page because of them.
@@ -97,7 +100,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: buildJsonLd(product) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: buildJsonLd(product) }}
+      />
 
       <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -126,7 +132,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <ProductGallery images={product.images} name={product.name} />
 
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{product.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            {product.name}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">SKU: {product.sku}</p>
 
           <div className="mt-4">
@@ -142,7 +150,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <StockStatus stockQuantity={product.stockQuantity} />
           </div>
 
-          <AddToCartButton productId={product.id} slug={product.slug} stockQuantity={product.stockQuantity} />
+          <AddToCartButton
+            productId={product.id}
+            slug={product.slug}
+            stockQuantity={product.stockQuantity}
+          />
 
           {product.shortDescription && (
             <p className="mt-6 text-slate-700">{product.shortDescription}</p>
