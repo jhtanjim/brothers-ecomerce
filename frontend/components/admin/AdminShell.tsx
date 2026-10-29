@@ -11,7 +11,11 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/payments', label: 'Payments' },
+  { href: '/admin/products', label: 'Products' },
+  { href: '/admin/categories', label: 'Categories' },
+  { href: '/admin/customers', label: 'Customers' },
   { href: '/admin/coupons', label: 'Coupons' },
+  { href: '/admin/settings', label: 'Settings' },
 ];
 
 function ShellSkeleton() {
@@ -79,7 +83,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${
-                  active ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'
+                  active ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 {item.label}
@@ -91,7 +95,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-end gap-4 border-b border-slate-200 bg-white px-4 py-3 text-sm">
-          <Link href="/" className="text-slate-600 hover:text-indigo-600">
+          <Link href="/" className="text-slate-600 hover:text-brand-600">
             Back to store
           </Link>
           <span className="text-slate-700">{user.name}</span>
