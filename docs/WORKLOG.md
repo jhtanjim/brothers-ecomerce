@@ -266,3 +266,10 @@ Template:
   it from `CLAUDE.md`.
 - Limitations: order detail/payment panel not re-audited with a live order; admin pages not audited for mobile.
 - Next step: owner approval to commit; then Q7/Q8.
+
+## 2026-10-29 — Sprint committed
+
+- Six focused commits on `main` (owner-approved, not pushed, no remote): `3e6037b` fix(auth), `e216a87`
+  chore(setup), `feb19f7` feat(api), `13c8ea5` feat(storefront), `84d8a1a` feat(admin), `3ee1eeb` docs.
+  112 files; no env/secret files; `.claude/` left untracked. Checks were last run on this exact tree (all pass).
+- Note: intermediate commits were grouped by area and not individually built; the final tree is the verified one.
