@@ -6,12 +6,13 @@ Setup and command reference: `README.md` (do not duplicate it here).
 
 ## Context documents
 
-| File                    | Use it for                                                                |
-| ----------------------- | ------------------------------------------------------------------------- |
-| `docs/SESSION-STATE.md` | Handoff: where the last session stopped, what to do next. **Read first.** |
-| `docs/WORKLOG.md`       | Chronological record of completed tasks (newest at the bottom).           |
-| `docs/STATUS.md`        | Feature status, architecture, known issues, baseline check results.       |
-| `docs/DECISIONS.md`     | Confirmed technical/business decisions and open questions.                |
+| File                       | Use it for                                                                |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `docs/SESSION-STATE.md`    | Handoff: where the last session stopped, what to do next. **Read first.** |
+| `docs/WORKLOG.md`          | Chronological record of completed tasks (newest at the bottom).           |
+| `docs/STATUS.md`           | Feature status, architecture, known issues, baseline check results.       |
+| `docs/DECISIONS.md`        | Confirmed technical/business decisions and open questions.                |
+| `docs/LAUNCH-CHECKLIST.md` | What must happen before real customers; owner vs developer tasks.         |
 
 ## Start-of-session rules (token efficiency)
 

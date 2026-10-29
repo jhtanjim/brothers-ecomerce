@@ -59,6 +59,30 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
 - **D22 — DB-level safety nets.** CHECK constraints and partial unique indexes in migration `20260928120000`.
 - **D23 — Integration tests use a separate `_test` database** and refuse to run otherwise (`src/test/db.ts`).
 - **D24 — Admin actions are logged in the same transaction** as the change (`activity-logs.service.ts`).
+- **D29 — Account checked on every request (2026-10-29).** `JwtAuthGuard` loads the user's `status` and `role`
+  after verifying the access token; a missing or non-ACTIVE user gets 401 `ACCOUNT_UNAVAILABLE`, and the DB role
+  (not the token role) is used. Cost: one primary-key lookup per authenticated request.
+- **D30 — Reset links are never logged in production (2026-10-29).** Until an email provider exists (Q7), password
+  reset cannot deliver mail in production; the mailer logs a warning without the link or address.
+- **D31 — `pg_trgm` stays a manual setup step (owner, 2026-10-29; answers Q11).** No migration change, because
+  editing an applied migration changes its checksum. `npm run db:check` detects a missing extension (dev, test,
+  shadow) and a missing or unsafe `SHADOW_DATABASE_URL`, and exits non-zero with the fix.
+- **D32 — Design system (2026-10-29).** One accent palette `brand` (green, `tailwind.config.ts`) replaces
+  `indigo` everywhere; neutrals `slate`; emerald/amber/rose for success/warning/error and discounts. Fonts via
+  `next/font` (self-hosted): Plus Jakarta Sans + Noto Sans Bengali fallback (renders the Taka sign). Cards show
+  "Only N left" at <= 5 units (public API has no per-product threshold). Overlays that must cover the screen are
+  portalled to `document.body` (the sticky header uses backdrop-blur).
+- **D33 — Checkout price preview (2026-10-29).** `POST /orders/quote` (authenticated, throttled 30/min,
+  read-only) prices the server-side cart for a city and optional coupon with the same `calculateOrderPricing` /
+  `evaluateCoupon` as order creation; an unusable coupon is returned as `couponError` instead of failing. A test
+  asserts the quoted total equals the placed order's total.
+- **D34 — Admin settings (2026-10-29).** `GET/PATCH /admin/settings` (ADMIN). PATCH sends only changed fields;
+  null clears the free-delivery threshold or a merchant number (that method then shows "not set up"). Each save is one
+  transaction with a `SETTINGS_UPDATED` activity log holding from/to values. GET returns effective values (defaults
+  applied) plus the raw stored merchant text and whether it is usable. The page shows a change summary to confirm.
+- **D35 — Customer suspension (2026-10-29).** `/admin/customers` lists and changes role CUSTOMER only (admins are
+  invisible there, so an admin cannot suspend an admin or themself). Suspending revokes all refresh tokens and is
+  logged (`CUSTOMER_SUSPENDED` / `CUSTOMER_REACTIVATED`, optional reason); existing orders are unchanged.
 
 ## Workflow (owner answers, 2026-10-29)
 
@@ -75,4 +99,3 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
 - Q8 — Deployment target and production database setup?
 - Q9 — When (if ever) to add a payment gateway?
 - Q10 — Is there a phase plan or requirements document (README mentions Phases 1–3)?
-- Q11 — How to handle `pg_trgm` for fresh databases (new migration vs documented manual step)?
