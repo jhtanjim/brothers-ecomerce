@@ -1,7 +1,7 @@
 import { PaymentMethod } from '@prisma/client';
 import {
   IsEmail,
-  IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   Matches,
@@ -67,6 +67,8 @@ export class CreateOrderDto {
   @MaxLength(50)
   couponCode?: string;
 
-  @IsEnum(PaymentMethod)
+  @IsIn([PaymentMethod.BKASH, PaymentMethod.NAGAD], {
+    message: 'paymentMethod must be BKASH or NAGAD',
+  })
   paymentMethod!: PaymentMethod;
 }

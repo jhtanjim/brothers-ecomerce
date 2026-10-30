@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   ActiveStatus,
+  OrderChannel,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
@@ -194,15 +195,15 @@ function orderDatePart(): string {
     .replace(/-/g, '');
 }
 
-function generateOrderNumber(): string {
+export function generateOrderNumber(prefix: string = ORDER_NUMBER_PREFIX): string {
   let suffix = '';
   for (let i = 0; i < ORDER_NUMBER_SUFFIX_LENGTH; i++) {
     suffix += ORDER_NUMBER_ALPHABET.charAt(randomInt(ORDER_NUMBER_ALPHABET.length));
   }
-  return `${ORDER_NUMBER_PREFIX}-${orderDatePart()}-${suffix}`;
+  return `${prefix}-${orderDatePart()}-${suffix}`;
 }
 
-function isOrderNumberCollision(error: unknown): boolean {
+export function isOrderNumberCollision(error: unknown): boolean {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === 'P2002' &&
@@ -261,13 +262,14 @@ export class OrdersService {
     const { skip, take } = toSkipTake(query.page, query.limit);
     const [rows, total] = await Promise.all([
       this.prisma.order.findMany({
-        where: { userId },
+        // An admin's counter sales are not their own purchases.
+        where: { userId, channel: OrderChannel.ONLINE },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip,
         take,
         select: orderListSelect,
       }),
-      this.prisma.order.count({ where: { userId } }),
+      this.prisma.order.count({ where: { userId, channel: OrderChannel.ONLINE } }),
     ]);
 
     return {
@@ -403,69 +405,9 @@ export class OrdersService {
     const inputs: PricingLineInput[] = [];
     const snapshots: ProductSnapshot[] = [];
     for (const item of items) {
-      const reserved = await tx.product.updateMany({
-        where: {
-          id: item.productId,
-          status: ProductStatus.ACTIVE,
-          category: { status: ActiveStatus.ACTIVE },
-          stockQuantity: { gte: item.quantity },
-        },
-        data: { stockQuantity: { decrement: item.quantity } },
-      });
-      if (reserved.count === 0) {
-        throw await this.stockFailure(tx, item.productId, item.quantity);
-      }
-
-      // The product row is locked now. Its total can hide an option that has run out.
-      if (item.variantId) {
-        const reservedOption = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stockQuantity: { gte: item.quantity } },
-          data: { stockQuantity: { decrement: item.quantity } },
-        });
-        if (reservedOption.count === 0) {
-          throw await this.optionStockFailure(tx, item.variantId, item.quantity);
-        }
-      }
-
-      // The row is locked by our own update, so this is the price we charge.
-      const product = await tx.product.findUniqueOrThrow({
-        where: { id: item.productId },
-        select: {
-          name: true,
-          sku: true,
-          price: true,
-          discountPrice: true,
-          images: { orderBy: IMAGE_ORDER, take: 1, select: { url: true } },
-          _count: { select: { variants: true } },
-        },
-      });
-      if (!item.variantId && product._count.variants > 0) {
-        throw new ConflictException({
-          message: `Please choose an option for ${product.name}`,
-          code: 'OPTION_REQUIRED',
-          details: { productId: item.productId },
-        });
-      }
-      const variant = item.variantId
-        ? await tx.productVariant.findUniqueOrThrow({
-            where: { id: item.variantId },
-            select: { size: true, color: true, sku: true },
-          })
-        : null;
-      inputs.push({
-        productId: item.productId,
-        regularPrice: product.price,
-        paidPrice: product.discountPrice ?? product.price,
-        quantity: item.quantity,
-      });
-      snapshots.push({
-        name: product.name,
-        sku: variant?.sku ?? product.sku,
-        imageUrl: product.images[0]?.url ?? null,
-        variantId: item.variantId,
-        size: variant?.size || null,
-        color: variant?.color || null,
-      });
+      const line = await this.reserveLine(tx, item);
+      inputs.push(line.input);
+      snapshots.push(line.snapshot);
     }
 
     // 5. Coupon (re-validated here, under the coupon row lock) and totals in integer cents.
@@ -570,6 +512,85 @@ export class OrdersService {
     // 7. The cart has become the order.
     await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
     return order.id;
+  }
+
+  /**
+   * Takes one line's units from stock and returns its price and snapshot. The conditional updates
+   * cannot oversell, even under concurrent sales. Used by online checkout and the POS.
+   */
+  async reserveLine(
+    tx: Prisma.TransactionClient,
+    item: { productId: string; variantId: string | null; quantity: number },
+  ): Promise<{ input: PricingLineInput; snapshot: ProductSnapshot }> {
+    const reserved = await tx.product.updateMany({
+      where: {
+        id: item.productId,
+        status: ProductStatus.ACTIVE,
+        category: { status: ActiveStatus.ACTIVE },
+        stockQuantity: { gte: item.quantity },
+      },
+      data: { stockQuantity: { decrement: item.quantity } },
+    });
+    if (reserved.count === 0) {
+      throw await this.stockFailure(tx, item.productId, item.quantity);
+    }
+
+    // The product row is locked now. Its total can hide an option that has run out.
+    if (item.variantId) {
+      const reservedOption = await tx.productVariant.updateMany({
+        where: {
+          id: item.variantId,
+          productId: item.productId,
+          stockQuantity: { gte: item.quantity },
+        },
+        data: { stockQuantity: { decrement: item.quantity } },
+      });
+      if (reservedOption.count === 0) {
+        throw await this.optionStockFailure(tx, item.variantId, item.quantity);
+      }
+    }
+
+    // The row is locked by our own update, so this is the price we charge.
+    const product = await tx.product.findUniqueOrThrow({
+      where: { id: item.productId },
+      select: {
+        name: true,
+        sku: true,
+        price: true,
+        discountPrice: true,
+        images: { orderBy: IMAGE_ORDER, take: 1, select: { url: true } },
+        _count: { select: { variants: true } },
+      },
+    });
+    if (!item.variantId && product._count.variants > 0) {
+      throw new ConflictException({
+        message: `Please choose an option for ${product.name}`,
+        code: 'OPTION_REQUIRED',
+        details: { productId: item.productId },
+      });
+    }
+    const variant = item.variantId
+      ? await tx.productVariant.findUniqueOrThrow({
+          where: { id: item.variantId },
+          select: { size: true, color: true, sku: true },
+        })
+      : null;
+    return {
+      input: {
+        productId: item.productId,
+        regularPrice: product.price,
+        paidPrice: product.discountPrice ?? product.price,
+        quantity: item.quantity,
+      },
+      snapshot: {
+        name: product.name,
+        sku: variant?.sku ?? product.sku,
+        imageUrl: product.images[0]?.url ?? null,
+        variantId: item.variantId,
+        size: variant?.size || null,
+        color: variant?.color || null,
+      },
+    };
   }
 
   /** Locks the coupon row FOR UPDATE, then loads its rule fields and this customer's live usage count. */

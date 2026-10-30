@@ -270,6 +270,11 @@ export function OrdersListContent() {
                     <tr key={order.id} className="hover:bg-slate-50">
                       <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900">
                         {order.orderNumber}
+                        {order.channel === 'POS' ? (
+                          <span className="ml-2 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
+                            Shop
+                          </span>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3 text-slate-700">
                         <p>{order.customerName}</p>

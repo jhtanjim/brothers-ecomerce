@@ -193,7 +193,9 @@ export interface AddressInput {
 // Orders (matches /orders responses; money values are decimal strings, dates are ISO strings)
 // ---------------------------------------------------------------------------
 
-export type PaymentMethod = 'BKASH' | 'NAGAD';
+export type PaymentMethod = 'BKASH' | 'NAGAD' | 'CASH';
+
+export type OrderChannel = 'ONLINE' | 'POS';
 
 export type OrderStatus =
   'PENDING_PAYMENT' | 'PROCESSING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
@@ -423,6 +425,7 @@ export interface AdminOrderFilters {
 export interface AdminOrderListItem {
   id: string;
   orderNumber: string;
+  channel: OrderChannel;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   totalAmount: string;
@@ -454,6 +457,9 @@ export interface AdminOrderTimelineEntry {
 export interface AdminOrderDetail {
   id: string;
   orderNumber: string;
+  channel: OrderChannel;
+  /** POS sales only: the cash handed over. */
+  cashReceived: string | null;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   subtotal: string;

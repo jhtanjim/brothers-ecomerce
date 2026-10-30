@@ -259,7 +259,21 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
           <OrderStatusBadge status={order.status} />
           <PaymentStatusBadge status={order.paymentStatus} />
         </div>
-        <p className="mt-1 text-sm text-slate-500">Placed {formatDateTime(order.createdAt)}</p>
+        <p className="mt-1 text-sm text-slate-500">
+          {order.channel === 'POS' ? 'Sold at the shop' : 'Placed'}{' '}
+          {formatDateTime(order.createdAt)}
+          {order.channel === 'POS' ? (
+            <>
+              {' '}
+              <Link
+                href={`/admin/pos/receipts/${encodeURIComponent(order.id)}`}
+                className="font-medium text-brand-600 hover:text-brand-700"
+              >
+                Receipt
+              </Link>
+            </>
+          ) : null}
+        </p>
       </div>
 
       {notice ? (
@@ -483,7 +497,15 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
                 </DetailRow>
               ) : null}
               {Number(order.couponDiscount) > 0 ? (
-                <DetailRow label={order.couponCode ? `Coupon (${order.couponCode})` : 'Coupon'}>
+                <DetailRow
+                  label={
+                    order.couponCode
+                      ? `Coupon (${order.couponCode})`
+                      : order.channel === 'POS'
+                        ? 'Sale discount'
+                        : 'Coupon'
+                  }
+                >
                   <span className="text-rose-600">-{formatPrice(order.couponDiscount)}</span>
                 </DetailRow>
               ) : null}

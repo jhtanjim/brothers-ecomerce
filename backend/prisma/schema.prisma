@@ -69,6 +69,12 @@ enum PaymentStatus {
 enum PaymentMethod {
   BKASH
   NAGAD
+  CASH
+}
+
+enum OrderChannel {
+  ONLINE
+  POS
 }
 
 // Future gateways (SSLCOMMERZ, STRIPE, ...) are added here later.
@@ -310,17 +316,21 @@ model CartItem {
 // ---------------------------------------------------------------------------
 
 model Order {
-  id          String @id @default(cuid())
-  orderNumber String @unique
+  id          String       @id @default(cuid())
+  orderNumber String       @unique
+  // For POS sales: the admin who made the sale.
   userId      String
+  channel     OrderChannel @default(ONLINE)
 
   // Money (all calculated by the backend)
-  subtotal       Decimal @db.Decimal(12, 2) // sum of regular price x qty
-  discountAmount Decimal @default(0) @db.Decimal(12, 2) // product-level discounts
-  couponDiscount Decimal @default(0) @db.Decimal(12, 2)
-  deliveryCharge Decimal @default(0) @db.Decimal(12, 2)
-  totalAmount    Decimal @db.Decimal(12, 2)
+  subtotal       Decimal  @db.Decimal(12, 2) // sum of regular price x qty
+  discountAmount Decimal  @default(0) @db.Decimal(12, 2) // product-level discounts
+  couponDiscount Decimal  @default(0) @db.Decimal(12, 2)
+  deliveryCharge Decimal  @default(0) @db.Decimal(12, 2)
+  totalAmount    Decimal  @db.Decimal(12, 2)
   couponCode     String? // snapshot of the coupon code used
+  // POS only: cash handed over, for the change shown on the receipt.
+  cashReceived   Decimal? @db.Decimal(12, 2)
 
   status        OrderStatus   @default(PENDING_PAYMENT)
   // Denormalized mirror of Payment.status so order lists can filter/sort without a join.
@@ -360,6 +370,7 @@ model Order {
   @@index([createdAt])
   // Auto-cancel job: status = PENDING_PAYMENT AND expiresAt < now()
   @@index([status, expiresAt])
+  @@index([channel, createdAt])
   @@map("orders")
 }
 

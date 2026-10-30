@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+import { OrderChannel, OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 
 export type CancelSource = 'CUSTOMER' | 'ADMIN' | 'EXPIRY';
 
@@ -51,6 +51,7 @@ export class OrderCancellationService {
         id: true,
         orderNumber: true,
         userId: true,
+        channel: true,
         status: true,
         paymentStatus: true,
         expiresAt: true,
@@ -152,11 +153,18 @@ export class OrderCancellationService {
   }
 
   private assertEligible(
-    order: { status: OrderStatus; paymentStatus: PaymentStatus; expiresAt: Date | null },
+    order: {
+      channel: OrderChannel;
+      status: OrderStatus;
+      paymentStatus: PaymentStatus;
+      expiresAt: Date | null;
+    },
     source: CancelSource,
   ): void {
     if (source === 'ADMIN') {
-      if (!ADMIN_CANCELLABLE.includes(order.status)) {
+      // A counter sale is complete from the start, but can still be undone at the counter.
+      const voidable = order.channel === OrderChannel.POS && order.status === OrderStatus.DELIVERED;
+      if (!voidable && !ADMIN_CANCELLABLE.includes(order.status)) {
         throw notCancellable('This order can no longer be cancelled', 'ORDER_NOT_CANCELLABLE');
       }
       return;

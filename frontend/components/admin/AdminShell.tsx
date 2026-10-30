@@ -9,6 +9,7 @@ import { SITE_NAME } from '@/lib/format';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/pos', label: 'POS' },
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/payments', label: 'Payments' },
   { href: '/admin/products', label: 'Products' },

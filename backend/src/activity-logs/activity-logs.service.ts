@@ -6,6 +6,8 @@ export const ACTIVITY_ACTIONS = {
   paymentRejected: 'PAYMENT_REJECTED',
   orderStatusChanged: 'ORDER_STATUS_CHANGED',
   orderCancelled: 'ORDER_CANCELLED',
+  posSaleCreated: 'POS_SALE_CREATED',
+  posSaleVoided: 'POS_SALE_VOIDED',
   couponCreated: 'COUPON_CREATED',
   couponUpdated: 'COUPON_UPDATED',
   couponStatusChanged: 'COUPON_STATUS_CHANGED',

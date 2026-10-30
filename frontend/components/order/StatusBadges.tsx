@@ -19,6 +19,7 @@ const PAYMENT_STATUS: Record<PaymentStatus, { label: string; className: string }
 const PAYMENT_METHOD: Record<PaymentMethod, string> = {
   BKASH: 'bKash',
   NAGAD: 'Nagad',
+  CASH: 'Cash',
 };
 
 export function orderStatusLabel(status: OrderStatus): string {

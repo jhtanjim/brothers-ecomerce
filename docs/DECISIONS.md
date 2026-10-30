@@ -100,6 +100,12 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
   first. A variant with order history cannot be deleted (cancelling must restore it). Categories allow one level of
   subcategories; hiding a parent hides its children.
 
+## POS (owner, 2026-10-30)
+
+- **D39 — Counter sales are orders.** `Order.channel = POS`, status DELIVERED, paid in CASH, `userId` = the admin who sold. They share stock,
+  reports and order pages with online orders, and are left out of that admin's own order history. A counter discount is stored in
+  `couponDiscount` with no coupon code. Only admins can sell; cancelling a sale restores stock and the cash refund is manual.
+
 ## Workflow (owner answers, 2026-10-29)
 
 - **D25 — Git:** initialize a local repo with a baseline commit of the existing state; no remote yet. Pushing still needs approval.

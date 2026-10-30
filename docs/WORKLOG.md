@@ -331,3 +331,14 @@ Template:
 - Limitations: one price per product; no size guide or exchange text (needs owner's content). Saving a product through the
   form and the admin subcategory save were not clicked through in the browser; the category rules are covered by tests.
 - Next step: owner supplies real products and content; add a remote and push.
+
+## 2026-10-30 — POS for walk-in customers
+
+- Objective: sell at the shop counter and print a receipt, sharing stock with the website.
+- Files changed: migration `20261030150000_add_pos_sales` (additive; applied to dev and `_test`, not to Neon),
+  `orders/pos.{service,controller}.ts`, `reserveLine` extracted in `orders.service.ts`, `admin/pos` pages, `PosContent`,
+  `PosReceiptContent`; online checkout now refuses `CASH`.
+- Tested: backend vitest 17 files / 154 tests (6 new in `pos.integration.spec.ts`), typecheck, lint, frontend build. Browser: SKU
+  scan-style add, discount, change, sale, receipt, cancel restores stock; test data removed.
+- Limitations: cash only, admin login only, whole-sale cancel only, needs internet. Not tried on a real 80mm printer or scanner.
+- Next step: test on the shop's printer; finish deployment (Render `DATABASE_URL`).

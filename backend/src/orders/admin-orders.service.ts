@@ -14,6 +14,7 @@ import { TRANSACTION_MAX_WAIT_MS, TRANSACTION_TIMEOUT_MS } from './orders.consta
 const listSelect = {
   id: true,
   orderNumber: true,
+  channel: true,
   status: true,
   paymentStatus: true,
   totalAmount: true,
@@ -27,6 +28,8 @@ const listSelect = {
 const detailSelect = {
   id: true,
   orderNumber: true,
+  channel: true,
+  cashReceived: true,
   status: true,
   paymentStatus: true,
   subtotal: true,
@@ -133,6 +136,7 @@ export class AdminOrdersService {
       data: rows.map((row) => ({
         id: row.id,
         orderNumber: row.orderNumber,
+        channel: row.channel,
         status: row.status,
         paymentStatus: row.paymentStatus,
         totalAmount: money(row.totalAmount),
@@ -249,6 +253,8 @@ export class AdminOrdersService {
     return {
       id: order.id,
       orderNumber: order.orderNumber,
+      channel: order.channel,
+      cashReceived: order.cashReceived ? money(order.cashReceived) : null,
       status: order.status,
       paymentStatus: order.paymentStatus,
       subtotal: money(order.subtotal),
