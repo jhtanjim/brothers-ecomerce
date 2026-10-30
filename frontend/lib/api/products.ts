@@ -41,11 +41,14 @@ export function getProducts(
   });
 }
 
-/** Returns null when the product does not exist or is hidden (the API answers 404 for both). */
+/**
+ * Returns null when the product does not exist or is hidden (the API answers 404 for both).
+ * Not cached: Next keeps a stale copy when a refresh gets a 404, so a hidden product would stay visible.
+ */
 export async function getProductBySlug(slug: string): Promise<ProductDetail | null> {
   try {
     return await apiFetch<ProductDetail>(`/products/${encodeURIComponent(slug)}`, {
-      next: { revalidate: CATALOG_REVALIDATE_SECONDS },
+      cache: 'no-store',
     });
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;

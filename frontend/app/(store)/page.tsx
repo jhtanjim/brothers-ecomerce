@@ -44,9 +44,10 @@ function ProductSection({
   );
 }
 
-/** next/image only allows Cloudinary here; other category image URLs fall back to the type tile. */
+/** next/image only allows Cloudinary and local files; other URLs fall back to the type tile. */
 function categoryImage(category: CategorySummary): string | null {
-  return category.imageUrl?.startsWith('https://res.cloudinary.com/') ? category.imageUrl : null;
+  const url = category.imageUrl;
+  return url?.startsWith('https://res.cloudinary.com/') || url?.startsWith('/') ? url : null;
 }
 
 function CategorySection({ result }: { result: Loaded<CategorySummary[]> }) {

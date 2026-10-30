@@ -11,8 +11,8 @@ export const store = {
     eyebrow: "Men's fashion and lifestyle",
     title: 'Dress like you mean it',
     text: 'Shirts, panjabi, denim, footwear and the details that finish the look.',
-    /** Path under public/, for example /brand/hero.jpg, once a campaign photo exists. */
-    image: null as string | null,
+    /** Stock photo under public/. Replace it with a real campaign photo before launch. */
+    image: '/brand/hero.jpg' as string | null,
   },
   contact: {
     phone: null as string | null,

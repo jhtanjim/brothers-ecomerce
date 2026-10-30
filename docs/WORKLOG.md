@@ -307,3 +307,14 @@ Template:
 - Limitations: no schema change yet, so no sizes, colours, subcategories or material. Homepage shows the sample catalog.
   Admin was restyled only by the shared tokens, and was not opened in the browser.
 - Next step: owner approves the catalog migration.
+
+## 2026-10-30 — BROTHERS men's catalog and photos
+
+- Objective: owner asked for a banner, fashion product photos, men's categories, and the non-fashion products removed.
+- Files changed: `backend/prisma/sample-catalog.ts` (new), `prisma/seed.ts`, `frontend/public/brand/` (stock photos, Unsplash
+  licence), `HomeHero.tsx`, `lib/store.ts`, `app/(store)/page.tsx`.
+- Dev DB: one-off script hid 9 old products and 5 old categories (`INACTIVE`, not deleted: order history needs them), added
+  8 men's categories and 5 sample products. Seed not run.
+- Limitations: prices and stock are invented, photos are stock images; replace both before launch. Local images use a
+  `sample/*` public id, so deleting one in admin only logs a Cloudinary warning.
+- Next step: owner approves the catalog migration.

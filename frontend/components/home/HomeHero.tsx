@@ -9,13 +9,23 @@ export function HomeHero() {
     <section className="relative isolate overflow-hidden bg-brand-950 text-white">
       {image ? (
         <>
-          <Image src={image} alt="" fill priority sizes="100vw" className="-z-20 object-cover" />
-          <div className="absolute inset-0 -z-10 bg-brand-950/50" aria-hidden="true" />
+          <Image
+            src={image}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="-z-20 object-cover object-[60%_top] sm:object-[100%_20%]"
+          />
+          <div
+            className="absolute inset-0 -z-10 bg-gradient-to-t from-brand-950/90 via-brand-950/50 to-transparent lg:bg-gradient-to-r"
+            aria-hidden="true"
+          />
         </>
       ) : null}
-      <div className="mx-auto flex min-h-[70vh] max-w-7xl flex-col justify-end px-4 pb-14 pt-24 sm:px-6 sm:pb-20 lg:px-8">
+      <div className="mx-auto flex min-h-[85vh] max-w-7xl sm:min-h-[70vh] flex-col justify-end px-4 pb-14 pt-24 sm:px-6 sm:pb-20 lg:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">{eyebrow}</p>
-        <h1 className="mt-4 max-w-4xl text-6xl font-semibold uppercase leading-[0.95] sm:text-8xl lg:text-9xl">
+        <h1 className="mt-4 max-w-md text-6xl font-semibold uppercase leading-[0.95] sm:text-7xl lg:max-w-xl lg:text-8xl">
           {title}
         </h1>
         <p className="mt-6 max-w-xl text-base leading-relaxed text-brand-200 sm:text-lg">{text}</p>
