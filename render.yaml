@@ -1,0 +1,46 @@
+# Backend API on Render. sync: false values are entered in the Render dashboard, never committed.
+services:
+  - type: web
+    name: brothers-api
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    healthCheckPath: /api/v1/health
+    # DEMO ONLY: the seed loads the sample catalog (development mode). It never overwrites rows.
+    # Remove the seed step before real products go live.
+    buildCommand: >-
+      npm ci --include=dev &&
+      npm run build -w backend &&
+      npm run prisma:deploy -w backend &&
+      NODE_ENV=development npm run db:seed -w backend
+    startCommand: npm run start -w backend
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: 1
+      - key: FRONTEND_URL
+        value: https://brothers-ecomerce.vercel.app
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: BKASH_NUMBER
+        sync: false
+      - key: NAGAD_NUMBER
+        sync: false

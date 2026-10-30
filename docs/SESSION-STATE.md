@@ -4,7 +4,7 @@ Updated: **2026-10-30** — BROTHERS storefront design on branch `feat/brothers-
 
 ## Current status
 
-- Git: branch `feat/brothers-fashion-store`, no remote, so not pushed. `.claude/launch.json` stays out of commits.
+- Git: remote `origin` = github.com/jhtanjim/brothers-ecomerce; `main` pushed at `8fa6094`. `.claude/launch.json` stays out of commits.
 - Checks (2026-10-29): typecheck + lint both apps, `prettier --check .`, backend `npx vitest run` 15 files / 137
   tests, `npm run build` (no warnings), `npm run db:check` — all pass.
 - Launch readiness: ready for local testing; NOT ready for staging/real customers — see `docs/LAUNCH-CHECKLIST.md`.
@@ -22,7 +22,7 @@ Updated: **2026-10-30** — BROTHERS storefront design on branch `feat/brothers-
 
 BROTHERS (D37, D38). Done: brand, storefront, men's sample catalog with stock photos, sizes/colours with their own stock,
 subcategories, material, new/bestseller flags, filters and admin screens. Next: (1) owner supplies real products, photos,
-policies, size guide, contact and social details, then replaces the sample catalog; (2) add a remote and push the branch.
+policies, size guide, contact and social details, then replaces the sample catalog
 Q7/Q8 still open.
 
 `prisma migrate dev` fails on its shadow DB (pg_trgm missing). Generate with `prisma migrate diff --from-url` and apply with
