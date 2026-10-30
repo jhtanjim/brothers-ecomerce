@@ -1,6 +1,6 @@
 # Session state
 
-Updated: **2026-10-30** — multi-store work started (D36): store profiles done, uncommitted.
+Updated: **2026-10-30** — multi-tenant phase 1 written and tested; dev DB migration awaiting owner approval.
 
 ## Current status
 
@@ -22,13 +22,13 @@ Updated: **2026-10-30** — multi-store work started (D36): store profiles done,
 
 ## Exact next action
 
-Multi-store plan (D36), stores: Geton (gadgets), Iliyan (menswear), Shatkania Pharmacy. (1) ~~store profiles, theme,
-fonts, hero and card variants~~; (2) owner reviews hero wording and supplies logos for `frontend/lib/store.ts`; (3) per-store listing and product page details, gadget specs;
-(4) clothing size/colour variants (needs a Prisma migration: ask first; touches cart, checkout, orders);
-(5) deployment per store. Launch Geton, then Iliyan, then Shatkania. **Do not sell prescription medicines online until a prescription flow
-exists and the owner has confirmed licence and online-sale rules with DGDA (Q12).** Q7/Q8 still open.
+Multi-tenant plan: D37. Phase 1 (`backend/prisma/migrations/20261030090000_add_stores_phase1`, schema) is written,
+applied to the `_test` DB and tested on a dropped copy of dev, but **not applied to the dev DB and not committed**.
 
-Run a store locally: `frontend` (Geton), `frontend-iliyan` or `frontend-shatkania` in `.claude/launch.json`; not both at once.
+**The regenerated Prisma client expects `storeId`, so the dev API can fail until the dev DB is migrated.** With owner
+approval: `npm run db:deploy`, verify counts, commit. Then phase 2: required `storeId`, per-store uniques (user email
+and phone, category name and slug, product slug and SKU, coupon code, settings key, transaction ID), store context on
+every request, isolation tests. Pharmacy needs: Q12.
 
 ## Inspect first next time
 

@@ -294,3 +294,14 @@ Template:
   pharmacy hero), `app/layout.tsx` (Figtree), `.env.example`, docs.
 - Limitations: no prescription flow, expiry or batch tracking; prescription medicines must not be sold yet (Q12).
 - Next step: owner reviews hero wording; Geton specs.
+
+## 2026-10-30 — Multi-tenant phase 1: stores and optional storeId (D37)
+
+- Objective: first, additive step towards a super-admin platform.
+- Files changed: `backend/prisma/schema.prisma` (Store model; optional storeId on users, categories, products, orders,
+  payment_transactions, coupons, activity_logs, settings), new migration `20261030090000_add_stores_phase1` (backfills
+  existing rows to store_geton). Docs. Also committed the store profiles as `7bb06b9`.
+- Checks run: migration on a temporary copy of dev: all row counts unchanged, all rows assigned to Geton, no nulls; copy
+  dropped. Applied to `_test`; backend typecheck; `npx vitest run` 15 files / 137 tests pass.
+- Limitations: not applied to dev, not committed; no code uses storeId yet, so stores are NOT isolated yet.
+- Next step: owner approval for the dev DB, then phase 2.

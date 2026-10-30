@@ -90,6 +90,14 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
   settings. `NEXT_PUBLIC_STORE_ID` (build time) picks a profile in `frontend/lib/store.ts` (name, wording, palette,
   layout, fonts); an unknown id fails the build. No shared multi-tenant database.
 
+- **D37 — Multi-tenant platform (owner, 2026-10-30; replaces the one-deployment-per-store part of D36 for Geton and
+  Iliyan).** A super admin creates and manages stores in one shared system; every tenant row carries `storeId`. Owner
+  runs three shops now and plans to sell the platform later. **Shatkania Pharmacy stays on its own database** with the
+  same code, because prescriptions are sensitive. Existing data belongs to Geton. Selling (sign-up, billing, plans)
+  comes after the own shops are proven. Phases: 1 stores + optional storeId; 2 required storeId, per-store uniques,
+  strict isolation with tests; 3 domain routing; 4 super admin; 5 design from the panel; 6 shop features; 7 launch;
+  8 pharmacy.
+
 ## Workflow (owner answers, 2026-10-29)
 
 - **D25 — Git:** initialize a local repo with a baseline commit of the existing state; no remote yet. Pushing still needs approval.
