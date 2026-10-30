@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import type { CartView, OrderQuote, ValidateCouponResult } from '@/lib/api/types';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, optionLabel } from '@/lib/format';
 
 interface CheckoutSummaryProps {
   cart: CartView;
@@ -79,6 +79,9 @@ export function CheckoutSummary({
             </div>
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-sm font-medium text-slate-900">{line.name}</p>
+              {optionLabel(line.size, line.color) ? (
+                <p className="text-xs text-slate-600">{optionLabel(line.size, line.color)}</p>
+              ) : null}
               <p className="text-xs text-slate-500">
                 {line.quantity} x {formatPrice(line.unitPrice)}
               </p>

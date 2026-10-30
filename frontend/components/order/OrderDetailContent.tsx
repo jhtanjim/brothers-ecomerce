@@ -19,7 +19,7 @@ import { ApiError } from '@/lib/api/client';
 import { getOrder } from '@/lib/api/orders';
 import type { OrderDetail } from '@/lib/api/types';
 import { formatDateTime } from '@/lib/format-date';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, optionLabel } from '@/lib/format';
 
 type LoadState =
   | { kind: 'loading' }
@@ -93,6 +93,9 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-2 text-sm font-medium text-slate-900">{item.name}</p>
+                    {optionLabel(item.size, item.color) ? (
+                      <p className="text-xs text-slate-600">{optionLabel(item.size, item.color)}</p>
+                    ) : null}
                     <p className="text-xs text-slate-500">SKU: {item.sku}</p>
                     <p className="mt-1 text-sm text-slate-600">
                       {item.quantity} x {formatPrice(item.unitPrice)}

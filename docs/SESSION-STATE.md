@@ -20,10 +20,13 @@ Updated: **2026-10-30** — BROTHERS storefront design on branch `feat/brothers-
 
 ## Exact next action
 
-BROTHERS (D37). Done: brand, header, homepage, footer, design tokens, men's sample catalog with stock photos. Next: (1) owner approves the catalog migration
-(subcategories, sizes/colours with per-variant stock, material, new/bestseller flags; touches cart, checkout, orders);
-(2) build the listing filters, product page options and admin screens on it; (3) owner supplies real products, photos,
-policies, contact and social details, then replaces the sample catalog; (4) add a remote and push the branch. Q7/Q8 still open.
+BROTHERS (D37, D38). Done: brand, storefront, men's sample catalog with stock photos, sizes/colours with their own stock,
+subcategories, material, new/bestseller flags, filters and admin screens. Next: (1) owner supplies real products, photos,
+policies, size guide, contact and social details, then replaces the sample catalog; (2) add a remote and push the branch.
+Q7/Q8 still open.
+
+`prisma migrate dev` fails on its shadow DB (pg_trgm missing). Generate with `prisma migrate diff --from-url` and apply with
+`prisma migrate deploy`.
 
 Multi-tenant phase 1 is parked in `git stash` ("multi-tenant phase 1"); it is not on this branch. The `_test` DB still
 has its migration applied (nullable columns plus a `_prisma_migrations` row); harmless to tests, may show in status.

@@ -9,7 +9,7 @@
  */
 import { PrismaClient } from '@prisma/client';
 import * as argon2 from 'argon2';
-import { CATEGORIES, PRODUCTS, imageUrl } from './sample-catalog';
+import { CATEGORIES, PRODUCTS, imageUrl, totalStock, variantSku } from './sample-catalog';
 
 const prisma = new PrismaClient();
 
@@ -67,11 +67,17 @@ async function seedSettings(): Promise<void> {
 }
 
 async function seedCatalog(): Promise<void> {
-  for (const { image, ...c } of CATEGORIES) {
+  // Parents first, so subcategories can point at them.
+  for (const { image, parent, ...c } of [...CATEGORIES].sort(
+    (x, y) => Number(Boolean(x.parent)) - Number(Boolean(y.parent)),
+  )) {
+    const parentRow = parent
+      ? await prisma.category.findUniqueOrThrow({ where: { slug: parent } })
+      : null;
     await prisma.category.upsert({
       where: { slug: c.slug },
       update: {},
-      create: { ...c, imageUrl: imageUrl(image), status: 'ACTIVE' },
+      create: { ...c, imageUrl: imageUrl(image), parentId: parentRow?.id, status: 'ACTIVE' },
     });
   }
 
@@ -99,13 +105,24 @@ async function seedCatalog(): Promise<void> {
         price: p.price.toFixed(2),
         discountPrice: p.discountPrice ? p.discountPrice.toFixed(2) : null,
         discountPercent,
-        stockQuantity: p.stock,
+        stockQuantity: totalStock(p),
         lowStockThreshold: p.lowStock ?? 5,
         status: p.status ?? 'ACTIVE',
         featured: p.featured ?? false,
+        newArrival: p.newArrival ?? false,
+        bestSeller: p.bestSeller ?? false,
+        material: p.material ?? null,
         soldCount: p.soldCount ?? 0,
         images: {
           create: { url: imageUrl(p.image), publicId: `sample/${p.image}`, isPrimary: true },
+        },
+        variants: {
+          create: (p.variants ?? []).map((variant) => ({
+            size: variant.size ?? '',
+            color: variant.color ?? '',
+            sku: variantSku(p.sku, variant),
+            stockQuantity: variant.stock,
+          })),
         },
       },
     });

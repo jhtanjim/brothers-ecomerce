@@ -9,7 +9,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { approveAdminPayment, getAdminPayment, rejectAdminPayment } from '@/lib/api/admin-payments';
 import { ApiError } from '@/lib/api/client';
 import type { AdminPaymentDetail } from '@/lib/api/types';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, optionLabel } from '@/lib/format';
 import { formatDateTime } from '@/lib/format-date';
 
 const LIST_PATH = '/admin/payments';
@@ -273,6 +273,9 @@ export function PaymentReviewContent({ paymentId }: { paymentId: string }) {
                 <div className="min-w-0">
                   <p className="line-clamp-2 text-slate-900">{item.name}</p>
                   <p className="text-xs text-slate-500">
+                    {optionLabel(item.size, item.color)
+                      ? `${optionLabel(item.size, item.color)} \u00b7 `
+                      : ''}
                     SKU {item.sku} &middot; Qty {item.quantity}
                   </p>
                 </div>

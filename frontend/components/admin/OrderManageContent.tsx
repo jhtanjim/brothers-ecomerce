@@ -13,7 +13,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { getAdminOrder, updateAdminOrderStatus } from '@/lib/api/admin-orders';
 import { ApiError } from '@/lib/api/client';
 import type { AdminOrderDetail, AdminOrderStatusResult, OrderStatus } from '@/lib/api/types';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, optionLabel } from '@/lib/format';
 import { formatDateTime } from '@/lib/format-date';
 
 const LIST_PATH = '/admin/orders';
@@ -429,6 +429,11 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
                 <li key={item.id} className="flex justify-between gap-4 py-3">
                   <div className="min-w-0">
                     <p className="line-clamp-2 font-medium text-slate-900">{item.name}</p>
+                    {optionLabel(item.size, item.color) ? (
+                      <p className="text-xs font-medium text-slate-700">
+                        {optionLabel(item.size, item.color)}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-slate-500">SKU {item.sku}</p>
                     <p className="mt-1 text-slate-600">
                       {item.quantity} x {formatPrice(item.unitPrice)}

@@ -8,8 +8,9 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Pagination } from '@/components/ui/Pagination';
 import { getCategories } from '@/lib/api/categories';
-import { getProducts } from '@/lib/api/products';
+import { getProductFilters, getProducts } from '@/lib/api/products';
 import type { CategorySummary } from '@/lib/api/types';
+import { subcategoriesOf, topLevelCategories } from '@/lib/categories';
 import { formatPrice } from '@/lib/format';
 import {
   buildProductsHref,
@@ -74,15 +75,25 @@ function activeFilterChips(query: ProductQuery, categories: CategorySummary[]) {
   }
   if (query.inStock) chips.push({ label: 'In stock', href: drop({ inStock: undefined }) });
   if (query.featured) chips.push({ label: 'Featured', href: drop({ featured: undefined }) });
+  if (query.newArrival) {
+    chips.push({ label: 'New arrivals', href: drop({ newArrival: undefined }) });
+  }
+  if (query.bestSeller) {
+    chips.push({ label: 'Best sellers', href: drop({ bestSeller: undefined }) });
+  }
+  if (query.size) chips.push({ label: `Size ${query.size}`, href: drop({ size: undefined }) });
+  if (query.color) chips.push({ label: query.color, href: drop({ color: undefined }) });
+  if (query.material) chips.push({ label: query.material, href: drop({ material: undefined }) });
   return chips;
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const query = parseProductSearchParams(await searchParams);
 
-  const [categoriesResult, productsResult] = await Promise.all([
+  const [categoriesResult, productsResult, optionsResult] = await Promise.all([
     settle(getCategories()),
     settle(getProducts({ ...query, limit: PAGE_SIZE })),
+    settle(getProductFilters(query.category)),
   ]);
 
   // A page number past the end (for example from an old link) goes to the last real page.
@@ -99,7 +110,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const activeCategory = categories.find((category) => category.slug === query.category);
   const heading = query.search
     ? `Results for "${query.search}"`
-    : (activeCategory?.name ?? 'All products');
+    : (activeCategory?.name ??
+      (query.newArrival ? 'New arrivals' : query.bestSeller ? 'Best sellers' : 'All products'));
+  // The row under the main categories: the open category's subcategories.
+  const openParentId = activeCategory?.parentId ?? activeCategory?.id;
+  const subcategories = openParentId ? subcategoriesOf(categories, openParentId) : [];
   const filtered = hasActiveFilters(query);
   const chips = activeFilterChips(query, categories);
 
@@ -118,8 +133,13 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       {categories.length > 0 ? (
         <nav aria-label="Categories" className="-mx-4 mt-5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <ul className="flex gap-2 whitespace-nowrap">
-            {[{ slug: undefined, name: 'All' }, ...categories].map((category) => {
-              const active = query.category === category.slug;
+            {[
+              { slug: undefined, name: 'All', id: undefined },
+              ...topLevelCategories(categories),
+            ].map((category) => {
+              const active =
+                query.category === category.slug ||
+                (category.id !== undefined && category.id === activeCategory?.parentId);
               return (
                 <li key={category.slug ?? 'all'}>
                   <Link
@@ -140,6 +160,28 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         </nav>
       ) : null}
 
+      {subcategories.length > 0 ? (
+        <nav aria-label="Subcategories" className="-mx-4 mt-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <ul className="flex gap-4 whitespace-nowrap text-sm">
+            {subcategories.map((category) => (
+              <li key={category.id}>
+                <Link
+                  href={buildProductsHref(query, { category: category.slug, page: 1 })}
+                  aria-current={query.category === category.slug ? 'page' : undefined}
+                  className={`inline-flex min-h-11 items-center underline-offset-4 hover:underline ${
+                    query.category === category.slug
+                      ? 'font-semibold text-brand-950 underline'
+                      : 'text-slate-600'
+                  }`}
+                >
+                  {category.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
+
       <div className="mt-4">
         <FiltersDisclosure activeCount={chips.length}>
           {/* The key remounts the form when the URL filters change, so its fields always match the URL. */}
@@ -147,6 +189,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             key={buildProductsHref(query, { page: 1 })}
             query={query}
             categories={categories}
+            options={
+              optionsResult.ok ? optionsResult.data : { sizes: [], colors: [], materials: [] }
+            }
           />
         </FiltersDisclosure>
       </div>

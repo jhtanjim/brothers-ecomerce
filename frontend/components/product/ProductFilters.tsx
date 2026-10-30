@@ -1,18 +1,59 @@
 import Link from 'next/link';
-import type { CategorySummary } from '@/lib/api/types';
+import type { CategorySummary, ProductFilterOptions } from '@/lib/api/types';
+import { categoriesInTreeOrder, categoryProductCount } from '@/lib/categories';
 import { SORT_OPTIONS, type ProductQuery } from '@/lib/product-search';
 
 interface ProductFiltersProps {
   query: ProductQuery;
   categories: CategorySummary[];
+  options: ProductFilterOptions;
 }
 
 const fieldClass =
   'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100';
 const labelClass = 'mb-1 block text-xs font-medium text-slate-600';
 
+/** Hidden when the catalog has no such values, so a customer never sees an empty filter. */
+function OptionSelect({
+  name,
+  label,
+  allLabel,
+  values,
+  selected,
+}: {
+  name: string;
+  label: string;
+  allLabel: string;
+  values: string[];
+  selected: string | undefined;
+}) {
+  if (values.length === 0 && !selected) return null;
+  // Keep a value from the URL selectable even when it has just sold out.
+  const all = selected && !values.includes(selected) ? [selected, ...values] : values;
+  return (
+    <div>
+      <label htmlFor={`filter-${name}`} className={labelClass}>
+        {label}
+      </label>
+      <select
+        id={`filter-${name}`}
+        name={name}
+        defaultValue={selected ?? ''}
+        className={fieldClass}
+      >
+        <option value="">{allLabel}</option>
+        {all.map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 /** A plain GET form: no JavaScript needed. Submitting it resets to page 1. */
-export function ProductFilters({ query, categories }: ProductFiltersProps) {
+export function ProductFilters({ query, categories, options }: ProductFiltersProps) {
   return (
     <form
       action="/products"
@@ -47,9 +88,10 @@ export function ProductFilters({ query, categories }: ProductFiltersProps) {
             className={fieldClass}
           >
             <option value="">All categories</option>
-            {categories.map((category) => (
+            {categoriesInTreeOrder(categories).map((category) => (
               <option key={category.id} value={category.slug}>
-                {category.name} ({category.productCount})
+                {category.parentId ? '\u2013 ' : ''}
+                {category.name} ({categoryProductCount(categories, category)})
               </option>
             ))}
           </select>
@@ -99,9 +141,33 @@ export function ProductFilters({ query, categories }: ProductFiltersProps) {
             className={fieldClass}
           />
         </div>
+
+        <OptionSelect
+          name="size"
+          label="Size"
+          allLabel="All sizes"
+          values={options.sizes}
+          selected={query.size}
+        />
+        <OptionSelect
+          name="color"
+          label="Colour"
+          allLabel="All colours"
+          values={options.colors}
+          selected={query.color}
+        />
+        <OptionSelect
+          name="material"
+          label="Material"
+          allLabel="All materials"
+          values={options.materials}
+          selected={query.material}
+        />
       </div>
 
       {query.featured && <input type="hidden" name="featured" value="true" />}
+      {query.newArrival && <input type="hidden" name="newArrival" value="true" />}
+      {query.bestSeller && <input type="hidden" name="bestSeller" value="true" />}
 
       <div className="mt-4 flex flex-wrap items-center gap-4">
         <label className="flex items-center gap-2 text-sm text-slate-700">

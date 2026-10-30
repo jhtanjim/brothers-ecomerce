@@ -78,7 +78,14 @@ const detailSelect = {
           user: { select: { name: true, email: true } },
           items: {
             orderBy: { id: 'asc' },
-            select: { productName: true, productSku: true, quantity: true, totalPrice: true },
+            select: {
+              productName: true,
+              productSku: true,
+              size: true,
+              color: true,
+              quantity: true,
+              totalPrice: true,
+            },
           },
         },
       },
@@ -202,6 +209,8 @@ export class AdminPaymentsService {
         items: order.items.map((item) => ({
           name: item.productName,
           sku: item.productSku,
+          size: item.size,
+          color: item.color,
           quantity: item.quantity,
           totalPrice: money(item.totalPrice),
         })),

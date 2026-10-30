@@ -6,10 +6,14 @@ export function getCart(): Promise<CartView> {
   return apiFetch<CartView>('/cart');
 }
 
-export function addCartItem(productId: string, quantity: number): Promise<CartView> {
+export function addCartItem(
+  productId: string,
+  quantity: number,
+  variantId?: string,
+): Promise<CartView> {
   return apiFetch<CartView>('/cart/items', {
     method: 'POST',
-    body: JSON.stringify({ productId, quantity }),
+    body: JSON.stringify({ productId, quantity, ...(variantId ? { variantId } : {}) }),
   });
 }
 

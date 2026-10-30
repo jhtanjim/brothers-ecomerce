@@ -54,7 +54,10 @@ export class OrderCancellationService {
         status: true,
         paymentStatus: true,
         expiresAt: true,
-        items: { orderBy: { productId: 'asc' }, select: { productId: true, quantity: true } },
+        items: {
+          orderBy: [{ productId: 'asc' }, { variantId: 'asc' }],
+          select: { productId: true, variantId: true, quantity: true },
+        },
         payment: { select: { id: true, status: true } },
       },
     });
@@ -88,10 +91,21 @@ export class OrderCancellationService {
     // Give the stock back (productId order, like order creation, so no deadlocks).
     let restoredUnits = 0;
     for (const item of order.items) {
-      await tx.product.update({
-        where: { id: item.productId },
+      // An order from before the product got options has no option to restore: skip the total
+      // too, or it would stop matching the sum of the options.
+      await tx.product.updateMany({
+        where: {
+          id: item.productId,
+          ...(item.variantId ? {} : { variants: { none: {} } }),
+        },
         data: { stockQuantity: { increment: item.quantity } },
       });
+      if (item.variantId) {
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stockQuantity: { increment: item.quantity } },
+        });
+      }
       if (wasPaid) {
         // Approval counted these units as sold; never go below zero.
         await tx.$executeRaw`

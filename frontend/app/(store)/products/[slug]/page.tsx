@@ -202,8 +202,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
               productId={product.id}
               slug={product.slug}
               stockQuantity={product.stockQuantity}
+              variants={product.variants}
             />
           </div>
+
+          {product.material ? (
+            <p className="mt-6 text-sm text-slate-700">
+              <span className="font-semibold text-slate-900">Material:</span> {product.material}
+            </p>
+          ) : null}
 
           {product.shortDescription && (
             <p className="mt-6 text-base leading-relaxed text-slate-700">

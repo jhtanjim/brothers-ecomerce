@@ -101,4 +101,18 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   featured?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  newArrival?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  bestSeller?: boolean;
+
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(120)
+  material?: string;
 }

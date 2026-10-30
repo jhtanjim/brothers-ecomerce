@@ -66,6 +66,16 @@ export function ProductCard({ product }: ProductCardProps) {
               -{product.discountPercent}%
             </span>
           ) : null}
+          {!outOfStock && product.newArrival ? (
+            <span className="bg-white px-2 py-1 text-xs font-semibold uppercase tracking-wider text-brand-950">
+              New
+            </span>
+          ) : null}
+          {!outOfStock && product.bestSeller ? (
+            <span className="bg-accent px-2 py-1 text-xs font-semibold uppercase tracking-wider text-brand-950">
+              Best seller
+            </span>
+          ) : null}
         </div>
       </div>
 

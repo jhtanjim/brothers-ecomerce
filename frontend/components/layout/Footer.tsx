@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getCategories } from '@/lib/api/categories';
 import type { CategorySummary } from '@/lib/api/types';
+import { topLevelCategories } from '@/lib/categories';
 import { SITE_NAME } from '@/lib/format';
 import { store } from '@/lib/store';
 
@@ -33,11 +34,11 @@ export async function Footer() {
           <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Shop</h2>
           <ul className="mt-2">
             <li>
-              <Link href="/products?sort=newest" className={LINK_CLASS}>
+              <Link href="/products?newArrival=true" className={LINK_CLASS}>
                 New arrivals
               </Link>
             </li>
-            {categories.map((category) => (
+            {topLevelCategories(categories).map((category) => (
               <li key={category.id}>
                 <Link
                   href={`/products?category=${encodeURIComponent(category.slug)}`}

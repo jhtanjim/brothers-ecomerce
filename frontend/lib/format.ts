@@ -23,3 +23,8 @@ export function getSiteUrl(): string {
   const raw = process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL;
   return raw.replace(/\/+$/, '');
 }
+
+/** "M / Navy" for showing a chosen size and colour; empty when neither applies. */
+export function optionLabel(size?: string | null, color?: string | null): string {
+  return [size, color].filter(Boolean).join(' / ');
+}

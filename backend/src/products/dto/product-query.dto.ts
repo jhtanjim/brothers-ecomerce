@@ -61,6 +61,36 @@ export class ProductQueryDto extends PaginationQueryDto {
   featured?: boolean;
 
   @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  newArrival?: boolean;
+
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  bestSeller?: boolean;
+
+  /** Only products with this size in stock. */
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(20)
+  size?: string;
+
+  /** Only products with this colour in stock. */
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(40)
+  color?: string;
+
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(120)
+  material?: string;
+
+  @IsOptional()
   @IsEnum(ProductSort)
   sort: ProductSort = ProductSort.NEWEST;
 }

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ProductForm } from '@/components/admin/ProductForm';
 import { ProductImagesManager } from '@/components/admin/ProductImagesManager';
+import { ProductVariantsManager } from '@/components/admin/ProductVariantsManager';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { getAdminProduct } from '@/lib/api/admin-products';
 import { ApiError } from '@/lib/api/client';
@@ -103,8 +104,14 @@ export function ProductEditContent({ id, created }: { id: string; created: boole
         ) : null}
       </p>
       <ProductImagesManager product={product} onChange={update} />
-      {/* key: a fresh form after an image change would discard typing, so key only on id. */}
-      <ProductForm key={product.id} product={product} onSaved={update} />
+      <ProductVariantsManager product={product} onChange={update} />
+      {/* key: a fresh form after an image change would discard typing. It resets only when the
+          product gains or loses options, because that decides who owns the stock number. */}
+      <ProductForm
+        key={`${product.id}-${product.variants.length > 0}`}
+        product={product}
+        onSaved={update}
+      />
     </div>
   );
 }

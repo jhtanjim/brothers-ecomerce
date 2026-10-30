@@ -4,6 +4,7 @@ import { HeaderCartLink } from '@/components/cart/HeaderCartLink';
 import { MobileMenu } from '@/components/layout/MobileMenu';
 import { getCategories } from '@/lib/api/categories';
 import type { CategorySummary } from '@/lib/api/types';
+import { subcategoriesOf, topLevelCategories } from '@/lib/categories';
 import { SITE_NAME } from '@/lib/format';
 import { store } from '@/lib/store';
 
@@ -89,25 +90,42 @@ export async function Header() {
         </div>
 
         <nav aria-label="Categories" className="hidden border-t border-slate-100 md:block">
-          <ul className="mx-auto flex max-w-7xl gap-6 overflow-x-auto whitespace-nowrap px-4 text-xs font-semibold uppercase tracking-wider sm:px-6 lg:px-8">
+          <ul className="mx-auto flex max-w-7xl flex-wrap gap-x-6 whitespace-nowrap px-4 text-xs font-semibold uppercase tracking-wider sm:px-6 lg:px-8">
             <li>
               <Link
-                href="/products?sort=newest"
+                href="/products?newArrival=true"
                 className="inline-flex min-h-11 items-center text-brand-950 hover:underline"
               >
                 New arrivals
               </Link>
             </li>
-            {categories.map((category) => (
-              <li key={category.id}>
-                <Link
-                  href={`/products?category=${encodeURIComponent(category.slug)}`}
-                  className="inline-flex min-h-11 items-center text-brand-500 hover:text-brand-950"
-                >
-                  {category.name}
-                </Link>
-              </li>
-            ))}
+            {topLevelCategories(categories).map((category) => {
+              const children = subcategoriesOf(categories, category.id);
+              return (
+                <li key={category.id} className="group relative">
+                  <Link
+                    href={`/products?category=${encodeURIComponent(category.slug)}`}
+                    className="inline-flex min-h-11 items-center text-brand-500 hover:text-brand-950"
+                  >
+                    {category.name}
+                  </Link>
+                  {children.length > 0 ? (
+                    <ul className="absolute left-0 top-full z-50 hidden min-w-48 border border-slate-200 bg-white py-2 shadow-lg group-focus-within:block group-hover:block">
+                      {children.map((child) => (
+                        <li key={child.id}>
+                          <Link
+                            href={`/products?category=${encodeURIComponent(child.slug)}`}
+                            className="flex min-h-10 items-center px-4 text-brand-500 hover:bg-brand-50 hover:text-brand-950"
+                          >
+                            {child.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </li>
+              );
+            })}
             <li>
               <Link
                 href="/products?sort=discount"

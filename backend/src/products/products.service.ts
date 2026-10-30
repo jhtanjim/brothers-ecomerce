@@ -15,6 +15,7 @@ import { AdminProductQueryDto } from './dto/admin-product-query.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductQueryDto, ProductSort } from './dto/product-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateVariantDto, UpdateVariantDto } from './dto/variant.dto';
 type MoneyInput = number | string | Prisma.Decimal;
 
 /** Primary image first, then by sortOrder. Stable even when no image is flagged primary. */
@@ -25,6 +26,29 @@ const IMAGE_ORDER: Prisma.ProductImageOrderByWithRelationInput[] = [
 ];
 
 const categoryPublicSelect = { select: { name: true, slug: true } } as const;
+
+const VARIANT_ORDER: Prisma.ProductVariantOrderByWithRelationInput[] = [
+  { color: 'asc' },
+  { createdAt: 'asc' },
+  { id: 'asc' },
+];
+
+const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '3XL', '4XL'];
+
+/** Letter sizes in wearing order, then numeric sizes, then anything else alphabetically. */
+function sortSizes(sizes: string[]): string[] {
+  const rank = (size: string) => {
+    const index = SIZE_ORDER.indexOf(size.toUpperCase());
+    return index >= 0 ? index : SIZE_ORDER.length;
+  };
+  return [...sizes].sort(
+    (a, b) => rank(a) - rank(b) || a.localeCompare(b, 'en', { numeric: true }),
+  );
+}
+
+function presentValues(values: (string | null)[]): string[] {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
 
 /** Storefront grid: light payload, one image only. No sku/soldCount/status/timestamps. */
 const publicListSelect = {
@@ -37,6 +61,8 @@ const publicListSelect = {
   discountPercent: true,
   stockQuantity: true,
   featured: true,
+  newArrival: true,
+  bestSeller: true,
   category: categoryPublicSelect,
   images: { orderBy: IMAGE_ORDER, take: 1, select: { url: true } },
 } satisfies Prisma.ProductSelect;
@@ -54,10 +80,17 @@ const publicDetailSelect = {
   discountPercent: true,
   stockQuantity: true,
   featured: true,
+  newArrival: true,
+  bestSeller: true,
+  material: true,
   category: categoryPublicSelect,
   images: {
     orderBy: IMAGE_ORDER,
     select: { id: true, url: true, sortOrder: true, isPrimary: true },
+  },
+  variants: {
+    orderBy: VARIANT_ORDER,
+    select: { id: true, size: true, color: true, stockQuantity: true },
   },
 } satisfies Prisma.ProductSelect;
 
@@ -77,6 +110,9 @@ const adminSelect = {
   lowStockThreshold: true,
   status: true,
   featured: true,
+  newArrival: true,
+  bestSeller: true,
+  material: true,
   soldCount: true,
   createdAt: true,
   updatedAt: true,
@@ -84,6 +120,10 @@ const adminSelect = {
   images: {
     orderBy: IMAGE_ORDER,
     select: { id: true, url: true, publicId: true, sortOrder: true, isPrimary: true },
+  },
+  variants: {
+    orderBy: VARIANT_ORDER,
+    select: { id: true, size: true, color: true, sku: true, stockQuantity: true },
   },
 } satisfies Prisma.ProductSelect;
 
@@ -147,6 +187,28 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
     return { data: rows.map(withPrimaryImage), meta: buildPaginationMeta(page, limit, total) };
+  }
+
+  /** The filter options that actually exist for this category (or the whole store). */
+  async findFilters(category?: string) {
+    const where = this.buildPublicWhere({ category } as ProductQueryDto);
+    const [variants, products] = await Promise.all([
+      this.prisma.productVariant.findMany({
+        where: { stockQuantity: { gt: 0 }, product: where },
+        distinct: ['size', 'color'],
+        select: { size: true, color: true },
+      }),
+      this.prisma.product.findMany({
+        where: { ...where, material: { not: null } },
+        distinct: ['material'],
+        select: { material: true },
+      }),
+    ]);
+    return {
+      sizes: sortSizes(presentValues(variants.map((variant) => variant.size))),
+      colors: presentValues(variants.map((variant) => variant.color)).sort(),
+      materials: presentValues(products.map((product) => product.material)).sort(),
+    };
   }
 
   /** Hidden products (inactive/archived, or in an inactive category) look exactly like missing ones. */
@@ -215,6 +277,9 @@ export class ProductsService {
           lowStockThreshold: dto.lowStockThreshold,
           status: dto.status,
           featured: dto.featured,
+          newArrival: dto.newArrival,
+          bestSeller: dto.bestSeller,
+          material: dto.material || null,
         },
         select: adminSelect,
       }),
@@ -224,9 +289,20 @@ export class ProductsService {
   async update(id: string, dto: UpdateProductDto) {
     const existing = await this.prisma.product.findUnique({
       where: { id },
-      select: { id: true, price: true, discountPrice: true },
+      select: {
+        id: true,
+        price: true,
+        discountPrice: true,
+        _count: { select: { variants: true } },
+      },
     });
     if (!existing) this.throwNotFound();
+    if (dto.stockQuantity !== undefined && existing._count.variants > 0) {
+      throw new ConflictException({
+        message: 'This product has sizes or colours. Change the stock of each option instead.',
+        code: 'PRODUCT_STOCK_FROM_VARIANTS',
+      });
+    }
 
     if (dto.categoryId !== undefined) await this.assertCategoryExists(dto.categoryId);
     await this.assertUnique(dto.slug, dto.sku, id);
@@ -250,6 +326,9 @@ export class ProductsService {
     if (dto.stockQuantity !== undefined) data.stockQuantity = dto.stockQuantity;
     if (dto.lowStockThreshold !== undefined) data.lowStockThreshold = dto.lowStockThreshold;
     if (dto.featured !== undefined) data.featured = dto.featured;
+    if (dto.newArrival !== undefined) data.newArrival = dto.newArrival;
+    if (dto.bestSeller !== undefined) data.bestSeller = dto.bestSeller;
+    if (dto.material !== undefined) data.material = dto.material || null;
     if (dto.price !== undefined || dto.discountPrice !== undefined) {
       data.discountPercent = calcDiscountPercent(nextPrice, nextDiscount);
     }
@@ -262,6 +341,140 @@ export class ProductsService {
   async setStatus(id: string, status: ProductStatus) {
     await this.ensureExists(id);
     return this.prisma.product.update({ where: { id }, data: { status }, select: adminSelect });
+  }
+
+  // -------------------------------------------------------------- variants
+
+  async addVariant(productId: string, dto: CreateVariantDto) {
+    const size = dto.size ?? '';
+    const color = dto.color ?? '';
+    this.assertHasOption(size, color);
+    await this.withVariantGuard(() =>
+      this.prisma.$transaction(async (tx) => {
+        await this.lockProduct(tx, productId);
+        await this.assertVariantSkuFree(tx, dto.sku);
+        await tx.productVariant.create({
+          data: { productId, size, color, sku: dto.sku, stockQuantity: dto.stockQuantity },
+        });
+        await this.syncStock(tx, productId);
+      }),
+    );
+    return this.findOneAdmin(productId);
+  }
+
+  async updateVariant(productId: string, variantId: string, dto: UpdateVariantDto) {
+    await this.withVariantGuard(() =>
+      this.prisma.$transaction(async (tx) => {
+        await this.lockProduct(tx, productId);
+        const variant = await this.findVariant(tx, productId, variantId);
+        const size = dto.size ?? variant.size;
+        const color = dto.color ?? variant.color;
+        this.assertHasOption(size, color);
+        if (dto.sku !== undefined) await this.assertVariantSkuFree(tx, dto.sku, variantId);
+        await tx.productVariant.update({
+          where: { id: variantId },
+          data: { size, color, sku: dto.sku, stockQuantity: dto.stockQuantity },
+        });
+        await this.syncStock(tx, productId);
+      }),
+    );
+    return this.findOneAdmin(productId);
+  }
+
+  /** An option with order history stays: cancelling those orders must be able to restore its stock. */
+  async removeVariant(productId: string, variantId: string) {
+    await this.prisma.$transaction(async (tx) => {
+      await this.lockProduct(tx, productId);
+      await this.findVariant(tx, productId, variantId);
+      const ordered = await tx.orderItem.count({ where: { variantId } });
+      if (ordered > 0) {
+        throw new ConflictException({
+          message: 'This option has been ordered before and cannot be deleted. Set its stock to 0.',
+          code: 'VARIANT_HAS_ORDERS',
+        });
+      }
+      await tx.productVariant.delete({ where: { id: variantId } });
+      await this.syncStock(tx, productId);
+    });
+    return this.findOneAdmin(productId);
+  }
+
+  /** Same lock order as checkout (product first), so stock edits and orders cannot deadlock. */
+  private async lockProduct(tx: Prisma.TransactionClient, productId: string): Promise<void> {
+    const rows = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "products" WHERE id = ${productId} FOR UPDATE`;
+    if (rows.length === 0) this.throwNotFound();
+  }
+
+  private async findVariant(tx: Prisma.TransactionClient, productId: string, variantId: string) {
+    const variant = await tx.productVariant.findFirst({
+      where: { id: variantId, productId },
+      select: { size: true, color: true },
+    });
+    if (!variant) {
+      throw new NotFoundException({ message: 'Option not found', code: 'VARIANT_NOT_FOUND' });
+    }
+    return variant;
+  }
+
+  /** Product stock is the sum of its options. Without options left it is 0 until the admin sets it. */
+  private async syncStock(tx: Prisma.TransactionClient, productId: string): Promise<void> {
+    const total = await tx.productVariant.aggregate({
+      where: { productId },
+      _sum: { stockQuantity: true },
+    });
+    await tx.product.update({
+      where: { id: productId },
+      data: { stockQuantity: total._sum.stockQuantity ?? 0 },
+    });
+  }
+
+  private assertHasOption(size: string, color: string): void {
+    if (!size && !color) {
+      throw new BadRequestException({
+        message: 'Enter a size, a colour or both',
+        code: 'VARIANT_OPTION_REQUIRED',
+      });
+    }
+  }
+
+  /** Case-insensitive, like product SKUs. */
+  private async assertVariantSkuFree(
+    tx: Prisma.TransactionClient,
+    sku: string,
+    excludeId?: string,
+  ): Promise<void> {
+    const clash = await tx.productVariant.findFirst({
+      where: {
+        sku: { equals: sku, mode: 'insensitive' },
+        ...(excludeId ? { NOT: { id: excludeId } } : {}),
+      },
+      select: { id: true },
+    });
+    if (clash) this.throwVariantSkuTaken();
+  }
+
+  private throwVariantSkuTaken(): never {
+    throw new ConflictException({
+      message: 'An option with this SKU already exists',
+      code: 'VARIANT_SKU_TAKEN',
+    });
+  }
+
+  /** Race guard: the unique indexes are the real protection. */
+  private async withVariantGuard<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        if (String(error.meta?.target ?? '').includes('sku')) this.throwVariantSkuTaken();
+        throw new ConflictException({
+          message: 'This product already has that size and colour',
+          code: 'VARIANT_EXISTS',
+        });
+      }
+      throw error;
+    }
   }
 
   /** Hard delete only when no order has ever referenced the product. Otherwise archive it. */
@@ -455,6 +668,7 @@ export class ProductsService {
 
   private buildPublicWhere(query: ProductQueryDto): Prisma.ProductWhereInput {
     const { search, category, minPrice, maxPrice, inStock, featured } = query;
+    const { newArrival, bestSeller, size, color, material } = query;
     const and: Prisma.ProductWhereInput[] = [];
 
     if (search) and.push({ OR: this.searchConditions(search) });
@@ -471,8 +685,26 @@ export class ProductsService {
 
     return {
       status: ProductStatus.ACTIVE,
-      category: { status: ActiveStatus.ACTIVE, ...(category ? { slug: category } : {}) },
+      // A parent category's page also shows its subcategories' products.
+      category: {
+        status: ActiveStatus.ACTIVE,
+        ...(category ? { OR: [{ slug: category }, { parent: { slug: category } }] } : {}),
+      },
       ...(featured !== undefined ? { featured } : {}),
+      ...(newArrival !== undefined ? { newArrival } : {}),
+      ...(bestSeller !== undefined ? { bestSeller } : {}),
+      ...(material ? { material } : {}),
+      ...(size || color
+        ? {
+            variants: {
+              some: {
+                stockQuantity: { gt: 0 },
+                ...(size ? { size } : {}),
+                ...(color ? { color } : {}),
+              },
+            },
+          }
+        : {}),
       // inStock=true filters; inStock=false applies no filter.
       ...(inStock !== undefined ? { stockQuantity: inStock ? { gt: 0 } : { lte: 0 } } : {}),
       ...(and.length > 0 ? { AND: and } : {}),

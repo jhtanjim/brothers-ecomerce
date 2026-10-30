@@ -315,7 +315,14 @@ export function CategoriesListContent() {
                     const deletable = category.productCount === 0;
                     return (
                       <tr key={category.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-900">{category.name}</td>
+                        <td className="px-4 py-3 font-medium text-slate-900">
+                          {category.name}
+                          {category.parentId ? (
+                            <span className="ml-2 text-xs font-normal text-slate-500">
+                              Subcategory
+                            </span>
+                          ) : null}
+                        </td>
                         <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                           {category.slug}
                         </td>

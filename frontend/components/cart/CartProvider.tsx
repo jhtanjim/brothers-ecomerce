@@ -21,7 +21,7 @@ interface CartContextValue {
   status: CartStatus;
   /** Units in purchasable lines; 0 when signed out or empty. */
   itemCount: number;
-  add: (productId: string, quantity: number) => Promise<void>;
+  add: (productId: string, quantity: number, variantId?: string) => Promise<void>;
   update: (itemId: string, quantity: number) => Promise<void>;
   remove: (itemId: string) => Promise<void>;
   clear: () => Promise<void>;
@@ -75,7 +75,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const add = useCallback(
-    (productId: string, quantity: number) => mutate(() => addCartItem(productId, quantity)),
+    (productId: string, quantity: number, variantId?: string) =>
+      mutate(() => addCartItem(productId, quantity, variantId)),
     [mutate],
   );
   const update = useCallback(

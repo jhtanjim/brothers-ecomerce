@@ -7,6 +7,7 @@ import type { FormEvent } from 'react';
 import { getAdminCategories } from '@/lib/api/admin-categories';
 import { createAdminProduct, updateAdminProduct } from '@/lib/api/admin-products';
 import { ApiError } from '@/lib/api/client';
+import { categoriesInTreeOrder } from '@/lib/categories';
 import type {
   AdminCategory,
   AdminProduct,
@@ -36,6 +37,9 @@ interface Values {
   stockQuantity: string;
   lowStockThreshold: string;
   featured: boolean;
+  newArrival: boolean;
+  bestSeller: boolean;
+  material: string;
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -61,6 +65,9 @@ function initialValues(product: AdminProduct | null): Values {
     stockQuantity: String(product?.stockQuantity ?? 0),
     lowStockThreshold: String(product?.lowStockThreshold ?? 5),
     featured: product?.featured ?? false,
+    newArrival: product?.newArrival ?? false,
+    bestSeller: product?.bestSeller ?? false,
+    material: product?.material ?? '',
     status: 'ACTIVE',
   };
 }
@@ -88,6 +95,7 @@ function validate(v: Values, editing: boolean): Errors {
   if (v.shortDescription.trim().length > 500)
     errors.shortDescription = 'Use at most 500 characters';
   if (v.description.trim().length > 10_000) errors.description = 'Use at most 10,000 characters';
+  if (v.material.trim().length > 120) errors.material = 'Use at most 120 characters';
   if (!MONEY_PATTERN.test(v.price) || Number(v.price) <= 0) {
     errors.price = 'Enter an amount above 0 with up to 2 decimals';
   }
@@ -171,6 +179,8 @@ export function ProductForm({
   }, []);
 
   const slugChanged = editing && values.slug.trim() !== product.slug;
+  // With options, the total is the sum of their stock and is not edited here.
+  const hasVariants = (product?.variants.length ?? 0) > 0;
 
   function set<K extends keyof Values>(key: K, value: Values[K]) {
     setSavedNotice(false);
@@ -198,14 +208,17 @@ export function ProductForm({
     const slug = values.slug.trim();
     const shortDescription = values.shortDescription.trim();
     const description = values.description.trim();
+    const material = values.material.trim();
     const common = {
       categoryId: values.categoryId,
       name: values.name.trim(),
       sku: values.sku.trim().toUpperCase(),
       price: Number(values.price),
-      stockQuantity: Number(values.stockQuantity),
+      ...(hasVariants ? {} : { stockQuantity: Number(values.stockQuantity) }),
       lowStockThreshold: Number(values.lowStockThreshold),
       featured: values.featured,
+      newArrival: values.newArrival,
+      bestSeller: values.bestSeller,
     };
     try {
       if (!editing) {
@@ -215,6 +228,7 @@ export function ProductForm({
           ...(slug ? { slug } : {}),
           ...(shortDescription ? { shortDescription } : {}),
           ...(description ? { description } : {}),
+          ...(material ? { material } : {}),
           ...(values.discountPrice ? { discountPrice: Number(values.discountPrice) } : {}),
         };
         const created = await createAdminProduct(input);
@@ -225,6 +239,7 @@ export function ProductForm({
         ...common,
         shortDescription: shortDescription || null,
         description: description || null,
+        material: material || null,
         discountPrice: values.discountPrice ? Number(values.discountPrice) : null,
         ...(slugChanged ? { slug } : {}),
       };
@@ -274,8 +289,9 @@ export function ProductForm({
             {categoryMissing && product ? (
               <option value={product.categoryId}>{product.category.name}</option>
             ) : null}
-            {(categories ?? []).map((category) => (
+            {categoriesInTreeOrder(categories ?? []).map((category) => (
               <option key={category.id} value={category.id}>
+                {category.parentId ? '\u2013 ' : ''}
                 {category.name}
                 {category.status === 'INACTIVE' ? ' (inactive)' : ''}
               </option>
@@ -323,12 +339,19 @@ export function ProductForm({
           label="Stock quantity"
           htmlFor="stockQuantity"
           error={errors.stockQuantity}
-          hint={editing ? 'Units on hand now. Unpaid orders already hold their units' : undefined}
+          hint={
+            hasVariants
+              ? 'Sum of the sizes and colours above. Change it there'
+              : editing
+                ? 'Units on hand now. Unpaid orders already hold their units'
+                : 'Sizes and colours can be added after creating the product'
+          }
         >
           <input
             id="stockQuantity"
             inputMode="numeric"
-            value={values.stockQuantity}
+            disabled={hasVariants}
+            value={hasVariants ? String(product?.stockQuantity ?? 0) : values.stockQuantity}
             onChange={(e) => set('stockQuantity', e.target.value.trim())}
             className={INPUT_CLASS}
           />
@@ -378,6 +401,44 @@ export function ProductForm({
             </select>
           </Field>
         ) : null}
+        <Field
+          label="Material"
+          htmlFor="material"
+          error={errors.material}
+          hint="Optional. For example 100% cotton. Also used as a store filter"
+        >
+          <input
+            id="material"
+            value={values.material}
+            maxLength={120}
+            onChange={(e) => set('material', e.target.value)}
+            className={INPUT_CLASS}
+          />
+        </Field>
+        <div className="flex items-center gap-2 sm:col-span-2">
+          <input
+            id="newArrival"
+            type="checkbox"
+            checked={values.newArrival}
+            onChange={(e) => set('newArrival', e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
+          <label htmlFor="newArrival" className="text-sm font-medium text-slate-700">
+            Show in New arrivals
+          </label>
+        </div>
+        <div className="flex items-center gap-2 sm:col-span-2">
+          <input
+            id="bestSeller"
+            type="checkbox"
+            checked={values.bestSeller}
+            onChange={(e) => set('bestSeller', e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
+          <label htmlFor="bestSeller" className="text-sm font-medium text-slate-700">
+            Show in Best sellers
+          </label>
+        </div>
         <div className="flex items-center gap-2 sm:col-span-2">
           <input
             id="featured"

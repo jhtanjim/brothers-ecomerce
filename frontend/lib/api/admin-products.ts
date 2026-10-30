@@ -3,9 +3,11 @@ import type {
   AdminProduct,
   AdminProductFilters,
   CreateProductInput,
+  CreateVariantInput,
   PaginationMeta,
   ProductStatus,
   UpdateProductInput,
+  UpdateVariantInput,
 } from './types';
 
 const BASE = '/admin/products';
@@ -79,5 +81,33 @@ export function reorderAdminProductImages(id: string, imageIds: string[]): Promi
   return apiFetch<AdminProduct>(`${productPath(id)}/images/reorder`, {
     method: 'PATCH',
     body: JSON.stringify({ imageIds }),
+  });
+}
+
+export function addAdminProductVariant(
+  id: string,
+  input: CreateVariantInput,
+): Promise<AdminProduct> {
+  return apiFetch<AdminProduct>(`${productPath(id)}/variants`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateAdminProductVariant(
+  id: string,
+  variantId: string,
+  input: UpdateVariantInput,
+): Promise<AdminProduct> {
+  return apiFetch<AdminProduct>(`${productPath(id)}/variants/${encodeURIComponent(variantId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+/** Refused (409 VARIANT_HAS_ORDERS) for an option that has been ordered: set its stock to 0 instead. */
+export function deleteAdminProductVariant(id: string, variantId: string): Promise<AdminProduct> {
+  return apiFetch<AdminProduct>(`${productPath(id)}/variants/${encodeURIComponent(variantId)}`, {
+    method: 'DELETE',
   });
 }

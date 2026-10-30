@@ -21,6 +21,7 @@ const IMAGE_ORDER: Prisma.ProductImageOrderByWithRelationInput[] = [
 const cartItemSelect = {
   id: true,
   quantity: true,
+  variant: { select: { id: true, size: true, color: true, stockQuantity: true } },
   product: {
     select: {
       id: true,
@@ -32,17 +33,22 @@ const cartItemSelect = {
       status: true,
       category: { select: { status: true } },
       images: { orderBy: IMAGE_ORDER, take: 1, select: { url: true } },
+      _count: { select: { variants: true } },
     },
   },
 } satisfies Prisma.CartItemSelect;
 
 type CartItemRow = Prisma.CartItemGetPayload<{ select: typeof cartItemSelect }>;
 
-export type CartLineIssue = 'PRODUCT_UNAVAILABLE' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK';
+export type CartLineIssue =
+  'PRODUCT_UNAVAILABLE' | 'OPTION_REQUIRED' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK';
 
 export interface CartLine {
   id: string;
   productId: string;
+  variantId: string | null;
+  size: string | null;
+  color: string | null;
   name: string;
   slug: string;
   imageUrl: string | null;
@@ -67,15 +73,21 @@ function toLine(row: CartItemRow): CartLine & { counted: boolean } {
   const purchasable =
     product.status === ProductStatus.ACTIVE && product.category.status === ActiveStatus.ACTIVE;
 
+  const available = row.variant ? row.variant.stockQuantity : product.stockQuantity;
+
   let issue: CartLineIssue | null = null;
   if (!purchasable) issue = 'PRODUCT_UNAVAILABLE';
-  else if (product.stockQuantity < 1) issue = 'OUT_OF_STOCK';
-  else if (row.quantity > product.stockQuantity) issue = 'INSUFFICIENT_STOCK';
+  else if (!row.variant && product._count.variants > 0) issue = 'OPTION_REQUIRED';
+  else if (available < 1) issue = 'OUT_OF_STOCK';
+  else if (row.quantity > available) issue = 'INSUFFICIENT_STOCK';
 
   const unitCents = toCents(product.discountPrice ?? product.price);
   return {
     id: row.id,
     productId: product.id,
+    variantId: row.variant?.id ?? null,
+    size: row.variant?.size || null,
+    color: row.variant?.color || null,
     name: product.name,
     slug: product.slug,
     imageUrl: product.images[0]?.url ?? null,
@@ -83,7 +95,7 @@ function toLine(row: CartItemRow): CartLine & { counted: boolean } {
     unitPrice: formatCents(unitCents),
     quantity: row.quantity,
     lineTotal: formatCents(unitCents * row.quantity),
-    availableStock: product.stockQuantity,
+    availableStock: available,
     issue,
     counted: issue === null,
   };
@@ -133,12 +145,34 @@ export class CartService {
         status: ProductStatus.ACTIVE,
         category: { status: ActiveStatus.ACTIVE },
       },
-      select: { id: true, stockQuantity: true },
+      select: {
+        id: true,
+        stockQuantity: true,
+        variants: {
+          where: { id: dto.variantId ?? '' },
+          select: { id: true, stockQuantity: true },
+        },
+        _count: { select: { variants: true } },
+      },
     });
     if (!product) {
       throw new NotFoundException({ message: 'Product not found', code: 'PRODUCT_NOT_FOUND' });
     }
-    if (product.stockQuantity < 1) {
+    const variant = product.variants[0] ?? null;
+    if (product._count.variants > 0 && !variant) {
+      throw new BadRequestException({
+        message: 'Please choose an option first',
+        code: 'OPTION_REQUIRED',
+      });
+    }
+    if (dto.variantId && !variant) {
+      throw new BadRequestException({
+        message: 'This option does not exist',
+        code: 'VARIANT_NOT_FOUND',
+      });
+    }
+    const available = variant ? variant.stockQuantity : product.stockQuantity;
+    if (available < 1) {
       throw new ConflictException({
         message: 'This product is out of stock',
         code: 'PRODUCT_OUT_OF_STOCK',
@@ -154,7 +188,10 @@ export class CartService {
 
     // The transaction rolls back if the resulting quantity breaks a limit, even under concurrent adds.
     await this.prisma.$transaction(async (tx) => {
-      const key = { cartId_productId: { cartId: cart.id, productId: product.id } };
+      const variantKey = variant?.id ?? '';
+      const key = {
+        cartId_productId_variantKey: { cartId: cart.id, productId: product.id, variantKey },
+      };
       const existing = await tx.cartItem.findUnique({ where: key, select: { id: true } });
 
       if (!existing) {
@@ -169,14 +206,20 @@ export class CartService {
 
       const item = await tx.cartItem.upsert({
         where: key,
-        create: { cartId: cart.id, productId: product.id, quantity: dto.quantity },
+        create: {
+          cartId: cart.id,
+          productId: product.id,
+          variantId: variant?.id ?? null,
+          variantKey,
+          quantity: dto.quantity,
+        },
         update: { quantity: { increment: dto.quantity } },
         select: { quantity: true },
       });
 
-      if (item.quantity > product.stockQuantity) {
+      if (item.quantity > available) {
         throw new ConflictException({
-          message: `Only ${product.stockQuantity} available in stock`,
+          message: `Only ${available} available in stock`,
           code: 'INSUFFICIENT_STOCK',
         });
       }
@@ -196,6 +239,7 @@ export class CartService {
       where: { id: itemId, cart: { userId } },
       select: {
         id: true,
+        variant: { select: { stockQuantity: true } },
         product: {
           select: { stockQuantity: true, status: true, category: { select: { status: true } } },
         },
@@ -215,15 +259,16 @@ export class CartService {
         code: 'PRODUCT_UNAVAILABLE',
       });
     }
-    if (product.stockQuantity < 1) {
+    const available = item.variant ? item.variant.stockQuantity : product.stockQuantity;
+    if (available < 1) {
       throw new ConflictException({
         message: 'This product is out of stock',
         code: 'PRODUCT_OUT_OF_STOCK',
       });
     }
-    if (dto.quantity > product.stockQuantity) {
+    if (dto.quantity > available) {
       throw new ConflictException({
-        message: `Only ${product.stockQuantity} available in stock`,
+        message: `Only ${available} available in stock`,
         code: 'INSUFFICIENT_STOCK',
       });
     }

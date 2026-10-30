@@ -31,7 +31,7 @@ export function HomeHero() {
         <p className="mt-6 max-w-xl text-base leading-relaxed text-brand-200 sm:text-lg">{text}</p>
         <div className="mt-9 flex flex-wrap gap-3">
           <Link
-            href="/products?sort=newest"
+            href="/products?newArrival=true"
             className="inline-flex h-12 items-center bg-white px-8 text-sm font-semibold uppercase tracking-wider text-brand-950 hover:bg-brand-100"
           >
             Shop new arrivals

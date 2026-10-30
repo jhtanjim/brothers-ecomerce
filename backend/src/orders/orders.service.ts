@@ -69,6 +69,8 @@ const orderViewSelect = {
       productName: true,
       productSku: true,
       productImageUrl: true,
+      size: true,
+      color: true,
       unitPrice: true,
       quantity: true,
       discountAmount: true,
@@ -161,6 +163,8 @@ function toView(order: OrderRow) {
       name: item.productName,
       sku: item.productSku,
       imageUrl: item.productImageUrl,
+      size: item.size,
+      color: item.color,
       unitPrice: money(item.unitPrice),
       quantity: item.quantity,
       discountAmount: money(item.discountAmount),
@@ -214,6 +218,9 @@ interface ProductSnapshot {
   name: string;
   sku: string;
   imageUrl: string | null;
+  variantId: string | null;
+  size: string | null;
+  color: string | null;
 }
 
 @Injectable()
@@ -383,8 +390,8 @@ export class OrdersService {
     // 3. Cart lines in a fixed order, so concurrent orders lock products in the same order.
     const items = await tx.cartItem.findMany({
       where: { cartId: cart.id },
-      orderBy: { productId: 'asc' },
-      select: { productId: true, quantity: true },
+      orderBy: [{ productId: 'asc' }, { variantKey: 'asc' }],
+      select: { productId: true, variantId: true, quantity: true },
     });
     if (items.length === 0) throw cartEmpty();
 
@@ -409,6 +416,17 @@ export class OrdersService {
         throw await this.stockFailure(tx, item.productId, item.quantity);
       }
 
+      // The product row is locked now. Its total can hide an option that has run out.
+      if (item.variantId) {
+        const reservedOption = await tx.productVariant.updateMany({
+          where: { id: item.variantId, stockQuantity: { gte: item.quantity } },
+          data: { stockQuantity: { decrement: item.quantity } },
+        });
+        if (reservedOption.count === 0) {
+          throw await this.optionStockFailure(tx, item.variantId, item.quantity);
+        }
+      }
+
       // The row is locked by our own update, so this is the price we charge.
       const product = await tx.product.findUniqueOrThrow({
         where: { id: item.productId },
@@ -418,8 +436,22 @@ export class OrdersService {
           price: true,
           discountPrice: true,
           images: { orderBy: IMAGE_ORDER, take: 1, select: { url: true } },
+          _count: { select: { variants: true } },
         },
       });
+      if (!item.variantId && product._count.variants > 0) {
+        throw new ConflictException({
+          message: `Please choose an option for ${product.name}`,
+          code: 'OPTION_REQUIRED',
+          details: { productId: item.productId },
+        });
+      }
+      const variant = item.variantId
+        ? await tx.productVariant.findUniqueOrThrow({
+            where: { id: item.variantId },
+            select: { size: true, color: true, sku: true },
+          })
+        : null;
       inputs.push({
         productId: item.productId,
         regularPrice: product.price,
@@ -428,8 +460,11 @@ export class OrdersService {
       });
       snapshots.push({
         name: product.name,
-        sku: product.sku,
+        sku: variant?.sku ?? product.sku,
         imageUrl: product.images[0]?.url ?? null,
+        variantId: item.variantId,
+        size: variant?.size || null,
+        color: variant?.color || null,
       });
     }
 
@@ -493,6 +528,9 @@ export class OrdersService {
             productName: snapshots[index]?.name ?? '',
             productSku: snapshots[index]?.sku ?? '',
             productImageUrl: snapshots[index]?.imageUrl ?? null,
+            variantId: snapshots[index]?.variantId ?? null,
+            size: snapshots[index]?.size ?? null,
+            color: snapshots[index]?.color ?? null,
             unitPrice: formatCents(line.unitPriceCents),
             quantity: line.quantity,
             discountAmount: formatCents(line.discountCents),
@@ -560,6 +598,35 @@ export class OrdersService {
     });
     const userUsageCount = await tx.couponUsage.count({ where: { couponId: id, userId } });
     return { ...coupon, userUsageCount };
+  }
+
+  private async optionStockFailure(
+    tx: Prisma.TransactionClient,
+    variantId: string,
+    requested: number,
+  ): Promise<ConflictException> {
+    const variant = await tx.productVariant.findUniqueOrThrow({
+      where: { id: variantId },
+      select: {
+        size: true,
+        color: true,
+        stockQuantity: true,
+        product: { select: { id: true, name: true } },
+      },
+    });
+    const label = [variant.product.name, variant.size, variant.color].filter(Boolean).join(' ');
+    return new ConflictException({
+      message:
+        variant.stockQuantity < 1
+          ? `${label} is out of stock`
+          : `Only ${variant.stockQuantity} of ${label} available`,
+      code: 'INSUFFICIENT_STOCK',
+      details: {
+        productId: variant.product.id,
+        availableStock: variant.stockQuantity,
+        requested,
+      },
+    });
   }
 
   /** Explains why a stock reservation failed (names the product so the customer can fix the cart). */

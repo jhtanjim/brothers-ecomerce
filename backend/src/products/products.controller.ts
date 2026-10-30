@@ -14,6 +14,12 @@ export class ProductsController {
     return this.products.findAllPublic(query);
   }
 
+  /** Must stay above :slug. */
+  @Get('filters')
+  findFilters(@Query('category') category?: string) {
+    return this.products.findFilters(category);
+  }
+
   @Get(':slug')
   findOne(@Param('slug') slug: string) {
     return this.products.findBySlugPublic(slug);

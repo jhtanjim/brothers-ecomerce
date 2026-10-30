@@ -39,6 +39,7 @@ export interface CategorySummary {
   description: string | null;
   imageUrl: string | null;
   sortOrder: number;
+  parentId: string | null;
   productCount: number;
 }
 
@@ -59,6 +60,8 @@ export interface ProductListItem {
   discountPercent: number;
   stockQuantity: number;
   featured: boolean;
+  newArrival: boolean;
+  bestSeller: boolean;
   category: CategoryRef;
   primaryImage: { url: string } | null;
 }
@@ -75,8 +78,27 @@ export interface ProductDetail {
   discountPercent: number;
   stockQuantity: number;
   featured: boolean;
+  newArrival: boolean;
+  bestSeller: boolean;
+  material: string | null;
   category: CategoryRef;
   images: ProductImage[];
+  /** Empty when the product has no sizes or colours. size/color are '' when not applicable. */
+  variants: ProductVariant[];
+}
+
+export interface ProductVariant {
+  id: string;
+  size: string;
+  color: string;
+  stockQuantity: number;
+}
+
+/** What the listing can actually be filtered by (GET /products/filters). */
+export interface ProductFilterOptions {
+  sizes: string[];
+  colors: string[];
+  materials: string[];
 }
 // ---------------------------------------------------------------------------
 // Auth (matches /auth/* responses; the session itself lives in HTTP-only cookies)
@@ -113,11 +135,15 @@ export interface RegisterInput {
 // Cart (matches /cart responses; all money values are decimal strings)
 // ---------------------------------------------------------------------------
 
-export type CartLineIssue = 'PRODUCT_UNAVAILABLE' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK';
+export type CartLineIssue =
+  'PRODUCT_UNAVAILABLE' | 'OPTION_REQUIRED' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK';
 
 export interface CartLine {
   id: string;
   productId: string;
+  variantId: string | null;
+  size: string | null;
+  color: string | null;
   name: string;
   slug: string;
   imageUrl: string | null;
@@ -195,6 +221,8 @@ export interface OrderItemView {
   name: string;
   sku: string;
   imageUrl: string | null;
+  size: string | null;
+  color: string | null;
   /** Regular unit price at purchase time. */
   unitPrice: string;
   quantity: number;
@@ -363,7 +391,14 @@ export interface AdminPaymentDetail {
     createdAt: string;
     customer: { name: string; email: string };
     shipping: { name: string; phone: string; email: string };
-    items: { name: string; sku: string; quantity: number; totalPrice: string }[];
+    items: {
+      name: string;
+      sku: string;
+      size: string | null;
+      color: string | null;
+      quantity: number;
+      totalPrice: string;
+    }[];
   };
 }
 
@@ -438,6 +473,8 @@ export interface AdminOrderDetail {
     id: string;
     name: string;
     sku: string;
+    size: string | null;
+    color: string | null;
     imageUrl: string | null;
     unitPrice: string;
     quantity: number;
@@ -567,6 +604,7 @@ export interface AdminCategory {
   imagePublicId: string | null;
   status: CategoryStatus;
   sortOrder: number;
+  parentId: string | null;
   /** All products in the category, any status. Delete is only possible at 0. */
   productCount: number;
   createdAt: string;
@@ -581,6 +619,7 @@ export interface CreateCategoryInput {
   imageUrl?: string;
   sortOrder?: number;
   status?: CategoryStatus;
+  parentId?: string;
 }
 
 /** Body of PATCH /admin/categories/:id. null clears description or imageUrl. Renaming keeps the slug. */
@@ -590,6 +629,7 @@ export interface UpdateCategoryInput {
   description?: string | null;
   imageUrl?: string | null;
   sortOrder?: number;
+  parentId?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -614,6 +654,28 @@ export interface AdminProductImage {
   isPrimary: boolean;
 }
 
+export interface AdminProductVariant {
+  id: string;
+  size: string;
+  color: string;
+  sku: string;
+  stockQuantity: number;
+}
+
+export interface CreateVariantInput {
+  size?: string;
+  color?: string;
+  sku: string;
+  stockQuantity: number;
+}
+
+export interface UpdateVariantInput {
+  size?: string;
+  color?: string;
+  sku?: string;
+  stockQuantity?: number;
+}
+
 export interface AdminProduct {
   id: string;
   categoryId: string;
@@ -629,11 +691,15 @@ export interface AdminProduct {
   lowStockThreshold: number;
   status: ProductStatus;
   featured: boolean;
+  newArrival: boolean;
+  bestSeller: boolean;
+  material: string | null;
   soldCount: number;
   createdAt: string;
   updatedAt: string;
   category: { id: string; name: string; slug: string; status: CategoryStatus };
   images: AdminProductImage[];
+  variants: AdminProductVariant[];
 }
 
 /** Body of POST /admin/products. Prices are numbers with up to 2 decimals; slug is generated when omitted. */
@@ -650,6 +716,9 @@ export interface CreateProductInput {
   lowStockThreshold?: number;
   status?: 'ACTIVE' | 'INACTIVE';
   featured?: boolean;
+  newArrival?: boolean;
+  bestSeller?: boolean;
+  material?: string;
 }
 
 /** Body of PATCH /admin/products/:id. null clears the descriptions or the discount. Status has its own endpoint. */
@@ -665,6 +734,9 @@ export interface UpdateProductInput {
   stockQuantity?: number;
   lowStockThreshold?: number;
   featured?: boolean;
+  newArrival?: boolean;
+  bestSeller?: boolean;
+  material?: string | null;
 }
 
 // ---------------------------------------------------------------------------

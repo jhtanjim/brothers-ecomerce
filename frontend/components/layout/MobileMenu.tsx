@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import type { CategorySummary } from '@/lib/api/types';
+import { categoriesInTreeOrder } from '@/lib/categories';
 import { SITE_NAME } from '@/lib/format';
 
 const PANEL_ID = 'mobile-menu';
@@ -150,8 +151,8 @@ export function MobileMenu({ categories }: { categories: CategorySummary[] }) {
                         All products
                       </Link>
                     </li>
-                    {categories.map((category) => (
-                      <li key={category.id}>
+                    {categoriesInTreeOrder(categories).map((category) => (
+                      <li key={category.id} className={category.parentId ? 'pl-4' : undefined}>
                         <Link
                           href={`/products?category=${encodeURIComponent(category.slug)}`}
                           className={LINK_CLASS}

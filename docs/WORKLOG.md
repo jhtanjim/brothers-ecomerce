@@ -318,3 +318,16 @@ Template:
 - Limitations: prices and stock are invented, photos are stock images; replace both before launch. Local images use a
   `sample/*` public id, so deleting one in admin only logs a Cloudinary warning.
 - Next step: owner approves the catalog migration.
+
+## 2026-10-30 — Catalog migration: options, subcategories, flags
+
+- Objective: owner approved the migration for sizes, colours, subcategories, material and new/bestseller flags.
+- Files changed: `prisma/schema.prisma`, migration `20261030120000_add_catalog_variants` (additive; applied to dev and `_test`),
+  cart, orders, cancellation, products, categories, payments services; `lib/categories.ts`, `AddToCartButton`,
+  `ProductFilters`, listing, header, `ProductVariantsManager`, `ProductForm`, `CategoryForm`; `prisma/sample-catalog.ts`.
+- Tested: backend vitest 16 files / 148 tests (11 new in `variants.integration.spec.ts`), typecheck, lint, frontend and backend
+  builds. Browser: subcategory dropdown, filters, option picker, cart, order to payment step with L / Sky Blue, cancel restored
+  stock; admin add and delete option; category parent list. Dev DB gained one more cancelled test order.
+- Limitations: one price per product; no size guide or exchange text (needs owner's content). Saving a product through the
+  form and the admin subcategory save were not clicked through in the browser; the category rules are covered by tests.
+- Next step: owner supplies real products and content; add a remote and push.

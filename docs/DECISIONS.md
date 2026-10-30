@@ -93,6 +93,13 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
   billing or per-store switching. Brand details live in `frontend/lib/store.ts`; palette and fonts in
   `tailwind.config.ts` and `app/layout.tsx`.
 
+## Catalog (owner approved, 2026-10-30)
+
+- **D38 — Options are variants with their own stock.** `ProductVariant` holds size, colour, SKU and stock; price stays on the
+  product. With variants, `Product.stockQuantity` is always their sum, kept in the same transaction with the product row locked
+  first. A variant with order history cannot be deleted (cancelling must restore it). Categories allow one level of
+  subcategories; hiding a parent hides its children.
+
 ## Workflow (owner answers, 2026-10-29)
 
 - **D25 — Git:** initialize a local repo with a baseline commit of the existing state; no remote yet. Pushing still needs approval.

@@ -19,6 +19,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { ReorderImagesDto } from './dto/reorder-images.dto';
 import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateVariantDto, UpdateVariantDto } from './dto/variant.dto';
 import { ProductsService } from './products.service';
 /** Admin-only (JwtAuthGuard is global; RolesGuard enforces ADMIN here). */
 
@@ -55,6 +56,25 @@ export class AdminProductsController {
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
     await this.products.remove(id);
+  }
+
+  @Post(':id/variants')
+  addVariant(@Param('id') id: string, @Body() dto: CreateVariantDto) {
+    return this.products.addVariant(id, dto);
+  }
+
+  @Patch(':id/variants/:variantId')
+  updateVariant(
+    @Param('id') id: string,
+    @Param('variantId') variantId: string,
+    @Body() dto: UpdateVariantDto,
+  ) {
+    return this.products.updateVariant(id, variantId, dto);
+  }
+
+  @Delete(':id/variants/:variantId')
+  removeVariant(@Param('id') id: string, @Param('variantId') variantId: string) {
+    return this.products.removeVariant(id, variantId);
   }
 
   /** Upload 1 to 5 images. Send multipart/form-data with the files in the "images" field. */

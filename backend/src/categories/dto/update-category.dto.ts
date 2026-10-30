@@ -55,4 +55,10 @@ export class UpdateCategoryDto {
   @ValidateIf((_o, v) => v !== undefined)
   @IsEnum(ActiveStatus)
   status?: ActiveStatus;
+
+  /** Parent category id: makes this a subcategory. null makes it top-level. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  parentId?: string | null;
 }

@@ -13,10 +13,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-    shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
-
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 // ---------------------------------------------------------------------------
@@ -82,15 +81,15 @@ enum PaymentProvider {
 // ---------------------------------------------------------------------------
 
 model User {
-  id           String     @id @default(cuid())
-  name         String
-  email        String     @unique
-  phone        String?    @unique
-  passwordHash String
-  role         Role       @default(CUSTOMER)
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                   String               @id @default(cuid())
+  name                 String
+  email                String               @unique
+  phone                String?              @unique
+  passwordHash         String
+  role                 Role                 @default(CUSTOMER)
+  status               UserStatus           @default(ACTIVE)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
   passwordResetTokens  PasswordResetToken[]
   refreshTokens        RefreshToken[]
   addresses            Address[]
@@ -98,8 +97,8 @@ model User {
   orders               Order[]
   couponUsages         CouponUsage[]
   activityLogs         ActivityLog[]
-  orderStatusChanges   OrderStatusHistory[]  @relation("OrderStatusChanger")
-  reviewedTransactions PaymentTransaction[]  @relation("TransactionReviewer")
+  orderStatusChanges   OrderStatusHistory[] @relation("OrderStatusChanger")
+  reviewedTransactions PaymentTransaction[] @relation("TransactionReviewer")
 
   // Admin customer list: filter by role, newest first.
   @@index([role, createdAt])
@@ -144,7 +143,6 @@ model Address {
   @@map("addresses")
 }
 
-
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String
@@ -173,38 +171,47 @@ model Category {
   imagePublicId String?
   status        ActiveStatus @default(ACTIVE)
   sortOrder     Int          @default(0)
+  // Null = top-level category. Only one level of subcategories is allowed (service rule).
+  parentId      String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children Category[] @relation("CategoryTree")
   products Product[]
 
   @@index([status, sortOrder])
+  @@index([parentId])
   @@map("categories")
 }
 
 model Product {
-  id               String        @id @default(cuid())
-  categoryId       String
-  name             String
-  slug             String        @unique
-  sku              String        @unique
-  shortDescription String?       @db.VarChar(500)
-  description      String?       @db.Text
-  price            Decimal       @db.Decimal(12, 2)
-  discountPrice    Decimal?      @db.Decimal(12, 2)
+  id                String        @id @default(cuid())
+  categoryId        String
+  name              String
+  slug              String        @unique
+  sku               String        @unique
+  shortDescription  String?       @db.VarChar(500)
+  description       String?       @db.Text
+  price             Decimal       @db.Decimal(12, 2)
+  discountPrice     Decimal?      @db.Decimal(12, 2)
   // Derived from price/discountPrice by the service layer; enables DB-level "discount" sorting.
-  discountPercent  Int           @default(0)
-  stockQuantity    Int           @default(0)
-  lowStockThreshold Int          @default(5)
-  status           ProductStatus @default(ACTIVE)
-  featured         Boolean       @default(false)
+  discountPercent   Int           @default(0)
+  stockQuantity     Int           @default(0)
+  lowStockThreshold Int           @default(5)
+  status            ProductStatus @default(ACTIVE)
+  featured          Boolean       @default(false)
+  newArrival        Boolean       @default(false)
+  bestSeller        Boolean       @default(false)
+  material          String?       @db.VarChar(120)
   // Incremented by the order flow; enables DB-level "popular" sorting.
-  soldCount        Int           @default(0)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  soldCount         Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
-  category   Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category   Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   images     ProductImage[]
+  variants   ProductVariant[]
   cartItems  CartItem[]
   orderItems OrderItem[]
 
@@ -212,6 +219,8 @@ model Product {
   @@index([status, createdAt])
   @@index([categoryId, status, createdAt])
   @@index([status, featured])
+  @@index([status, newArrival])
+  @@index([status, bestSeller])
   @@index([status, soldCount])
   @@index([status, discountPercent])
   @@index([status, price])
@@ -219,6 +228,29 @@ model Product {
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_name_trgm_idx")
   @@index([sku(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_sku_trgm_idx")
   @@map("products")
+}
+
+// One sellable size/colour of a product. When a product has variants, Product.stockQuantity is
+// always the sum of its variants' stock (kept in the same transaction by the services).
+model ProductVariant {
+  id            String   @id @default(cuid())
+  productId     String
+  // Empty string = this option does not apply (a watch has neither; a shoe may have only a size).
+  size          String   @default("") @db.VarChar(20)
+  color         String   @default("") @db.VarChar(40)
+  sku           String   @unique
+  stockQuantity Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@unique([productId, size, color])
+  @@index([size])
+  @@index([color])
+  @@map("product_variants")
 }
 
 model ProductImage {
@@ -253,17 +285,22 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
-  productId String
-  quantity  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  cartId     String
+  productId  String
+  variantId  String?
+  // "" or the variant id: NULLs never clash in a unique index, so this keeps one line per option.
+  variantKey String   @default("")
+  quantity   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  @@unique([cartId, productId])
+  @@unique([cartId, productId, variantKey])
+  @@index([variantId])
   @@index([productId])
   @@map("cart_items")
 }
@@ -279,9 +316,9 @@ model Order {
 
   // Money (all calculated by the backend)
   subtotal       Decimal @db.Decimal(12, 2) // sum of regular price x qty
-  discountAmount Decimal @db.Decimal(12, 2) @default(0) // product-level discounts
-  couponDiscount Decimal @db.Decimal(12, 2) @default(0)
-  deliveryCharge Decimal @db.Decimal(12, 2) @default(0)
+  discountAmount Decimal @default(0) @db.Decimal(12, 2) // product-level discounts
+  couponDiscount Decimal @default(0) @db.Decimal(12, 2)
+  deliveryCharge Decimal @default(0) @db.Decimal(12, 2)
   totalAmount    Decimal @db.Decimal(12, 2)
   couponCode     String? // snapshot of the coupon code used
 
@@ -331,34 +368,39 @@ model Order {
 // discountAmount  = total product-level discount for this line
 // totalPrice      = unitPrice * quantity - discountAmount
 model OrderItem {
-  id             String  @id @default(cuid())
-  orderId        String
-  productId      String
-  productName    String
-  productSku     String
+  id              String  @id @default(cuid())
+  orderId         String
+  productId       String
+  productName     String
+  productSku      String
   productImageUrl String?
-  unitPrice      Decimal @db.Decimal(12, 2)
-  quantity       Int
-  discountAmount Decimal @db.Decimal(12, 2) @default(0)
-  totalPrice     Decimal @db.Decimal(12, 2)
+  variantId       String?
+  size            String?
+  color           String?
+  unitPrice       Decimal @db.Decimal(12, 2)
+  quantity        Int
+  discountAmount  Decimal @default(0) @db.Decimal(12, 2)
+  totalPrice      Decimal @db.Decimal(12, 2)
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
   @@index([orderId])
   @@index([productId])
+  @@index([variantId])
   @@map("order_items")
 }
 
 model OrderStatusHistory {
-  id         String       @id @default(cuid())
-  orderId    String
-  fromStatus OrderStatus?
-  toStatus   OrderStatus
-  note       String?
+  id          String       @id @default(cuid())
+  orderId     String
+  fromStatus  OrderStatus?
+  toStatus    OrderStatus
+  note        String?
   // null = system action (e.g. auto-cancel job)
   changedById String?
-  createdAt  DateTime     @default(now())
+  createdAt   DateTime     @default(now())
 
   order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   changedBy User? @relation("OrderStatusChanger", fields: [changedById], references: [id], onDelete: Restrict)
@@ -391,19 +433,19 @@ model Payment {
 
 // One row per customer submission (transaction ID + optional screenshot).
 model PaymentTransaction {
-  id                   String        @id @default(cuid())
-  paymentId            String
-  method               PaymentMethod
-  transactionId        String
-  senderPhone          String?
-  screenshotUrl        String?
-  screenshotPublicId   String?
-  status               PaymentStatus @default(PENDING)
-  reviewedById         String?
-  reviewedAt           DateTime?
-  rejectionReason      String?
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  id                 String        @id @default(cuid())
+  paymentId          String
+  method             PaymentMethod
+  transactionId      String
+  senderPhone        String?
+  screenshotUrl      String?
+  screenshotPublicId String?
+  status             PaymentStatus @default(PENDING)
+  reviewedById       String?
+  reviewedAt         DateTime?
+  rejectionReason    String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   payment    Payment @relation(fields: [paymentId], references: [id], onDelete: Restrict)
   reviewedBy User?   @relation("TransactionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)

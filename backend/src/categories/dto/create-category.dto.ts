@@ -54,4 +54,10 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsEnum(ActiveStatus)
   status?: ActiveStatus;
+
+  /** Parent category id: makes this a subcategory. null makes it top-level. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  parentId?: string | null;
 }

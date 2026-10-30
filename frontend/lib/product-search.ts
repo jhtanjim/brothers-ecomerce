@@ -24,6 +24,11 @@ export interface ProductQuery {
   maxPrice?: number;
   inStock?: boolean;
   featured?: boolean;
+  newArrival?: boolean;
+  bestSeller?: boolean;
+  size?: string;
+  color?: string;
+  material?: string;
 }
 
 function first(value: string | string[] | undefined): string | undefined {
@@ -63,7 +68,26 @@ export function parseProductSearchParams(raw: RawSearchParams): ProductQuery {
     maxPrice,
     inStock: first(raw.inStock) === 'true' ? true : undefined,
     featured: first(raw.featured) === 'true' ? true : undefined,
+    newArrival: first(raw.newArrival) === 'true' ? true : undefined,
+    bestSeller: first(raw.bestSeller) === 'true' ? true : undefined,
+    size: first(raw.size)?.slice(0, 20),
+    color: first(raw.color)?.slice(0, 40),
+    material: first(raw.material)?.slice(0, 120),
   };
+}
+
+function hasOtherFilters(query: ProductQuery): boolean {
+  return Boolean(
+    query.search ||
+    query.category ||
+    query.inStock ||
+    query.featured ||
+    query.newArrival ||
+    query.bestSeller ||
+    query.size ||
+    query.color ||
+    query.material,
+  );
 }
 
 /** True when the query differs from the plain, unfiltered first page. */
@@ -71,7 +95,7 @@ export function isNonDefaultQuery(query: ProductQuery): boolean {
   return (
     query.page > 1 ||
     query.sort !== DEFAULT_SORT ||
-    Boolean(query.search || query.category || query.inStock || query.featured) ||
+    hasOtherFilters(query) ||
     query.minPrice !== undefined ||
     query.maxPrice !== undefined
   );
@@ -79,11 +103,7 @@ export function isNonDefaultQuery(query: ProductQuery): boolean {
 
 /** True when any filter (not just sort or page) is applied. */
 export function hasActiveFilters(query: ProductQuery): boolean {
-  return (
-    Boolean(query.search || query.category || query.inStock || query.featured) ||
-    query.minPrice !== undefined ||
-    query.maxPrice !== undefined
-  );
+  return hasOtherFilters(query) || query.minPrice !== undefined || query.maxPrice !== undefined;
 }
 
 /** Builds a clean /products URL, leaving out default values. */
@@ -99,6 +119,11 @@ export function buildProductsHref(
   if (next.maxPrice !== undefined) params.set('maxPrice', String(next.maxPrice));
   if (next.inStock) params.set('inStock', 'true');
   if (next.featured) params.set('featured', 'true');
+  if (next.newArrival) params.set('newArrival', 'true');
+  if (next.bestSeller) params.set('bestSeller', 'true');
+  if (next.size) params.set('size', next.size);
+  if (next.color) params.set('color', next.color);
+  if (next.material) params.set('material', next.material);
   if (next.sort !== DEFAULT_SORT) params.set('sort', next.sort);
   if (next.page > 1) params.set('page', String(next.page));
   const value = params.toString();

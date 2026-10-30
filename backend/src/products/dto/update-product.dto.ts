@@ -95,4 +95,19 @@ export class UpdateProductDto {
   @ValidateIf((_o, v) => v !== undefined)
   @IsBoolean()
   featured?: boolean;
+
+  @ValidateIf((_o, v) => v !== undefined)
+  @IsBoolean()
+  newArrival?: boolean;
+
+  @ValidateIf((_o, v) => v !== undefined)
+  @IsBoolean()
+  bestSeller?: boolean;
+
+  /** null clears it. */
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(120)
+  material?: string | null;
 }

@@ -2,9 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { createAdminCategory, updateAdminCategory } from '@/lib/api/admin-categories';
+import {
+  createAdminCategory,
+  getAdminCategories,
+  updateAdminCategory,
+} from '@/lib/api/admin-categories';
 import { ApiError } from '@/lib/api/client';
 import type {
   AdminCategory,
@@ -14,6 +18,7 @@ import type {
 } from '@/lib/api/types';
 
 const LIST_PATH = '/admin/categories';
+const CATEGORY_LIMIT = 100; // API maximum page size
 // Same rule as the backend DTO: lowercase letters, numbers and single hyphens.
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const INPUT_CLASS =
@@ -26,6 +31,7 @@ interface Values {
   imageUrl: string;
   sortOrder: string;
   status: CategoryStatus;
+  parentId: string;
 }
 
 type Errors = Partial<Record<keyof Values, string>>;
@@ -38,6 +44,7 @@ function initialValues(category: AdminCategory | null): Values {
     imageUrl: category?.imageUrl ?? '',
     sortOrder: String(category?.sortOrder ?? 0),
     status: category?.status ?? 'ACTIVE',
+    parentId: category?.parentId ?? '',
   };
 }
 
@@ -120,6 +127,20 @@ export function CategoryForm({ category }: { category: AdminCategory | null }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+
+  useEffect(() => {
+    getAdminCategories({ sort: 'sort_order' }, 1, CATEGORY_LIMIT)
+      .then(({ items }) => setCategories(items))
+      .catch(() => setCategories([]));
+  }, []);
+
+  // Only one level of subcategories: a parent must be top-level, and a parent cannot move under one.
+  const hasChildren = editing && categories.some((entry) => entry.parentId === category.id);
+  const parentOptions = categories.filter(
+    (entry) => entry.parentId === null && entry.id !== category?.id,
+  );
+
   const slugChanged = editing && values.slug.trim() !== category.slug;
 
   function set<K extends keyof Values>(key: K, value: Values[K]) {
@@ -155,6 +176,7 @@ export function CategoryForm({ category }: { category: AdminCategory | null }) {
           ...(slug ? { slug } : {}),
           ...(description ? { description } : {}),
           ...(imageUrl ? { imageUrl } : {}),
+          ...(values.parentId ? { parentId: values.parentId } : {}),
         };
         await createAdminCategory(input);
       } else {
@@ -162,6 +184,7 @@ export function CategoryForm({ category }: { category: AdminCategory | null }) {
           name: values.name.trim(),
           description: description || null,
           sortOrder: Number(values.sortOrder),
+          parentId: values.parentId || null,
           ...(slugChanged ? { slug } : {}),
           // Sending imageUrl also clears the stored image id on the backend, so only send a change.
           ...(imageUrl !== (category.imageUrl ?? '') ? { imageUrl: imageUrl || null } : {}),
@@ -209,6 +232,31 @@ export function CategoryForm({ category }: { category: AdminCategory | null }) {
             onChange={(e) => set('slug', e.target.value.trim().toLowerCase())}
             className={INPUT_CLASS}
           />
+        </Field>
+        <Field
+          label="Parent category"
+          htmlFor="parentId"
+          hint={
+            hasChildren
+              ? 'This category has subcategories, so it stays top-level'
+              : 'Leave as none for a main category'
+          }
+        >
+          <select
+            id="parentId"
+            value={values.parentId}
+            disabled={hasChildren}
+            onChange={(e) => set('parentId', e.target.value)}
+            className={INPUT_CLASS}
+          >
+            <option value="">None (main category)</option>
+            {parentOptions.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.name}
+                {entry.status === 'INACTIVE' ? ' (inactive)' : ''}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field
           label="Sort order"

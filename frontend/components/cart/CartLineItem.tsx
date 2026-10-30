@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { CartLine } from '@/lib/api/types';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, optionLabel } from '@/lib/format';
 
 /** Keep in sync with MAX_QUANTITY_PER_LINE in the backend (the backend enforces it anyway). */
 const MAX_QUANTITY = 20;
@@ -17,6 +17,8 @@ function issueMessage(line: CartLine): string | null {
   switch (line.issue) {
     case 'PRODUCT_UNAVAILABLE':
       return 'This product is no longer available. Remove it to continue.';
+    case 'OPTION_REQUIRED':
+      return 'This product now has sizes or colours. Remove it and add it again with your choice.';
     case 'OUT_OF_STOCK':
       return 'This product is out of stock. Remove it to continue.';
     case 'INSUFFICIENT_STOCK':
@@ -30,7 +32,10 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
   const message = issueMessage(line);
   const hasDiscount = Number(line.regularPrice) > Number(line.unitPrice);
   // The backend rejects updates for unavailable and out-of-stock products.
-  const stepperLocked = line.issue === 'PRODUCT_UNAVAILABLE' || line.issue === 'OUT_OF_STOCK';
+  const stepperLocked =
+    line.issue === 'PRODUCT_UNAVAILABLE' ||
+    line.issue === 'OPTION_REQUIRED' ||
+    line.issue === 'OUT_OF_STOCK';
   const max = Math.max(1, Math.min(line.availableStock, MAX_QUANTITY));
   const canDecrease = !stepperLocked && !busy && line.quantity > 1;
   const canIncrease = !stepperLocked && !busy && line.quantity < max;
@@ -71,6 +76,10 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
               {formatPrice(line.lineTotal)}
             </p>
           </div>
+
+          {optionLabel(line.size, line.color) ? (
+            <p className="text-sm text-slate-600">{optionLabel(line.size, line.color)}</p>
+          ) : null}
 
           <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
             <span className="text-slate-700">{formatPrice(line.unitPrice)}</span>

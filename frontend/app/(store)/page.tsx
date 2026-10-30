@@ -7,6 +7,7 @@ import { SectionHeading } from '@/components/ui/SectionHeading';
 import { getCategories } from '@/lib/api/categories';
 import { getProducts, type ProductListParams } from '@/lib/api/products';
 import type { CategorySummary, ProductListItem } from '@/lib/api/types';
+import { topLevelCategories } from '@/lib/categories';
 import { store } from '@/lib/store';
 
 const SECTION_SIZE = 8;
@@ -57,7 +58,7 @@ function CategorySection({ result }: { result: Loaded<CategorySummary[]> }) {
       <SectionHeading title="Shop by category" href="/products" linkLabel="View all" />
       {result.ok ? (
         <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {result.data.map((category) => {
+          {topLevelCategories(result.data).map((category) => {
             const image = categoryImage(category);
             return (
               <li key={category.id}>
@@ -138,9 +139,10 @@ function WhyBrothers() {
 }
 
 export default async function HomePage() {
-  const [categories, newest, featured, deals] = await Promise.all([
+  const [categories, newest, bestSellers, featured, deals] = await Promise.all([
     load(getCategories()),
-    loadProducts({ sort: 'newest' }),
+    loadProducts({ newArrival: true }),
+    loadProducts({ bestSeller: true }),
     loadProducts({ featured: true }),
     loadProducts({ sort: 'discount' }),
   ]);
@@ -153,8 +155,9 @@ export default async function HomePage() {
   return (
     <main>
       <HomeHero />
-      <ProductSection title="New arrivals" href="/products?sort=newest" result={newest} />
+      <ProductSection title="New arrivals" href="/products?newArrival=true" result={newest} />
       <CategorySection result={categories} />
+      <ProductSection title="Best sellers" href="/products?bestSeller=true" result={bestSellers} />
       <ProductSection title="Featured" href="/products?featured=true" result={featured} />
       <ProductSection title="Special offers" href="/products?sort=discount" result={offers} />
       <WhyBrothers />
