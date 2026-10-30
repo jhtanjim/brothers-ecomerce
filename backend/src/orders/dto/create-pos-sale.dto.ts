@@ -1,8 +1,10 @@
-import { Type } from 'class-transformer';
+import { PaymentMethod } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
@@ -44,10 +46,23 @@ export class CreatePosSaleDto {
   @Type(() => PosSaleItemDto)
   items!: PosSaleItemDto[];
 
+  @IsEnum(PaymentMethod)
+  paymentMethod!: PaymentMethod;
+
+  /** Required for cash. */
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2, allowNaN: false, allowInfinity: false })
   @Min(0)
   @Max(MAX_PRICE)
-  cashReceived!: number;
+  cashReceived?: number;
+
+  /** Required for bKash and Nagad. Upper case, like online payments, so the same ID always matches. */
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toUpperCase() : value,
+  )
+  @Matches(/^[A-Z0-9]{6,30}$/, { message: 'transactionId must be 6 to 30 letters or numbers' })
+  transactionId?: string;
 
   /** Taka off the whole sale, on top of any product sale prices. */
   @IsOptional()

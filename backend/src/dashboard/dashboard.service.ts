@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { OrderStatus, PaymentStatus, Prisma, ProductStatus, Role } from '@prisma/client';
+import {
+  OrderChannel,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  Prisma,
+  ProductStatus,
+  Role,
+} from '@prisma/client';
 import { formatCents, toCents } from '../common/utils/money';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -13,6 +21,8 @@ const SALE_WHERE: Prisma.OrderWhereInput = {
   paymentStatus: PaymentStatus.APPROVED,
   status: { not: OrderStatus.CANCELLED },
 };
+
+const TOP_ITEMS = 10;
 
 function money(value: Prisma.Decimal | null): string {
   return formatCents(value === null ? 0 : toCents(value));
@@ -166,6 +176,72 @@ export class DashboardService {
   }
 
   /** Best sellers by units sold (Product.soldCount, indexed). */
+  /** One Dhaka calendar day. Online orders count on the day they were placed, once paid. */
+  async dailyReport(date?: string) {
+    const start = date
+      ? new Date(new Date(`${date}T00:00:00.000Z`).getTime() - DHAKA_OFFSET_MS)
+      : dhakaDayStart();
+    const end = new Date(start.getTime() + DAY_MS);
+
+    const [groups, cancelledPos, items] = await Promise.all([
+      this.prisma.$queryRaw<
+        { channel: OrderChannel; method: PaymentMethod; sales: number; total: Prisma.Decimal }[]
+      >`
+        SELECT o."channel", p."method", COUNT(*)::int AS sales, SUM(o."totalAmount") AS total
+        FROM "orders" o JOIN "payments" p ON p."orderId" = o."id"
+        WHERE o."paymentStatus" = 'APPROVED' AND o."status" <> 'CANCELLED'
+          AND o."createdAt" >= ${start} AND o."createdAt" < ${end}
+        GROUP BY o."channel", p."method"`,
+      this.prisma.order.aggregate({
+        where: {
+          channel: OrderChannel.POS,
+          status: OrderStatus.CANCELLED,
+          createdAt: { gte: start, lt: end },
+        },
+        _count: true,
+        _sum: { totalAmount: true },
+      }),
+      this.prisma.$queryRaw<
+        { productId: string; name: string; quantity: number; total: Prisma.Decimal }[]
+      >`
+        SELECT i."productId", MAX(i."productName") AS name,
+          SUM(i."quantity")::int AS quantity, SUM(i."totalPrice") AS total
+        FROM "order_items" i JOIN "orders" o ON o."id" = i."orderId"
+        WHERE o."paymentStatus" = 'APPROVED' AND o."status" <> 'CANCELLED'
+          AND o."createdAt" >= ${start} AND o."createdAt" < ${end}
+        GROUP BY i."productId"
+        ORDER BY quantity DESC, name ASC`,
+    ]);
+
+    const channelReport = (channel: OrderChannel) => {
+      const rows = groups.filter((row) => row.channel === channel);
+      return {
+        sales: rows.reduce((sum, row) => sum + row.sales, 0),
+        total: formatCents(rows.reduce((sum, row) => sum + toCents(row.total), 0)),
+        methods: rows.map((row) => ({
+          method: row.method,
+          sales: row.sales,
+          total: money(row.total),
+        })),
+      };
+    };
+
+    return {
+      date: dhakaDayLabel(start),
+      total: formatCents(groups.reduce((sum, row) => sum + toCents(row.total), 0)),
+      itemsSold: items.reduce((sum, item) => sum + item.quantity, 0),
+      pos: channelReport(OrderChannel.POS),
+      online: channelReport(OrderChannel.ONLINE),
+      cancelledPos: { sales: cancelledPos._count, total: money(cancelledPos._sum.totalAmount) },
+      topItems: items.slice(0, TOP_ITEMS).map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        quantity: item.quantity,
+        total: money(item.total),
+      })),
+    };
+  }
+
   async topProducts(limit: number) {
     const rows = await this.prisma.product.findMany({
       where: { status: ProductStatus.ACTIVE, soldCount: { gt: 0 } },

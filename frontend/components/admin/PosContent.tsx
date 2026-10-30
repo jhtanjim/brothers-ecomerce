@@ -7,12 +7,18 @@ import type { FormEvent } from 'react';
 import { getAdminProducts } from '@/lib/api/admin-products';
 import { createPosSale } from '@/lib/api/admin-pos';
 import { ApiError } from '@/lib/api/client';
-import type { AdminProduct, AdminProductVariant } from '@/lib/api/types';
+import type { AdminProduct, AdminProductVariant, PaymentMethod } from '@/lib/api/types';
 import { formatPrice, optionLabel } from '@/lib/format';
 
 const RESULT_LIMIT = 12;
 const SEARCH_DELAY_MS = 250;
 const MONEY_PATTERN = /^\d{1,10}(\.\d{1,2})?$/;
+const TRANSACTION_PATTERN = /^[A-Z0-9]{6,30}$/;
+const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
+  { value: 'CASH', label: 'Cash' },
+  { value: 'BKASH', label: 'bKash' },
+  { value: 'NAGAD', label: 'Nagad' },
+];
 const INPUT_CLASS =
   'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100';
 
@@ -116,7 +122,9 @@ export function PosContent() {
   const [searchError, setSearchError] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [discount, setDiscount] = useState('');
+  const [method, setMethod] = useState<PaymentMethod>('CASH');
   const [cash, setCash] = useState('');
+  const [transactionId, setTransactionId] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -200,6 +208,9 @@ export function PosContent() {
   const discountValid = discount === '' || MONEY_PATTERN.test(discount);
   const discountCents = discountValid && discount !== '' ? toCents(discount) : 0;
   const totalCents = Math.max(0, subtotalCents - discountCents);
+  const isCash = method === 'CASH';
+  const cleanTransactionId = transactionId.trim().toUpperCase();
+  const transactionValid = TRANSACTION_PATTERN.test(cleanTransactionId);
   const cashValid = MONEY_PATTERN.test(cash);
   const cashCents = cashValid ? toCents(cash) : 0;
   const changeCents = cashCents - totalCents;
@@ -207,8 +218,7 @@ export function PosContent() {
     lines.length > 0 &&
     discountValid &&
     discountCents <= subtotalCents &&
-    cashValid &&
-    changeCents >= 0 &&
+    (isCash ? cashValid && changeCents >= 0 : transactionValid) &&
     !submitting;
 
   async function onComplete() {
@@ -223,7 +233,8 @@ export function PosContent() {
             ...(line.variantId ? { variantId: line.variantId } : {}),
             quantity: line.quantity,
           })),
-          cashReceived: Number(cash),
+          paymentMethod: method,
+          ...(isCash ? { cashReceived: Number(cash) } : { transactionId: cleanTransactionId }),
           ...(discountCents > 0 ? { discount: Number(discount) } : {}),
           ...(customerName.trim() ? { customerName: customerName.trim() } : {}),
           ...(customerPhone.trim() ? { customerPhone: customerPhone.trim() } : {}),
@@ -340,7 +351,33 @@ export function PosContent() {
           </ul>
         )}
 
-        <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2">
+        <fieldset className="mt-4 border-t border-slate-200 pt-4">
+          <legend className="float-left mb-2 w-full text-sm font-medium text-slate-700">
+            Payment
+          </legend>
+          <div className="clear-both flex gap-2">
+            {PAYMENT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={method === option.value}
+                onClick={() => {
+                  setMethod(option.value);
+                  setError(null);
+                }}
+                className={`min-h-11 flex-1 border px-3 text-sm font-semibold ${
+                  method === option.value
+                    ? 'border-brand-950 bg-brand-950 text-white'
+                    : 'border-slate-300 text-slate-800 hover:border-brand-950'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="posName" className="mb-1 block text-sm font-medium text-slate-700">
               Customer name (optional)
@@ -378,18 +415,37 @@ export function PosContent() {
               className={INPUT_CLASS}
             />
           </div>
-          <div>
-            <label htmlFor="posCash" className="mb-1 block text-sm font-medium text-slate-700">
-              Cash received (BDT)
-            </label>
-            <input
-              id="posCash"
-              inputMode="decimal"
-              value={cash}
-              onChange={(e) => setCash(e.target.value.trim())}
-              className={INPUT_CLASS}
-            />
-          </div>
+          {isCash ? (
+            <div>
+              <label htmlFor="posCash" className="mb-1 block text-sm font-medium text-slate-700">
+                Cash received (BDT)
+              </label>
+              <input
+                id="posCash"
+                inputMode="decimal"
+                value={cash}
+                onChange={(e) => setCash(e.target.value.trim())}
+                className={INPUT_CLASS}
+              />
+            </div>
+          ) : (
+            <div>
+              <label
+                htmlFor="posTransaction"
+                className="mb-1 block text-sm font-medium text-slate-700"
+              >
+                Transaction ID
+              </label>
+              <input
+                id="posTransaction"
+                value={transactionId}
+                maxLength={30}
+                autoComplete="off"
+                onChange={(e) => setTransactionId(e.target.value)}
+                className={`${INPUT_CLASS} uppercase`}
+              />
+            </div>
+          )}
         </div>
 
         <dl className="mt-4 space-y-1 text-sm">
@@ -407,7 +463,7 @@ export function PosContent() {
             <dt>Total</dt>
             <dd>{formatPrice(fromCents(totalCents))}</dd>
           </div>
-          {cashValid && lines.length > 0 ? (
+          {isCash && cashValid && lines.length > 0 ? (
             <div
               className={`flex justify-between font-semibold ${
                 changeCents < 0 ? 'text-rose-700' : 'text-emerald-700'

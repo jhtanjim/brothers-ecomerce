@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { paymentMethodLabel } from '@/components/order/StatusBadges';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { getAdminOrder } from '@/lib/api/admin-orders';
 import { voidPosSale } from '@/lib/api/admin-pos';
@@ -93,6 +94,8 @@ export function PosReceiptContent({ id, autoPrint }: { id: string; autoPrint: bo
   }
 
   const cancelled = sale.status === 'CANCELLED';
+  const method = sale.payment?.method;
+  const transactionId = sale.payment?.submissions[0]?.transactionId;
   const change =
     sale.cashReceived !== null
       ? (Number(sale.cashReceived) - Number(sale.totalAmount)).toFixed(2)
@@ -220,6 +223,12 @@ export function PosReceiptContent({ id, autoPrint }: { id: string; autoPrint: bo
             <Row label="Cash" value={formatPrice(sale.cashReceived)} />
           ) : null}
           {change !== null ? <Row label="Change" value={formatPrice(change)} /> : null}
+          {method && method !== 'CASH' ? (
+            <>
+              <Row label="Paid by" value={paymentMethodLabel(method)} />
+              {transactionId ? <Row label="Transaction" value={transactionId} /> : null}
+            </>
+          ) : null}
         </dl>
 
         <p className="mt-3 border-t border-dashed border-black pt-2 text-center">

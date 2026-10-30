@@ -861,3 +861,23 @@ export interface DashboardTopProduct {
   soldCount: number;
   price: string;
 }
+
+// ---------------------------------------------------------------------------
+// Daily report (matches /admin/dashboard/daily)
+// ---------------------------------------------------------------------------
+
+export interface DailyReportChannel {
+  sales: number;
+  total: string;
+  methods: { method: PaymentMethod; sales: number; total: string }[];
+}
+
+export interface DailyReport {
+  date: string;
+  total: string;
+  itemsSold: number;
+  pos: DailyReportChannel;
+  online: DailyReportChannel;
+  cancelledPos: { sales: number; total: string };
+  topItems: { productId: string; name: string; quantity: number; total: string }[];
+}

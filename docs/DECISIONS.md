@@ -102,7 +102,7 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
 
 ## POS (owner, 2026-10-30)
 
-- **D39 — Counter sales are orders.** `Order.channel = POS`, status DELIVERED, paid in CASH, `userId` = the admin who sold. They share stock,
+- **D39 — Counter sales are orders.** `Order.channel = POS`, status DELIVERED, paid in cash, bKash or Nagad, `userId` = the admin who sold. They share stock,
   reports and order pages with online orders, and are left out of that admin's own order history. A counter discount is stored in
   `couponDiscount` with no coupon code. Only admins can sell; cancelling a sale restores stock and the cash refund is manual.
 

@@ -25,7 +25,7 @@ const IN_STORE = 'In store';
 /** Counter sales have no delivery. */
 const NO_DELIVERY = { homeCity: '', homeCityCharge: 0, otherCityCharge: 0, freeThreshold: null };
 
-/** Sales at the shop counter: paid in cash and handed over on the spot. */
+/** Sales at the shop counter: paid on the spot and handed over. */
 @Injectable()
 export class PosService {
   constructor(
@@ -54,6 +54,14 @@ export class PosService {
         return await this.adminOrders.findOne(orderId);
       } catch (error) {
         if (attempt < ORDER_NUMBER_MAX_ATTEMPTS && isOrderNumberCollision(error)) continue;
+        // Two sales raced with one ID: the database's unique index stopped the second.
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002' &&
+          String(error.meta?.target ?? '').includes('transactionId')
+        ) {
+          throw this.transactionUsed();
+        }
         throw error;
       }
     }
@@ -84,6 +92,26 @@ export class PosService {
       { timeout: TRANSACTION_TIMEOUT_MS, maxWait: TRANSACTION_MAX_WAIT_MS },
     );
     return this.adminOrders.findOne(id);
+  }
+
+  /** Same rule as online payments: an ID that was not rejected cannot be used again. */
+  private async assertTransactionUnused(
+    tx: Prisma.TransactionClient,
+    method: PaymentMethod,
+    transactionId: string,
+  ): Promise<void> {
+    const used = await tx.paymentTransaction.findFirst({
+      where: { method, transactionId, status: { not: PaymentStatus.REJECTED } },
+      select: { id: true },
+    });
+    if (used) throw this.transactionUsed();
+  }
+
+  private transactionUsed(): ConflictException {
+    return new ConflictException({
+      message: 'This transaction ID has already been used',
+      code: 'POS_TRANSACTION_ID_USED',
+    });
   }
 
   private async placeSale(
@@ -127,13 +155,22 @@ export class PosService {
     }
     const pricing = calculateOrderPricing(inputs, IN_STORE, NO_DELIVERY, discountCents);
 
-    const cashCents = toCents(dto.cashReceived);
-    if (cashCents < pricing.totalCents) {
+    const isCash = dto.paymentMethod === PaymentMethod.CASH;
+    const cashCents = isCash ? toCents(dto.cashReceived ?? 0) : null;
+    if (cashCents !== null && cashCents < pricing.totalCents) {
       throw new ConflictException({
         message: 'The cash received is less than the total',
         code: 'POS_CASH_TOO_LOW',
       });
     }
+    const transactionId = isCash ? null : dto.transactionId;
+    if (!isCash && !transactionId) {
+      throw new BadRequestException({
+        message: 'Enter the transaction ID',
+        code: 'POS_TRANSACTION_ID_REQUIRED',
+      });
+    }
+    if (transactionId) await this.assertTransactionUnused(tx, dto.paymentMethod, transactionId);
 
     const order = await tx.order.create({
       data: {
@@ -145,7 +182,7 @@ export class PosService {
         couponDiscount: formatCents(pricing.couponDiscountCents),
         deliveryCharge: formatCents(0),
         totalAmount: formatCents(pricing.totalCents),
-        cashReceived: formatCents(cashCents),
+        cashReceived: cashCents === null ? null : formatCents(cashCents),
         status: OrderStatus.DELIVERED,
         paymentStatus: PaymentStatus.APPROVED,
         shippingName: dto.customerName || WALK_IN_NAME,
@@ -184,9 +221,22 @@ export class PosService {
         },
         payment: {
           create: {
-            method: PaymentMethod.CASH,
+            method: dto.paymentMethod,
             amount: formatCents(pricing.totalCents),
             status: PaymentStatus.APPROVED,
+            ...(transactionId
+              ? {
+                  transactions: {
+                    create: {
+                      method: dto.paymentMethod,
+                      transactionId,
+                      status: PaymentStatus.APPROVED,
+                      reviewedById: adminId,
+                      reviewedAt: new Date(),
+                    },
+                  },
+                }
+              : {}),
           },
         },
       },

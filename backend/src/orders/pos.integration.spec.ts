@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
+import { DashboardService } from '../dashboard/dashboard.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import { createTestPrisma, resetDatabase } from '../test/db';
@@ -90,6 +91,7 @@ describe('POS sales (integration)', () => {
           { productId: watch, quantity: 1 },
         ],
         discount: 100,
+        paymentMethod: 'CASH',
         cashReceived: 2000,
       },
       randomUUID(),
@@ -115,7 +117,11 @@ describe('POS sales (integration)', () => {
 
   it('does not sell twice when the same sale is submitted again', async () => {
     const key = randomUUID();
-    const dto = { items: [{ productId: watch, quantity: 1 }], cashReceived: 500 };
+    const dto = {
+      items: [{ productId: watch, quantity: 1 }],
+      paymentMethod: 'CASH' as const,
+      cashReceived: 500,
+    };
     const first = await pos.createSale(adminId, dto, key);
     const second = await pos.createSale(adminId, dto, key);
     expect(second.id).toBe(first.id);
@@ -126,7 +132,7 @@ describe('POS sales (integration)', () => {
     await expect(
       pos.createSale(
         adminId,
-        { items: [{ productId: watch, quantity: 1 }], cashReceived: 499 },
+        { items: [{ productId: watch, quantity: 1 }], paymentMethod: 'CASH', cashReceived: 499 },
         randomUUID(),
       ),
     ).rejects.toMatchObject({ response: { code: 'POS_CASH_TOO_LOW' } });
@@ -138,7 +144,12 @@ describe('POS sales (integration)', () => {
     await expect(
       pos.createSale(
         adminId,
-        { items: [{ productId: watch, quantity: 1 }], discount: 501, cashReceived: 500 },
+        {
+          items: [{ productId: watch, quantity: 1 }],
+          discount: 501,
+          paymentMethod: 'CASH',
+          cashReceived: 500,
+        },
         randomUUID(),
       ),
     ).rejects.toMatchObject({ response: { code: 'POS_DISCOUNT_TOO_LARGE' } });
@@ -149,14 +160,14 @@ describe('POS sales (integration)', () => {
     await expect(
       pos.createSale(
         adminId,
-        { items: [{ productId: watch, quantity: 3 }], cashReceived: 5000 },
+        { items: [{ productId: watch, quantity: 3 }], paymentMethod: 'CASH', cashReceived: 5000 },
         randomUUID(),
       ),
     ).rejects.toMatchObject({ response: { code: 'INSUFFICIENT_STOCK' } });
     await expect(
       pos.createSale(
         adminId,
-        { items: [{ productId: shirt, quantity: 1 }], cashReceived: 5000 },
+        { items: [{ productId: shirt, quantity: 1 }], paymentMethod: 'CASH', cashReceived: 5000 },
         randomUUID(),
       ),
     ).rejects.toMatchObject({ response: { code: 'OPTION_REQUIRED' } });
@@ -168,6 +179,7 @@ describe('POS sales (integration)', () => {
             { productId: watch, quantity: 1 },
             { productId: watch, quantity: 1 },
           ],
+          paymentMethod: 'CASH',
           cashReceived: 5000,
         },
         randomUUID(),
@@ -180,7 +192,11 @@ describe('POS sales (integration)', () => {
   it('voids a sale and restores stock and sold count', async () => {
     const sale = await pos.createSale(
       adminId,
-      { items: [{ productId: shirt, variantId: medium, quantity: 2 }], cashReceived: 1600 },
+      {
+        items: [{ productId: shirt, variantId: medium, quantity: 2 }],
+        paymentMethod: 'CASH',
+        cashReceived: 1600,
+      },
       randomUUID(),
     );
     const voided = await pos.voidSale(adminId, sale.id, 'Customer changed mind', null);
@@ -192,5 +208,62 @@ describe('POS sales (integration)', () => {
     await expect(pos.voidSale(adminId, sale.id, 'Again please', null)).rejects.toMatchObject({
       response: { code: 'ORDER_NOT_CANCELLABLE' },
     });
+  });
+
+  it('takes bKash with a transaction ID, which cannot be used twice', async () => {
+    const dto = {
+      items: [{ productId: watch, quantity: 1 }],
+      paymentMethod: 'BKASH' as const,
+      transactionId: 'ABC12345',
+    };
+    const sale = await pos.createSale(adminId, dto, randomUUID());
+    expect(sale).toMatchObject({
+      cashReceived: null,
+      payment: { method: 'BKASH', status: 'APPROVED' },
+    });
+    expect(sale.payment?.submissions[0]?.transactionId).toBe('ABC12345');
+
+    await expect(pos.createSale(adminId, dto, randomUUID())).rejects.toMatchObject({
+      response: { code: 'POS_TRANSACTION_ID_USED' },
+    });
+    await expect(
+      pos.createSale(
+        adminId,
+        { items: [{ productId: watch, quantity: 1 }], paymentMethod: 'NAGAD' },
+        randomUUID(),
+      ),
+    ).rejects.toMatchObject({ response: { code: 'POS_TRANSACTION_ID_REQUIRED' } });
+    expect(await stockOf(watch)).toBe(1);
+  });
+
+  it('reports a day by channel and method, leaving out cancelled sales', async () => {
+    const buy = (data: object) =>
+      pos.createSale(
+        adminId,
+        { items: [{ productId: watch, quantity: 1 }], ...data } as never,
+        randomUUID(),
+      );
+    await buy({ paymentMethod: 'CASH', cashReceived: 500 });
+    await buy({ paymentMethod: 'BKASH', transactionId: 'REPORT001' });
+
+    const dashboard = new DashboardService(prisma as unknown as PrismaService);
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka' }).format(new Date());
+    const report = await dashboard.dailyReport(today);
+    expect(report).toMatchObject({ total: '1000.00', itemsSold: 2 });
+    expect(report.pos.methods).toEqual(
+      expect.arrayContaining([
+        { method: 'CASH', sales: 1, total: '500.00' },
+        { method: 'BKASH', sales: 1, total: '500.00' },
+      ]),
+    );
+    expect(report.topItems[0]).toMatchObject({ name: 'Watch', quantity: 2, total: '1000.00' });
+
+    const sold = await prisma.order.findFirstOrThrow({ where: { cashReceived: { not: null } } });
+    await pos.voidSale(adminId, sold.id, 'Returned', null);
+    const after = await dashboard.dailyReport(today);
+    expect(after.total).toBe('500.00');
+    expect(after.cancelledPos).toEqual({ sales: 1, total: '500.00' });
+
+    expect((await dashboard.dailyReport('2020-01-01')).total).toBe('0.00');
   });
 });

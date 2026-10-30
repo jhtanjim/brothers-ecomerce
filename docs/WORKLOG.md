@@ -342,3 +342,15 @@ Template:
   scan-style add, discount, change, sale, receipt, cancel restores stock; test data removed.
 - Limitations: cash only, admin login only, whole-sale cancel only, needs internet. Not tried on a real 80mm printer or scanner.
 - Next step: test on the shop's printer; finish deployment (Render `DATABASE_URL`).
+
+## 2026-10-30 — POS bKash/Nagad and daily report
+
+- Objective: take mobile payments at the counter and check sales at closing.
+- Files changed: `orders/pos.service.ts`, `create-pos-sale.dto.ts`, `dashboard.service.ts` (`dailyReport`), `PosContent`,
+  `PosReceiptContent`, `DailyReportContent`, `app/admin/reports`. No migration.
+- Behaviour: bKash and Nagad need a transaction ID, recorded as an approved `PaymentTransaction`, so an ID cannot be reused online
+  or in the shop. Report at `/admin/reports` groups one Dhaka day by channel and method.
+- Tested: backend vitest 17 files / 156 tests, typecheck, lint, builds. Browser: bKash sale, repeated ID refused, cash sale, report
+  totals; test data removed.
+- Limitations: staff check the bKash/Nagad payment on their own phone; the system does not verify it. Report has no opening cash.
+- Next step: exchanges and returns (needs a migration).

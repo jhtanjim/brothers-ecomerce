@@ -1,9 +1,13 @@
 import { apiFetch } from './client';
-import type { AdminOrderDetail } from './types';
+import type { AdminOrderDetail, PaymentMethod } from './types';
 
 export interface PosSaleInput {
   items: { productId: string; variantId?: string; quantity: number }[];
-  cashReceived: number;
+  paymentMethod: PaymentMethod;
+  /** Cash only. */
+  cashReceived?: number;
+  /** bKash and Nagad only. */
+  transactionId?: string;
   discount?: number;
   customerName?: string;
   customerPhone?: string;
