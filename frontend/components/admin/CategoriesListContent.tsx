@@ -327,7 +327,7 @@ export function CategoriesListContent() {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            className={` px-2 py-0.5 text-xs font-medium ${
                               category.status === 'ACTIVE'
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : 'bg-slate-100 text-slate-600'

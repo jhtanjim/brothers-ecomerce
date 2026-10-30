@@ -294,3 +294,16 @@ Template:
   pharmacy hero), `app/layout.tsx` (Figtree), `.env.example`, docs.
 - Limitations: no prescription flow, expiry or batch tracking; prescription medicines must not be sold yet (Q12).
 - Next step: owner reviews hero wording; Geton specs.
+
+## 2026-10-30 — BROTHERS storefront design
+
+- Objective: turn the store into BROTHERS, a single men's fashion brand (D37), with multi-tenant work parked.
+- Files changed: `frontend/lib/store.ts`, `tailwind.config.ts`, `app/layout.tsx`, `app/(store)/page.tsx`,
+  `components/home/HomeHero.tsx` (replaces `StoreHero.tsx`), `components/layout/{Header,Footer}.tsx`, `ProductCard`,
+  `SectionHeading`; pill shapes squared across `app/` and `components/`.
+- Tested: browser, phone-width pane: home, listing, product, sign-in, cart, checkout, placed a bKash order to the payment
+  step. Dev DB gained one `brothers-test-*@example.test` customer and unpaid order ORD-20261030-R585B3 (1 jeans reserved
+  until it expires on 31 Oct).
+- Limitations: no schema change yet, so no sizes, colours, subcategories or material. Homepage shows the sample catalog.
+  Admin was restyled only by the shared tokens, and was not opened in the browser.
+- Next step: owner approves the catalog migration.

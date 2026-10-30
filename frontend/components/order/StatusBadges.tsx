@@ -31,9 +31,7 @@ export function paymentMethodLabel(method: PaymentMethod): string {
 
 function Badge({ label, className }: { label: string; className: string }) {
   return (
-    <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${className}`}>
-      {label}
-    </span>
+    <span className={`inline-block px-2.5 py-1 text-xs font-semibold ${className}`}>{label}</span>
   );
 }
 

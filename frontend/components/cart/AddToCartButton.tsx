@@ -29,7 +29,7 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
       <button
         type="button"
         disabled
-        className="mt-4 h-12 w-full cursor-not-allowed rounded-full bg-slate-200 px-6 text-sm font-semibold text-slate-500"
+        className="mt-4 h-12 w-full cursor-not-allowed bg-slate-200 px-6 text-sm font-semibold text-slate-500"
       >
         Out of stock
       </button>
@@ -68,13 +68,13 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
   return (
     <div className="mt-4">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex h-12 items-center rounded-full border border-slate-300">
+        <div className="flex h-12 items-center border border-slate-300">
           <button
             type="button"
             aria-label="Decrease quantity"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             disabled={quantity <= 1}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+            className="flex h-11 w-11 items-center justify-center text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
           >
             -
           </button>
@@ -86,7 +86,7 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
             aria-label="Increase quantity"
             onClick={() => setQuantity((q) => Math.min(max, q + 1))}
             disabled={quantity >= max}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+            className="flex h-11 w-11 items-center justify-center text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
           >
             +
           </button>
@@ -96,7 +96,7 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
           type="button"
           onClick={() => void onAdd('add')}
           disabled={busy !== null || authStatus === 'loading'}
-          className="h-12 flex-1 rounded-full bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 sm:flex-none"
+          className="h-12 flex-1 bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 sm:flex-none"
         >
           {busy === 'add' ? 'Adding...' : 'Add to cart'}
         </button>
@@ -104,7 +104,7 @@ export function AddToCartButton({ productId, slug, stockQuantity }: AddToCartBut
           type="button"
           onClick={() => void onAdd('buy')}
           disabled={busy !== null || authStatus === 'loading'}
-          className="h-12 w-full rounded-full border border-slate-900 px-6 text-sm font-semibold text-slate-900 hover:bg-slate-900 hover:text-white disabled:opacity-60 sm:w-auto"
+          className="h-12 w-full border border-slate-900 px-6 text-sm font-semibold text-slate-900 hover:bg-slate-900 hover:text-white disabled:opacity-60 sm:w-auto"
         >
           {busy === 'buy' ? 'Adding...' : 'Buy now'}
         </button>

@@ -391,7 +391,7 @@ export function ProductsListContent() {
                               <p className="font-medium text-slate-900">
                                 {product.name}
                                 {product.featured ? (
-                                  <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                                  <span className="ml-2 bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
                                     Featured
                                   </span>
                                 ) : null}
@@ -426,9 +426,7 @@ export function ProductsListContent() {
                           {product.soldCount}
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
-                          >
+                          <span className={` px-2 py-0.5 text-xs font-medium ${badge.className}`}>
                             {badge.label}
                           </span>
                         </td>

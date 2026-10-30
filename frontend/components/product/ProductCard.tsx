@@ -2,7 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PriceDisplay } from '@/components/product/PriceDisplay';
 import type { ProductListItem } from '@/lib/api/types';
-import { store } from '@/lib/store';
 
 /** Storefront display rule only: the public API does not expose each product's own threshold. */
 const LOW_STOCK_HINT_AT = 5;
@@ -14,7 +13,7 @@ interface ProductCardProps {
 /** Shown when a product has no image yet: calm and clearly intentional, never a broken image. */
 function ImagePlaceholder({ name }: { name: string }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400">
+    <div className="flex h-full flex-col items-center justify-center gap-2 bg-brand-100 text-brand-400">
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -37,20 +36,13 @@ export function ProductCard({ product }: ProductCardProps) {
   const outOfStock = product.stockQuantity <= 0;
   const lowStock = !outOfStock && product.stockQuantity <= LOW_STOCK_HINT_AT;
   const hasDiscount = product.discountPrice !== null && product.discountPercent > 0;
-  const editorial = store.layout === 'editorial';
 
   return (
     <Link
       href={`/products/${product.slug}`}
-      className={`group flex w-full flex-col overflow-hidden bg-white transition ${
-        editorial
-          ? ''
-          : 'rounded-xl border border-slate-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-card'
-      }`}
+      className="group flex w-full flex-col overflow-hidden bg-white"
     >
-      <div
-        className={`relative overflow-hidden bg-slate-100 ${editorial ? 'aspect-[3/4]' : 'aspect-square'}`}
-      >
+      <div className="relative aspect-[3/4] overflow-hidden bg-brand-100">
         {product.primaryImage ? (
           <Image
             src={product.primaryImage.url}
@@ -66,24 +58,22 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
         <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
           {outOfStock ? (
-            <span className="rounded-full bg-slate-900/85 px-2.5 py-1 text-xs font-semibold text-white">
+            <span className="bg-brand-950 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-white">
               Sold out
             </span>
           ) : hasDiscount ? (
-            <span className="rounded-full bg-rose-600 px-2.5 py-1 text-xs font-bold text-white">
+            <span className="bg-rose-700 px-2 py-1 text-xs font-semibold text-white">
               -{product.discountPercent}%
             </span>
           ) : null}
         </div>
       </div>
 
-      <div className={`flex flex-1 flex-col gap-1 ${editorial ? 'px-0.5 pt-3' : 'p-3 sm:p-4'}`}>
-        {editorial ? null : (
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            {product.category.name}
-          </span>
-        )}
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 group-hover:text-brand-700 sm:text-base">
+      <div className="flex flex-1 flex-col gap-1 pt-3">
+        <span className="text-xs font-medium uppercase tracking-wider text-brand-500">
+          {product.category.name}
+        </span>
+        <h3 className="line-clamp-2 font-sans text-sm font-medium leading-snug text-slate-900 group-hover:underline sm:text-base">
           {product.name}
         </h3>
         <div className="mt-auto pt-2">

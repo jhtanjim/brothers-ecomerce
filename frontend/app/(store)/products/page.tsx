@@ -125,7 +125,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   <Link
                     href={buildProductsHref(query, { category: category.slug, page: 1 })}
                     aria-current={active ? 'page' : undefined}
-                    className={`inline-flex h-10 items-center rounded-full border px-4 text-sm font-medium ${
+                    className={`inline-flex h-10 items-center border px-4 text-sm font-medium ${
                       active
                         ? 'border-brand-600 bg-brand-600 text-white'
                         : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
@@ -157,7 +157,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <li key={chip.label}>
               <Link
                 href={chip.href}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-brand-50 px-3 text-sm font-medium text-brand-800 hover:bg-brand-100"
+                className="inline-flex h-8 items-center gap-1.5 bg-brand-50 px-3 text-sm font-medium text-brand-800 hover:bg-brand-100"
               >
                 {chip.label}
                 <span aria-hidden="true">&times;</span>

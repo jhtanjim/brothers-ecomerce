@@ -1,12 +1,10 @@
 # Session state
 
-Updated: **2026-10-30** — multi-store work started (D36): store profiles done, uncommitted.
+Updated: **2026-10-30** — BROTHERS storefront design on branch `feat/brothers-fashion-store`.
 
 ## Current status
 
-- Git: branch `main`, no remote. Sprint committed 2026-10-29 as 6 focused commits (`3e6037b`..`3ee1eeb`:
-  auth fix, setup checks, API, storefront, admin pages, docs). Working tree clean except the untracked
-  `.claude/launch.json` (kept out of commits).
+- Git: branch `feat/brothers-fashion-store`, no remote, so not pushed. `.claude/launch.json` stays out of commits.
 - Checks (2026-10-29): typecheck + lint both apps, `prettier --check .`, backend `npx vitest run` 15 files / 137
   tests, `npm run build` (no warnings), `npm run db:check` — all pass.
 - Launch readiness: ready for local testing; NOT ready for staging/real customers — see `docs/LAUNCH-CHECKLIST.md`.
@@ -22,13 +20,13 @@ Updated: **2026-10-30** — multi-store work started (D36): store profiles done,
 
 ## Exact next action
 
-Multi-store plan (D36), stores: Geton (gadgets), Iliyan (menswear), Shatkania Pharmacy. (1) ~~store profiles, theme,
-fonts, hero and card variants~~; (2) owner reviews hero wording and supplies logos for `frontend/lib/store.ts`; (3) per-store listing and product page details, gadget specs;
-(4) clothing size/colour variants (needs a Prisma migration: ask first; touches cart, checkout, orders);
-(5) deployment per store. Launch Geton, then Iliyan, then Shatkania. **Do not sell prescription medicines online until a prescription flow
-exists and the owner has confirmed licence and online-sale rules with DGDA (Q12).** Q7/Q8 still open.
+BROTHERS (D37). Done: brand, header, homepage, footer, design tokens. Next: (1) owner approves the catalog migration
+(subcategories, sizes/colours with per-variant stock, material, new/bestseller flags; touches cart, checkout, orders);
+(2) build the listing filters, product page options and admin screens on it; (3) owner supplies real products, photos,
+policies, contact and social details, then replaces the sample catalog; (4) add a remote and push the branch. Q7/Q8 still open.
 
-Run a store locally: `frontend` (Geton), `frontend-iliyan` or `frontend-shatkania` in `.claude/launch.json`; not both at once.
+Multi-tenant phase 1 is parked in `git stash` ("multi-tenant phase 1"); it is not on this branch. The `_test` DB still
+has its migration applied (nullable columns plus a `_prisma_migrations` row); harmless to tests, may show in status.
 
 ## Inspect first next time
 

@@ -2,9 +2,9 @@ import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
 
 /**
- * Design tokens. `brand` is the single accent colour used for actions, links and focus rings
- * across the storefront and the admin; its values come from the store profile (lib/store.ts).
- * Neutrals are Tailwind's `slate`; status colours use emerald (success), amber (warning) and rose (error / discount).
+ * BROTHERS design tokens. `brand` is warm ink used for actions, links and focus rings; `accent`
+ * is brass for small highlights on dark backgrounds. Status colours stay emerald, amber and rose.
+ * Corners are deliberately sharp.
  */
 const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
@@ -12,22 +12,31 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: 'rgb(var(--brand-50) / <alpha-value>)',
-          100: 'rgb(var(--brand-100) / <alpha-value>)',
-          200: 'rgb(var(--brand-200) / <alpha-value>)',
-          300: 'rgb(var(--brand-300) / <alpha-value>)',
-          400: 'rgb(var(--brand-400) / <alpha-value>)',
-          500: 'rgb(var(--brand-500) / <alpha-value>)',
-          600: 'rgb(var(--brand-600) / <alpha-value>)',
-          700: 'rgb(var(--brand-700) / <alpha-value>)',
-          800: 'rgb(var(--brand-800) / <alpha-value>)',
-          900: 'rgb(var(--brand-900) / <alpha-value>)',
-          950: 'rgb(var(--brand-950) / <alpha-value>)',
+          50: '#f7f5f2',
+          100: '#ece9e3',
+          200: '#d8d3cb',
+          300: '#bab4aa',
+          400: '#8c867d',
+          500: '#625d56',
+          600: '#262421',
+          700: '#1c1b19',
+          800: '#141413',
+          900: '#0e0e0d',
+          950: '#080807',
         },
+        accent: '#c9a25f',
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'var(--font-bengali)', ...defaultTheme.fontFamily.sans],
         display: ['var(--font-display)', 'var(--font-bengali)', ...defaultTheme.fontFamily.sans],
+      },
+      borderRadius: {
+        sm: '1px',
+        md: '2px',
+        lg: '2px',
+        xl: '2px',
+        '2xl': '2px',
+        '3xl': '2px',
       },
       boxShadow: {
         card: '0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.08)',

@@ -180,14 +180,14 @@ export function CartPageContent() {
         {cart.hasIssues ? (
           <p
             role="status"
-            className="mt-5 rounded-full bg-slate-100 px-6 py-3 text-center text-sm font-semibold text-slate-500"
+            className="mt-5 bg-slate-100 px-6 py-3 text-center text-sm font-semibold text-slate-500"
           >
             Fix the items above to check out
           </p>
         ) : (
           <Link
             href="/checkout"
-            className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700"
+            className="mt-5 flex h-12 w-full items-center justify-center bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700"
           >
             Proceed to checkout
           </Link>

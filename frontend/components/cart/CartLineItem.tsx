@@ -81,13 +81,13 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
           </div>
 
           <div className="mt-auto flex flex-wrap items-center gap-3">
-            <div className="flex h-12 items-center rounded-full border border-slate-300">
+            <div className="flex h-12 items-center border border-slate-300">
               <button
                 type="button"
                 aria-label={`Decrease quantity of ${line.name}`}
                 onClick={() => onChangeQuantity(line, Math.min(line.quantity - 1, max))}
                 disabled={!canDecrease}
-                className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                className="flex h-11 w-11 items-center justify-center text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
               >
                 -
               </button>
@@ -102,7 +102,7 @@ export function CartLineItem({ line, busy, onChangeQuantity, onRemove }: CartLin
                 aria-label={`Increase quantity of ${line.name}`}
                 onClick={() => onChangeQuantity(line, line.quantity + 1)}
                 disabled={!canIncrease}
-                className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                className="flex h-11 w-11 items-center justify-center text-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"
               >
                 +
               </button>

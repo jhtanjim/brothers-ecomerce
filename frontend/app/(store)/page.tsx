@@ -1,15 +1,15 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { StoreHero } from '@/components/home/StoreHero';
+import { HomeHero } from '@/components/home/HomeHero';
 import { ProductGrid } from '@/components/product/ProductGrid';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { getCategories } from '@/lib/api/categories';
 import { getProducts, type ProductListParams } from '@/lib/api/products';
 import type { CategorySummary, ProductListItem } from '@/lib/api/types';
+import { store } from '@/lib/store';
 
 const SECTION_SIZE = 8;
-const HERO_PICKS = 3;
 
 type Loaded<T> = { ok: true; data: T } | { ok: false };
 
@@ -25,166 +25,138 @@ async function loadProducts(params: ProductListParams): Promise<Loaded<ProductLi
   return load(getProducts({ ...params, limit: SECTION_SIZE }).then((result) => result.items));
 }
 
-interface ProductSectionProps {
-  title: string;
-  href: string;
-  result: Loaded<ProductListItem[]>;
-  /** When true, an empty section is hidden instead of showing an empty state. */
-  hideWhenEmpty?: boolean;
-  emptyTitle?: string;
-}
-
+/** Sections with no real products hide themselves, so the page never shows empty promises. */
 function ProductSection({
   title,
   href,
   result,
-  hideWhenEmpty = false,
-  emptyTitle,
-}: ProductSectionProps) {
-  if (result.ok && result.data.length === 0 && hideWhenEmpty) return null;
-
+}: {
+  title: string;
+  href: string;
+  result: Loaded<ProductListItem[]>;
+}) {
+  if (result.ok && result.data.length === 0) return null;
   return (
-    <section className="mt-14 sm:mt-20">
+    <section className="mx-auto mt-16 max-w-7xl px-4 sm:mt-24 sm:px-6 lg:px-8">
       <SectionHeading title={title} href={href} />
-      {!result.ok ? (
-        <ErrorState />
-      ) : result.data.length === 0 ? (
-        <EmptyState title={emptyTitle ?? 'Nothing here yet'} message="Please check back soon." />
-      ) : (
-        <ProductGrid products={result.data} />
-      )}
+      {result.ok ? <ProductGrid products={result.data} /> : <ErrorState />}
     </section>
   );
+}
+
+/** next/image only allows Cloudinary here; other category image URLs fall back to the type tile. */
+function categoryImage(category: CategorySummary): string | null {
+  return category.imageUrl?.startsWith('https://res.cloudinary.com/') ? category.imageUrl : null;
 }
 
 function CategorySection({ result }: { result: Loaded<CategorySummary[]> }) {
   if (result.ok && result.data.length === 0) return null;
-
   return (
-    <section className="mt-14 sm:mt-20">
-      <SectionHeading title="Shop by category" href="/products" linkLabel="All products" />
-      {!result.ok ? (
-        <ErrorState />
-      ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
-          {result.data.map((category) => (
-            <li key={category.id}>
-              <Link
-                href={`/products?category=${encodeURIComponent(category.slug)}`}
-                className="group flex h-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-brand-300 hover:shadow-card"
-              >
-                <span
-                  aria-hidden="true"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-lg font-bold text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white"
+    <section className="mx-auto mt-16 max-w-7xl px-4 sm:mt-24 sm:px-6 lg:px-8">
+      <SectionHeading title="Shop by category" href="/products" linkLabel="View all" />
+      {result.ok ? (
+        <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {result.data.map((category) => {
+            const image = categoryImage(category);
+            return (
+              <li key={category.id}>
+                <Link
+                  href={`/products?category=${encodeURIComponent(category.slug)}`}
+                  className="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden bg-brand-100 p-4 sm:p-6"
                 >
-                  {category.name.charAt(0)}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate font-semibold text-slate-900">
+                  {image ? (
+                    <>
+                      <Image
+                        src={image}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 25vw, 50vw"
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <span className="absolute inset-0 bg-brand-950/30" aria-hidden="true" />
+                    </>
+                  ) : null}
+                  <span
+                    className={`relative font-display text-3xl font-semibold uppercase leading-none sm:text-4xl ${
+                      image ? 'text-white' : 'text-brand-950'
+                    }`}
+                  >
                     {category.name}
                   </span>
-                  <span className="text-xs text-slate-500">
-                    {category.productCount} {category.productCount === 1 ? 'product' : 'products'}
+                  <span
+                    className={`relative mt-2 text-xs font-medium uppercase tracking-wider ${
+                      image ? 'text-white' : 'text-brand-500'
+                    }`}
+                  >
+                    Shop now &rarr;
                   </span>
-                </span>
-              </Link>
-            </li>
-          ))}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
+      ) : (
+        <ErrorState />
       )}
     </section>
   );
 }
 
-const STEPS = [
+/** Only statements true of the current ordering flow. */
+const PROMISES = [
   {
-    title: 'Place your order',
-    text: 'Add products to your cart, enter your delivery address and choose bKash or Nagad.',
+    title: 'Pay your way',
+    text: 'Pay with bKash or Nagad, then submit your transaction ID on the order page.',
   },
   {
-    title: 'Send the payment',
-    text: 'Pay the order total to our merchant number, then submit your transaction ID on the order page.',
+    title: 'No surprise charges',
+    text: 'Your delivery charge and final total are shown at checkout before you order.',
   },
   {
-    title: 'We verify and deliver',
-    text: 'We confirm your payment, pack your order and you can follow every step from My orders.',
+    title: 'Always know where it is',
+    text: 'Follow every order from payment check to delivery in your account.',
   },
 ];
 
-function HowItWorks() {
+function WhyBrothers() {
   return (
-    <section
-      aria-labelledby="howItWorks"
-      className="mt-14 rounded-2xl bg-slate-50 p-6 sm:mt-20 sm:p-10"
-    >
-      <h2
-        id="howItWorks"
-        className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl"
-      >
-        How ordering works
-      </h2>
-      <ol className="mt-6 grid gap-6 sm:grid-cols-3">
-        {STEPS.map((step, index) => (
-          <li key={step.title} className="flex gap-4">
-            <span
-              aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white"
-            >
-              {index + 1}
-            </span>
-            <div>
-              <h3 className="font-semibold text-slate-900">{step.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-slate-600">{step.text}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+    <section className="mt-16 bg-brand-950 text-white sm:mt-24">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <h2 className="text-4xl font-semibold uppercase sm:text-5xl">Why {store.name}</h2>
+        <ul className="mt-10 grid gap-8 sm:grid-cols-3">
+          {PROMISES.map((item) => (
+            <li key={item.title} className="border-t border-white/25 pt-5">
+              <h3 className="text-2xl font-semibold uppercase">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-brand-200">{item.text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
 
 export default async function HomePage() {
-  const [categories, featured, newest, deals] = await Promise.all([
+  const [categories, newest, featured, deals] = await Promise.all([
     load(getCategories()),
-    loadProducts({ featured: true }),
     loadProducts({ sort: 'newest' }),
+    loadProducts({ featured: true }),
     loadProducts({ sort: 'discount' }),
   ]);
 
   // The "discount" sort puts discounted items first; keep only items that really have a discount.
-  const discounted: Loaded<ProductListItem[]> = deals.ok
+  const offers: Loaded<ProductListItem[]> = deals.ok
     ? { ok: true, data: deals.data.filter((product) => product.discountPercent > 0) }
     : deals;
 
-  const pickSource = featured.ok && featured.data.length > 0 ? featured : newest;
-  const picks = pickSource.ok
-    ? pickSource.data.filter((product) => product.stockQuantity > 0).slice(0, HERO_PICKS)
-    : [];
-
   return (
-    <main className="mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 lg:px-8">
-      <StoreHero picks={picks} />
-
+    <main>
+      <HomeHero />
+      <ProductSection title="New arrivals" href="/products?sort=newest" result={newest} />
       <CategorySection result={categories} />
-      <ProductSection
-        title="Featured products"
-        href="/products?featured=true"
-        result={featured}
-        hideWhenEmpty
-      />
-      <ProductSection
-        title="Deals"
-        href="/products?sort=discount"
-        result={discounted}
-        hideWhenEmpty
-      />
-      <ProductSection
-        title="New arrivals"
-        href="/products?sort=newest"
-        result={newest}
-        emptyTitle="No products yet"
-      />
-      <HowItWorks />
+      <ProductSection title="Featured" href="/products?featured=true" result={featured} />
+      <ProductSection title="Special offers" href="/products?sort=discount" result={offers} />
+      <WhyBrothers />
     </main>
   );
 }

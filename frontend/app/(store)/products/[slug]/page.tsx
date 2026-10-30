@@ -53,9 +53,7 @@ function StockStatus({ stockQuantity }: { stockQuantity: number }) {
         ? [`Only ${stockQuantity} left in stock`, 'bg-amber-50 text-amber-800']
         : ['In stock', 'bg-emerald-50 text-emerald-700'];
   return (
-    <p
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${className}`}
-    >
+    <p className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold ${className}`}>
       <span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />
       {label}
     </p>

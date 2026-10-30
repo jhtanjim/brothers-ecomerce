@@ -179,7 +179,7 @@ export function ProductImagesManager({
                     className="object-cover"
                   />
                   {image.isPrimary ? (
-                    <span className="absolute left-2 top-2 rounded-full bg-brand-600 px-2 py-0.5 text-xs font-medium text-white">
+                    <span className="absolute left-2 top-2 bg-brand-600 px-2 py-0.5 text-xs font-medium text-white">
                       Primary
                     </span>
                   ) : null}

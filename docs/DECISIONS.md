@@ -88,7 +88,10 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
 
 - **D36 — One codebase, one deployment per store.** Each store has its own domain, API process, database, admin and
   settings. `NEXT_PUBLIC_STORE_ID` (build time) picks a profile in `frontend/lib/store.ts` (name, wording, palette,
-  layout, fonts); an unknown id fails the build. No shared multi-tenant database.
+  layout, fonts); an unknown id fails the build. No shared multi-tenant database. **Replaced by D37 for now.**
+- **D37 — Single store: BROTHERS (owner, 2026-10-30).** A men's fashion store. No tenant IDs, tenant resolution, tenant
+  billing or per-store switching. Brand details live in `frontend/lib/store.ts`; palette and fonts in
+  `tailwind.config.ts` and `app/layout.tsx`.
 
 ## Workflow (owner answers, 2026-10-29)
 

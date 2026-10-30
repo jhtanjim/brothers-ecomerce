@@ -168,7 +168,7 @@ function AddressForm({
         <button
           type="submit"
           disabled={busy}
-          className="h-11 rounded-full bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+          className="h-11 bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
         >
           {busy ? 'Saving...' : submitLabel}
         </button>
@@ -176,7 +176,7 @@ function AddressForm({
           type="button"
           onClick={onCancel}
           disabled={busy}
-          className="h-11 rounded-full border border-slate-300 px-6 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="h-11 border border-slate-300 px-6 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
           Cancel
         </button>
@@ -289,7 +289,7 @@ export function AddressBookContent() {
               setNotice(null);
               setEditor({ mode: 'new' });
             }}
-            className="h-11 rounded-full bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-11 bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Add address
           </button>
@@ -370,7 +370,7 @@ export function AddressBookContent() {
               <div className="flex items-start justify-between gap-3">
                 <p className="font-semibold text-slate-900">{address.fullName}</p>
                 {address.isDefault ? (
-                  <span className="shrink-0 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
+                  <span className="shrink-0 bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
                     Default
                   </span>
                 ) : null}

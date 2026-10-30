@@ -5,6 +5,7 @@ import { MobileMenu } from '@/components/layout/MobileMenu';
 import { getCategories } from '@/lib/api/categories';
 import type { CategorySummary } from '@/lib/api/types';
 import { SITE_NAME } from '@/lib/format';
+import { store } from '@/lib/store';
 
 /** The header must never break the whole site if the API is down. */
 async function loadCategories(): Promise<CategorySummary[]> {
@@ -40,11 +41,11 @@ function SearchForm({ id, className }: { id: string; className: string }) {
           name="search"
           maxLength={100}
           placeholder="Search for products"
-          className="h-11 w-full rounded-full border border-slate-300 bg-slate-50 pl-10 pr-24 text-sm outline-none transition focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-100"
+          className="h-11 w-full border border-brand-200 bg-brand-50 pl-10 pr-24 text-sm outline-none transition focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-100"
         />
         <button
           type="submit"
-          className="absolute right-1 top-1 h-9 rounded-full bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700"
+          className="absolute right-1 top-1 h-9 bg-brand-950 px-4 text-sm font-semibold text-white hover:bg-brand-700"
         >
           Search
         </button>
@@ -57,66 +58,72 @@ export async function Header() {
   const categories = await loadCategories();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="bg-brand-900 text-brand-50">
-        <p className="mx-auto max-w-7xl px-4 py-1.5 text-center text-xs sm:px-6 lg:px-8">
-          Pay with <span className="font-semibold">bKash</span> or{' '}
-          <span className="font-semibold">Nagad</span>
-          <span className="hidden sm:inline"> &middot; Track every order from your account</span>
-        </p>
-      </div>
-
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 md:gap-6 lg:px-8">
-        <MobileMenu categories={categories} />
-
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-base font-extrabold text-white"
-          >
-            {SITE_NAME.charAt(0)}
-          </span>
-          <span className="text-base font-bold tracking-tight text-slate-900 sm:text-lg">
-            {SITE_NAME}
-          </span>
-        </Link>
-
-        <SearchForm id="headerSearch" className="hidden flex-1 md:flex md:max-w-xl lg:ml-4" />
-
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <div className="hidden md:block">
-            <HeaderActions />
-          </div>
-          <HeaderCartLink />
+    <>
+      {store.announcement ? (
+        <div className="bg-brand-950 text-brand-100">
+          <p className="mx-auto max-w-7xl px-4 py-2 text-center text-xs tracking-wide sm:px-6 lg:px-8">
+            {store.announcement}
+          </p>
         </div>
-      </div>
+      ) : null}
 
-      <div className="px-4 pb-3 sm:px-6 md:hidden">
-        <SearchForm id="headerSearchMobile" className="flex" />
-      </div>
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2 sm:px-6 md:gap-6 lg:px-8">
+          <MobileMenu categories={categories} />
 
-      <nav aria-label="Categories" className="hidden border-t border-slate-100 md:block">
-        <ul className="mx-auto flex max-w-7xl gap-1 overflow-x-auto whitespace-nowrap px-2 py-1.5 text-sm sm:px-4 lg:px-6">
-          <li>
-            <Link
-              href="/products"
-              className="block rounded-full px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-100"
-            >
-              All products
-            </Link>
-          </li>
-          {categories.map((category) => (
-            <li key={category.id}>
+          <Link
+            href="/"
+            className="inline-flex min-h-11 shrink-0 items-center font-display text-2xl font-semibold tracking-[0.25em] text-brand-950 sm:text-3xl"
+          >
+            {SITE_NAME}
+          </Link>
+
+          <SearchForm id="headerSearch" className="hidden flex-1 md:flex md:max-w-xl lg:ml-4" />
+
+          <div className="ml-auto flex items-center gap-1 sm:gap-2">
+            <div className="hidden md:block">
+              <HeaderActions />
+            </div>
+            <HeaderCartLink />
+          </div>
+        </div>
+
+        <nav aria-label="Categories" className="hidden border-t border-slate-100 md:block">
+          <ul className="mx-auto flex max-w-7xl gap-6 overflow-x-auto whitespace-nowrap px-4 text-xs font-semibold uppercase tracking-wider sm:px-6 lg:px-8">
+            <li>
               <Link
-                href={`/products?category=${encodeURIComponent(category.slug)}`}
-                className="block rounded-full px-3 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                href="/products?sort=newest"
+                className="inline-flex min-h-11 items-center text-brand-950 hover:underline"
               >
-                {category.name}
+                New arrivals
               </Link>
             </li>
-          ))}
-        </ul>
-      </nav>
-    </header>
+            {categories.map((category) => (
+              <li key={category.id}>
+                <Link
+                  href={`/products?category=${encodeURIComponent(category.slug)}`}
+                  className="inline-flex min-h-11 items-center text-brand-500 hover:text-brand-950"
+                >
+                  {category.name}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link
+                href="/products?sort=discount"
+                className="inline-flex min-h-11 items-center text-rose-700 hover:underline"
+              >
+                Offers
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      </header>
+
+      {/* On phones search scrolls away, so the sticky bar stays small. */}
+      <div className="px-4 py-3 sm:px-6 md:hidden">
+        <SearchForm id="headerSearchMobile" className="flex" />
+      </div>
+    </>
   );
 }

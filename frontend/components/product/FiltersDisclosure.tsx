@@ -25,7 +25,7 @@ export function FiltersDisclosure({
         aria-expanded={open}
         aria-controls={PANEL_ID}
         onClick={() => setOpen((value) => !value)}
-        className="flex h-11 items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:border-slate-400 lg:hidden"
+        className="flex h-11 items-center gap-2 border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:border-slate-400 lg:hidden"
       >
         <svg
           viewBox="0 0 24 24"
@@ -40,7 +40,7 @@ export function FiltersDisclosure({
         </svg>
         {open ? 'Hide filters' : 'Filters & sort'}
         {activeCount > 0 ? (
-          <span className="rounded-full bg-brand-600 px-2 text-xs font-bold leading-5 text-white">
+          <span className="bg-brand-600 px-2 text-xs font-bold leading-5 text-white">
             {activeCount}
           </span>
         ) : null}
