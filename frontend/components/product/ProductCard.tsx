@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PriceDisplay } from '@/components/product/PriceDisplay';
 import type { ProductListItem } from '@/lib/api/types';
+import { store } from '@/lib/store';
 
 /** Storefront display rule only: the public API does not expose each product's own threshold. */
 const LOW_STOCK_HINT_AT = 5;
@@ -36,13 +37,20 @@ export function ProductCard({ product }: ProductCardProps) {
   const outOfStock = product.stockQuantity <= 0;
   const lowStock = !outOfStock && product.stockQuantity <= LOW_STOCK_HINT_AT;
   const hasDiscount = product.discountPrice !== null && product.discountPercent > 0;
+  const editorial = store.layout === 'editorial';
 
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group flex w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-card"
+      className={`group flex w-full flex-col overflow-hidden bg-white transition ${
+        editorial
+          ? ''
+          : 'rounded-xl border border-slate-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-card'
+      }`}
     >
-      <div className="relative aspect-square overflow-hidden bg-slate-100">
+      <div
+        className={`relative overflow-hidden bg-slate-100 ${editorial ? 'aspect-[3/4]' : 'aspect-square'}`}
+      >
         {product.primaryImage ? (
           <Image
             src={product.primaryImage.url}
@@ -69,10 +77,12 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 p-3 sm:p-4">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          {product.category.name}
-        </span>
+      <div className={`flex flex-1 flex-col gap-1 ${editorial ? 'px-0.5 pt-3' : 'p-3 sm:p-4'}`}>
+        {editorial ? null : (
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {product.category.name}
+          </span>
+        )}
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 group-hover:text-brand-700 sm:text-base">
           {product.name}
         </h3>

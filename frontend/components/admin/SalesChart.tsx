@@ -102,7 +102,7 @@ export function SalesChart() {
                     width={Math.max(barW - 2, 1)}
                     height={h}
                     rx="2"
-                    fill="#4f46e5"
+                    fill="rgb(var(--brand-600))"
                   >
                     <title>{`${point.date}: ${formatPrice(point.sales)} (${point.orders} orders)`}</title>
                   </rect>

@@ -1,6 +1,6 @@
 # Session state
 
-Updated: **2026-10-29** — 3-day launch sprint finished (Day 3, task 4: mobile/accessibility pass + launch checklist).
+Updated: **2026-10-30** — multi-store work started (D36): store profiles done, uncommitted.
 
 ## Current status
 
@@ -22,8 +22,13 @@ Updated: **2026-10-29** — 3-day launch sprint finished (Day 3, task 4: mobile/
 
 ## Exact next action
 
-1. Depending on the owner's answers to Q7/Q8: email provider integration in `mailer.service.ts`, or
-   deployment setup. Otherwise P2: activity log for product/category changes.
+Multi-store plan (D36), stores: Geton (gadgets), Iliyan (menswear), Shatkania Pharmacy. (1) ~~store profiles, theme,
+fonts, hero and card variants~~; (2) owner reviews hero wording and supplies logos for `frontend/lib/store.ts`; (3) per-store listing and product page details, gadget specs;
+(4) clothing size/colour variants (needs a Prisma migration: ask first; touches cart, checkout, orders);
+(5) deployment per store. Launch Geton, then Iliyan, then Shatkania. **Do not sell prescription medicines online until a prescription flow
+exists and the owner has confirmed licence and online-sale rules with DGDA (Q12).** Q7/Q8 still open.
+
+Run a store locally: `frontend` (Geton), `frontend-iliyan` or `frontend-shatkania` in `.claude/launch.json`; not both at once.
 
 ## Inspect first next time
 

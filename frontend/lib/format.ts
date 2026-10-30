@@ -1,6 +1,8 @@
+import { store } from '@/lib/store';
+
 const DEFAULT_SITE_URL = 'http://localhost:3000';
 
-export const SITE_NAME = 'E-Commerce Platform';
+export const SITE_NAME = store.name;
 
 /** Bangladeshi taka sign, written as an escape so file encoding can never garble it. */
 const TAKA = '\u09F3';

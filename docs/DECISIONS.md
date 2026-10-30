@@ -84,6 +84,12 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
   invisible there, so an admin cannot suspend an admin or themself). Suspending revokes all refresh tokens and is
   logged (`CUSTOMER_SUSPENDED` / `CUSTOMER_REACTIVATED`, optional reason); existing orders are unchanged.
 
+## Multiple stores (owner, 2026-10-30)
+
+- **D36 — One codebase, one deployment per store.** Each store has its own domain, API process, database, admin and
+  settings. `NEXT_PUBLIC_STORE_ID` (build time) picks a profile in `frontend/lib/store.ts` (name, wording, palette,
+  layout, fonts); an unknown id fails the build. No shared multi-tenant database.
+
 ## Workflow (owner answers, 2026-10-29)
 
 - **D25 — Git:** initialize a local repo with a baseline commit of the existing state; no remote yet. Pushing still needs approval.
@@ -93,6 +99,8 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
 
 ## Open questions (unresolved — ask the owner)
 
+- Q12 — Shatkania Pharmacy will sell all medicine types: which licence and online-sale rules apply (DGDA)? Prescription
+  flow (upload, pharmacist approval), expiry and batch tracking are not built.
 - Q5 — Guest checkout needed?
 - Q6 — Real delivery charges, home city, free-shipping threshold?
 - Q7 — Email provider (Resend / SMTP / other)?

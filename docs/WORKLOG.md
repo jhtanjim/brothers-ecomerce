@@ -273,3 +273,24 @@ Template:
   chore(setup), `feb19f7` feat(api), `13c8ea5` feat(storefront), `84d8a1a` feat(admin), `3ee1eeb` docs.
   112 files; no env/secret files; `.claude/` left untracked. Checks were last run on this exact tree (all pass).
 - Note: intermediate commits were grouped by area and not individually built; the final tree is the verified one.
+
+## 2026-10-30 — Multi-store foundation: store profiles (D36)
+
+- Objective: run visibly different shops (gadgets, clothing) from one codebase.
+- Files changed: new `frontend/lib/store.ts`, `components/home/StoreHero.tsx`; `tailwind.config.ts` (brand from CSS
+  variables, display font), `app/layout.tsx` (per-store fonts, palette, metadata), `app/globals.css`,
+  `lib/format.ts` (`SITE_NAME` from profile), `app/(store)/page.tsx`, `components/product/ProductCard.tsx`,
+  `components/admin/SalesChart.tsx` (hard-coded colour), `.env.example`.
+- Checks run: frontend typecheck + lint, `prettier --check .`; browser compare of both home pages (name, palette,
+  fonts, hero, card shape, no overflow); production build of each store; bad store id fails the build.
+- Limitations: names and wording are placeholders; both local stores share the dev DB and catalog; listing, cart and
+  checkout differ only by theme and card; no size/colour variants yet. Not committed.
+- Next step: owner supplies names; then gadget specs and clothing variants.
+
+## 2026-10-30 — Real store names and pharmacy profile
+
+- Objective: use the owner's businesses: Geton (gadgets), Iliyan (menswear), Shatkania Pharmacy (all medicine types).
+- Files changed: `frontend/lib/store.ts` (ids geton, iliyan, shatkania), `components/home/StoreHero.tsx` (search-first
+  pharmacy hero), `app/layout.tsx` (Figtree), `.env.example`, docs.
+- Limitations: no prescription flow, expiry or batch tracking; prescription medicines must not be sold yet (Q12).
+- Next step: owner reviews hero wording; Geton specs.

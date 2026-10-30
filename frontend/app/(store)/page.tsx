@@ -1,6 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import { PriceDisplay } from '@/components/product/PriceDisplay';
+import { StoreHero } from '@/components/home/StoreHero';
 import { ProductGrid } from '@/components/product/ProductGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -97,57 +96,6 @@ function CategorySection({ result }: { result: Loaded<CategorySummary[]> }) {
   );
 }
 
-/** Real featured products with live prices; falls back to newest when nothing is featured. */
-function HeroPicks({ products }: { products: ProductListItem[] }) {
-  if (products.length === 0) return null;
-  return (
-    <div className="rounded-2xl border border-brand-100 bg-white/80 p-4 shadow-card sm:p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Popular picks</p>
-      <ul className="mt-3 divide-y divide-slate-100">
-        {products.map((product) => (
-          <li key={product.id}>
-            <Link
-              href={`/products/${product.slug}`}
-              className="flex items-center gap-3 rounded-lg py-3 hover:bg-slate-50"
-            >
-              <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                {product.primaryImage ? (
-                  <Image
-                    src={product.primaryImage.url}
-                    alt=""
-                    fill
-                    sizes="56px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className="flex h-full items-center justify-center text-lg font-bold text-slate-400"
-                  >
-                    {product.name.charAt(0)}
-                  </span>
-                )}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-slate-900">
-                  {product.name}
-                </span>
-                <span className="block text-xs text-slate-500">{product.category.name}</span>
-              </span>
-              <PriceDisplay
-                price={product.price}
-                discountPrice={product.discountPrice}
-                discountPercent={product.discountPercent}
-                showPercent={false}
-              />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 const STEPS = [
   {
     title: 'Place your order',
@@ -215,47 +163,7 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 lg:px-8">
-      <section className="overflow-hidden rounded-3xl border border-brand-100 bg-brand-50 px-6 py-10 sm:px-10 sm:py-14 lg:px-14">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
-          <div>
-            <p className="text-sm font-semibold text-brand-700">Online shopping, made simple</p>
-            <h1 className="mt-3 max-w-xl text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
-              Order online, pay with bKash or Nagad
-            </h1>
-            <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
-              Browse the catalog, place your order in minutes and follow it from payment to
-              delivery.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/products"
-                className="inline-flex h-12 items-center rounded-full bg-brand-600 px-7 text-sm font-semibold text-white hover:bg-brand-700"
-              >
-                Shop all products
-              </Link>
-              {discounted.ok && discounted.data.length > 0 ? (
-                <Link
-                  href="/products?sort=discount"
-                  className="inline-flex h-12 items-center rounded-full border border-slate-300 bg-white px-7 text-sm font-semibold text-slate-800 hover:border-slate-400"
-                >
-                  See today&apos;s deals
-                </Link>
-              ) : null}
-            </div>
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
-              <li className="flex items-center gap-2">
-                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-600" />
-                All prices in Taka
-              </li>
-              <li className="flex items-center gap-2">
-                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-600" />
-                Order tracking in your account
-              </li>
-            </ul>
-          </div>
-          <HeroPicks products={picks} />
-        </div>
-      </section>
+      <StoreHero picks={picks} />
 
       <CategorySection result={categories} />
       <ProductSection
