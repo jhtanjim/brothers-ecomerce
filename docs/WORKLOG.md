@@ -365,3 +365,12 @@ Template:
 - Limitations: customers do not see returns on their own order page; the online shipping charge is not refunded; the 30-day sales
   chart and best-seller lists are before returns. No time limit on returns (owner policy).
 - Next step: barcode labels, or real products and policies.
+
+## 2026-10-30 — Barcode labels
+
+- Objective: print SKU stickers so a scanner can add items in the POS.
+- Files changed: `frontend/lib/code128.ts` (no new dependency), `LabelsContent`, `app/admin/labels`, `AdminShell`.
+- Tested: encoder output matched JsBarcode (scratchpad only, not a project dependency) on 104 cases; typecheck, lint, build; screen
+  and label preview in the browser.
+- Limitations: not tried on a real label printer or scanner. Long SKUs give thin bars; the screen warns only below 0.19 mm.
+- Next step: test on real hardware; finish deployment; real products and policies.
