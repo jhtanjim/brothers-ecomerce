@@ -30,6 +30,7 @@ const detailSelect = {
   orderNumber: true,
   channel: true,
   cashReceived: true,
+  exchangeCredit: true,
   status: true,
   paymentStatus: true,
   subtotal: true,
@@ -64,6 +65,18 @@ const detailSelect = {
       quantity: true,
       discountAmount: true,
       totalPrice: true,
+      returnItems: { select: { quantity: true, amount: true } },
+    },
+  },
+  returns: {
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      returnNumber: true,
+      refundAmount: true,
+      refundMethod: true,
+      exchangeOrderId: true,
+      createdAt: true,
     },
   },
   payment: {
@@ -255,6 +268,15 @@ export class AdminOrdersService {
       orderNumber: order.orderNumber,
       channel: order.channel,
       cashReceived: order.cashReceived ? money(order.cashReceived) : null,
+      exchangeCredit: money(order.exchangeCredit),
+      returns: order.returns.map((entry) => ({
+        id: entry.id,
+        returnNumber: entry.returnNumber,
+        refundAmount: money(entry.refundAmount),
+        refundMethod: entry.refundMethod,
+        exchangeOrderId: entry.exchangeOrderId,
+        createdAt: entry.createdAt,
+      })),
       status: order.status,
       paymentStatus: order.paymentStatus,
       subtotal: money(order.subtotal),
@@ -289,6 +311,10 @@ export class AdminOrdersService {
         quantity: item.quantity,
         discountAmount: money(item.discountAmount),
         totalPrice: money(item.totalPrice),
+        returnedQuantity: item.returnItems.reduce((sum, entry) => sum + entry.quantity, 0),
+        returnedAmount: money(
+          item.returnItems.reduce((sum, entry) => sum.add(entry.amount), new Prisma.Decimal(0)),
+        ),
       })),
       payment: order.payment
         ? {

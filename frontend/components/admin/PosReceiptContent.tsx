@@ -98,7 +98,10 @@ export function PosReceiptContent({ id, autoPrint }: { id: string; autoPrint: bo
   const transactionId = sale.payment?.submissions[0]?.transactionId;
   const change =
     sale.cashReceived !== null
-      ? (Number(sale.cashReceived) - Number(sale.totalAmount)).toFixed(2)
+      ? (
+          Number(sale.cashReceived) -
+          (Number(sale.totalAmount) - Number(sale.exchangeCredit))
+        ).toFixed(2)
       : null;
 
   return (
@@ -126,6 +129,14 @@ export function PosReceiptContent({ id, autoPrint }: { id: string; autoPrint: bo
           View order
         </Link>
         {!cancelled ? (
+          <Link
+            href={`/admin/orders/${encodeURIComponent(sale.id)}/return`}
+            className="inline-flex min-h-11 items-center px-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            Return or exchange
+          </Link>
+        ) : null}
+        {!cancelled && sale.returns.length === 0 ? (
           <button
             type="button"
             onClick={() => setVoidOpen((open) => !open)}
@@ -219,6 +230,9 @@ export function PosReceiptContent({ id, autoPrint }: { id: string; autoPrint: bo
             </>
           ) : null}
           <Row label="Total" value={formatPrice(sale.totalAmount)} strong />
+          {Number(sale.exchangeCredit) > 0 ? (
+            <Row label="Exchange credit" value={`-${formatPrice(sale.exchangeCredit)}`} />
+          ) : null}
           {sale.cashReceived !== null ? (
             <Row label="Cash" value={formatPrice(sale.cashReceived)} />
           ) : null}

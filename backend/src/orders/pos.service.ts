@@ -71,14 +71,29 @@ export class PosService {
   async voidSale(adminId: string, id: string, reason: string, ipAddress: string | null) {
     await this.prisma.$transaction(
       async (tx) => {
-        const sale = await tx.order.findUnique({ where: { id }, select: { channel: true } });
+        const sale = await tx.order.findUnique({
+          where: { id },
+          select: { channel: true, _count: { select: { returns: true } } },
+        });
         if (sale?.channel !== OrderChannel.POS) {
           throw new NotFoundException({ message: 'Sale not found', code: 'POS_SALE_NOT_FOUND' });
+        }
+        // Those items are already back; cancelling would put them in stock twice.
+        if (sale._count.returns > 0) {
+          throw new ConflictException({
+            message: 'This sale has returns, so it cannot be cancelled',
+            code: 'POS_SALE_HAS_RETURNS',
+          });
         }
         const result = await this.cancellation.cancelInTx(tx, id, {
           source: 'ADMIN',
           reason,
           actorId: adminId,
+        });
+        // Cancelling an exchange gives the customer their credit back.
+        await tx.orderReturn.updateMany({
+          where: { exchangeOrderId: id },
+          data: { exchangeOrderId: null },
         });
         await this.activityLogs.record(tx, {
           adminId,
@@ -92,6 +107,23 @@ export class PosService {
       { timeout: TRANSACTION_TIMEOUT_MS, maxWait: TRANSACTION_MAX_WAIT_MS },
     );
     return this.adminOrders.findOne(id);
+  }
+
+  /** The value of an unused exchange. A refunded return has already been paid out. */
+  private async creditFor(tx: Prisma.TransactionClient, returnId: string): Promise<number> {
+    const credit = await tx.orderReturn.findFirst({
+      where: { id: returnId, refundMethod: null, exchangeOrderId: null },
+      select: { refundAmount: true },
+    });
+    if (!credit) throw this.creditInvalid();
+    return toCents(credit.refundAmount);
+  }
+
+  private creditInvalid(): ConflictException {
+    return new ConflictException({
+      message: 'This exchange credit does not exist or has already been used',
+      code: 'POS_CREDIT_INVALID',
+    });
   }
 
   /** Same rule as online payments: an ID that was not rejected cannot be used again. */
@@ -155,9 +187,18 @@ export class PosService {
     }
     const pricing = calculateOrderPricing(inputs, IN_STORE, NO_DELIVERY, discountCents);
 
+    const creditCents = dto.exchangeReturnId ? await this.creditFor(tx, dto.exchangeReturnId) : 0;
+    const dueCents = Math.max(0, pricing.totalCents - creditCents);
     const isCash = dto.paymentMethod === PaymentMethod.CASH;
+    // Credit above the new total goes back to the customer as cash.
+    if (!isCash && creditCents >= pricing.totalCents) {
+      throw new ConflictException({
+        message: 'The exchange credit covers this sale. Choose cash.',
+        code: 'POS_CREDIT_NEEDS_CASH',
+      });
+    }
     const cashCents = isCash ? toCents(dto.cashReceived ?? 0) : null;
-    if (cashCents !== null && cashCents < pricing.totalCents) {
+    if (cashCents !== null && cashCents < dueCents) {
       throw new ConflictException({
         message: 'The cash received is less than the total',
         code: 'POS_CASH_TOO_LOW',
@@ -183,6 +224,7 @@ export class PosService {
         deliveryCharge: formatCents(0),
         totalAmount: formatCents(pricing.totalCents),
         cashReceived: cashCents === null ? null : formatCents(cashCents),
+        exchangeCredit: formatCents(creditCents),
         status: OrderStatus.DELIVERED,
         paymentStatus: PaymentStatus.APPROVED,
         shippingName: dto.customerName || WALK_IN_NAME,
@@ -222,7 +264,7 @@ export class PosService {
         payment: {
           create: {
             method: dto.paymentMethod,
-            amount: formatCents(pricing.totalCents),
+            amount: formatCents(dueCents),
             status: PaymentStatus.APPROVED,
             ...(transactionId
               ? {
@@ -242,6 +284,15 @@ export class PosService {
       },
       select: { id: true, orderNumber: true },
     });
+
+    if (dto.exchangeReturnId) {
+      // Conditional, so two sales racing for one credit cannot both use it.
+      const claimed = await tx.orderReturn.updateMany({
+        where: { id: dto.exchangeReturnId, refundMethod: null, exchangeOrderId: null },
+        data: { exchangeOrderId: order.id },
+      });
+      if (claimed.count === 0) throw this.creditInvalid();
+    }
 
     // Same as an approved online payment: the units count as sold.
     for (const item of items) {

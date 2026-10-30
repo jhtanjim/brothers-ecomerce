@@ -11,10 +11,12 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { PosController } from './pos.controller';
 import { PosService } from './pos.service';
+import { ReturnsController } from './returns.controller';
+import { ReturnsService } from './returns.service';
 
 @Module({
   imports: [SettingsModule, UploadsModule, ActivityLogsModule],
-  controllers: [OrdersController, AdminOrdersController, PosController],
+  controllers: [OrdersController, AdminOrdersController, PosController, ReturnsController],
   providers: [
     OrdersService,
     OrderCancellationService,
@@ -22,6 +24,7 @@ import { PosService } from './pos.service';
     OrderQuoteService,
     AdminOrdersService,
     PosService,
+    ReturnsService,
   ],
   exports: [OrdersService, OrderCancellationService],
 })

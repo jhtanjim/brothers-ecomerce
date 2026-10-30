@@ -509,7 +509,9 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
                   <span className="text-rose-600">-{formatPrice(order.couponDiscount)}</span>
                 </DetailRow>
               ) : null}
-              <DetailRow label="Delivery">{formatPrice(order.deliveryCharge)}</DetailRow>
+              {order.channel === 'POS' ? null : (
+                <DetailRow label="Delivery">{formatPrice(order.deliveryCharge)}</DetailRow>
+              )}
               <div className="flex items-baseline justify-between border-t border-slate-200 pt-3">
                 <dt className="font-semibold text-slate-900">Total</dt>
                 <dd className="text-base font-bold text-slate-900">
@@ -518,6 +520,44 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
               </div>
             </dl>
           </section>
+
+          {order.status === 'DELIVERED' && order.paymentStatus === 'APPROVED' ? (
+            <section aria-labelledby="returns-heading" className={cardClass}>
+              <h2 id="returns-heading" className="text-lg font-semibold text-slate-900">
+                Returns
+              </h2>
+              {order.returns.length === 0 ? (
+                <p className="mt-2 text-sm text-slate-500">Nothing has been returned.</p>
+              ) : (
+                <ul className="mt-2 divide-y divide-slate-100 text-sm">
+                  {order.returns.map((entry) => (
+                    <li key={entry.id} className="py-2">
+                      <Link
+                        href={`/admin/pos/returns/${encodeURIComponent(entry.id)}`}
+                        className="font-medium text-brand-600 hover:text-brand-700"
+                      >
+                        {entry.returnNumber}
+                      </Link>
+                      <p className="text-slate-600">
+                        {formatPrice(entry.refundAmount)}{' '}
+                        {entry.refundMethod
+                          ? `refunded by ${paymentMethodLabel(entry.refundMethod)}`
+                          : entry.exchangeOrderId
+                            ? 'exchanged'
+                            : 'credit not used yet'}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link
+                href={`/admin/orders/${encodeURIComponent(order.id)}/return`}
+                className="mt-3 inline-flex min-h-11 items-center border border-slate-300 px-4 text-sm font-medium text-slate-800 hover:border-slate-500"
+              >
+                Return or exchange
+              </Link>
+            </section>
+          ) : null}
 
           <section aria-labelledby="payment-heading" className={cardClass}>
             <h2 id="payment-heading" className="text-lg font-semibold text-slate-900">

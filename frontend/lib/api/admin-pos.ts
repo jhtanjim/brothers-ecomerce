@@ -9,6 +9,8 @@ export interface PosSaleInput {
   /** bKash and Nagad only. */
   transactionId?: string;
   discount?: number;
+  /** A return whose exchange credit pays towards this sale. */
+  exchangeReturnId?: string;
   customerName?: string;
   customerPhone?: string;
 }

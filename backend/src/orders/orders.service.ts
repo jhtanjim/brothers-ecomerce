@@ -203,11 +203,11 @@ export function generateOrderNumber(prefix: string = ORDER_NUMBER_PREFIX): strin
   return `${prefix}-${orderDatePart()}-${suffix}`;
 }
 
-export function isOrderNumberCollision(error: unknown): boolean {
+export function isOrderNumberCollision(error: unknown, field = 'orderNumber'): boolean {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === 'P2002' &&
-    String(error.meta?.target ?? '').includes('orderNumber')
+    String(error.meta?.target ?? '').includes(field)
   );
 }
 

@@ -460,6 +460,16 @@ export interface AdminOrderDetail {
   channel: OrderChannel;
   /** POS sales only: the cash handed over. */
   cashReceived: string | null;
+  /** POS sales only: value from returned items, paid towards this sale. */
+  exchangeCredit: string;
+  returns: {
+    id: string;
+    returnNumber: string;
+    refundAmount: string;
+    refundMethod: PaymentMethod | null;
+    exchangeOrderId: string | null;
+    createdAt: string;
+  }[];
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   subtotal: string;
@@ -486,6 +496,8 @@ export interface AdminOrderDetail {
     quantity: number;
     discountAmount: string;
     totalPrice: string;
+    returnedQuantity: number;
+    returnedAmount: string;
   }[];
   payment: {
     id: string;
@@ -879,5 +891,39 @@ export interface DailyReport {
   pos: DailyReportChannel;
   online: DailyReportChannel;
   cancelledPos: { sales: number; total: string };
+  returns: {
+    count: number;
+    total: string;
+    credit: string;
+    refunds: { method: PaymentMethod; total: string }[];
+  };
   topItems: { productId: string; name: string; quantity: number; total: string }[];
+}
+
+// ---------------------------------------------------------------------------
+// Returns and exchanges (matches /admin/returns)
+// ---------------------------------------------------------------------------
+
+export interface OrderReturn {
+  id: string;
+  returnNumber: string;
+  reason: string;
+  refundAmount: string;
+  /** null = exchange: the value is credit for a new sale. */
+  refundMethod: PaymentMethod | null;
+  restocked: boolean;
+  /** The new sale that used the credit. */
+  exchangeOrderId: string | null;
+  createdAt: string;
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  items: {
+    id: string;
+    name: string;
+    size: string | null;
+    color: string | null;
+    quantity: number;
+    amount: string;
+  }[];
 }

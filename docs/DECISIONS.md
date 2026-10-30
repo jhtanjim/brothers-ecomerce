@@ -106,6 +106,10 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
   reports and order pages with online orders, and are left out of that admin's own order history. A counter discount is stored in
   `couponDiscount` with no coupon code. Only admins can sell; cancelling a sale restores stock and the cash refund is manual.
 
+- **D40 — Returns.** `OrderReturn` records items brought back from a paid, DELIVERED order. `refundMethod` set = money back (paid by hand);
+  null = exchange credit, used once by a new POS sale (`Order.exchangeCredit`). Value is what was paid, including the share of a
+  sale discount; shipping is not refunded. Sales totals are net of returns. A sale with returns cannot be cancelled.
+
 ## Workflow (owner answers, 2026-10-29)
 
 - **D25 — Git:** initialize a local repo with a baseline commit of the existing state; no remote yet. Pushing still needs approval.

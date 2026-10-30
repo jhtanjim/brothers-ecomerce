@@ -64,6 +64,12 @@ export class CreatePosSaleDto {
   @Matches(/^[A-Z0-9]{6,30}$/, { message: 'transactionId must be 6 to 30 letters or numbers' })
   transactionId?: string;
 
+  /** A return whose value (exchange credit) pays towards this sale. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  exchangeReturnId?: string;
+
   /** Taka off the whole sale, on top of any product sale prices. */
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2, allowNaN: false, allowInfinity: false })

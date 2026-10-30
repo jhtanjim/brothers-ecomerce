@@ -5,9 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { getAdminProducts } from '@/lib/api/admin-products';
+import { getOrderReturn } from '@/lib/api/admin-returns';
 import { createPosSale } from '@/lib/api/admin-pos';
 import { ApiError } from '@/lib/api/client';
-import type { AdminProduct, AdminProductVariant, PaymentMethod } from '@/lib/api/types';
+import type {
+  AdminProduct,
+  AdminProductVariant,
+  OrderReturn,
+  PaymentMethod,
+} from '@/lib/api/types';
 import { formatPrice, optionLabel } from '@/lib/format';
 
 const RESULT_LIMIT = 12;
@@ -113,7 +119,7 @@ function ProductResult({ product, onAdd }: { product: AdminProduct; onAdd: (line
   );
 }
 
-export function PosContent() {
+export function PosContent({ creditId }: { creditId?: string }) {
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
@@ -132,9 +138,32 @@ export function PosContent() {
   // Kept across retries, so a repeated submit can never record the sale twice.
   const saleKey = useRef(newSaleKey());
 
+  const [credit, setCredit] = useState<OrderReturn | null>(null);
+  const [creditError, setCreditError] = useState<string | null>(null);
+
   useEffect(() => {
     searchRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (!creditId) return;
+    let cancelled = false;
+    getOrderReturn(creditId)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.refundMethod !== null || result.exchangeOrderId !== null) {
+          setCreditError(`The credit from ${result.returnNumber} has already been used.`);
+        } else {
+          setCredit(result);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCreditError('Could not load the exchange credit.');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [creditId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -208,17 +237,23 @@ export function PosContent() {
   const discountValid = discount === '' || MONEY_PATTERN.test(discount);
   const discountCents = discountValid && discount !== '' ? toCents(discount) : 0;
   const totalCents = Math.max(0, subtotalCents - discountCents);
-  const isCash = method === 'CASH';
+  const creditCents = credit ? toCents(credit.refundAmount) : 0;
+  const dueCents = Math.max(0, totalCents - creditCents);
+  // Credit covers it all, so nothing is paid by phone; any difference goes back as cash.
+  const creditCovers = credit !== null && creditCents >= totalCents;
+  const isCash = method === 'CASH' || creditCovers;
   const cleanTransactionId = transactionId.trim().toUpperCase();
   const transactionValid = TRANSACTION_PATTERN.test(cleanTransactionId);
   const cashValid = MONEY_PATTERN.test(cash);
   const cashCents = cashValid ? toCents(cash) : 0;
-  const changeCents = cashCents - totalCents;
+  const changeCents = cashCents - dueCents;
   const canComplete =
     lines.length > 0 &&
     discountValid &&
     discountCents <= subtotalCents &&
-    (isCash ? cashValid && changeCents >= 0 : transactionValid) &&
+    (isCash
+      ? (cashValid || cash === '') && (cash === '' ? dueCents === 0 : changeCents >= 0)
+      : transactionValid) &&
     !submitting;
 
   async function onComplete() {
@@ -233,8 +268,9 @@ export function PosContent() {
             ...(line.variantId ? { variantId: line.variantId } : {}),
             quantity: line.quantity,
           })),
-          paymentMethod: method,
-          ...(isCash ? { cashReceived: Number(cash) } : { transactionId: cleanTransactionId }),
+          paymentMethod: isCash ? 'CASH' : method,
+          ...(isCash ? { cashReceived: Number(cash || 0) } : { transactionId: cleanTransactionId }),
+          ...(credit ? { exchangeReturnId: credit.id } : {}),
           ...(discountCents > 0 ? { discount: Number(discount) } : {}),
           ...(customerName.trim() ? { customerName: customerName.trim() } : {}),
           ...(customerPhone.trim() ? { customerPhone: customerPhone.trim() } : {}),
@@ -297,6 +333,17 @@ export function PosContent() {
         <h2 id="pos-sale-heading" className="text-lg font-semibold text-slate-900">
           Current sale
         </h2>
+        {creditError ? (
+          <p role="alert" className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {creditError}
+          </p>
+        ) : null}
+        {credit ? (
+          <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            Exchange: {formatPrice(credit.refundAmount)} credit from {credit.returnNumber}. Add the
+            new items.
+          </p>
+        ) : null}
         {lines.length === 0 ? (
           <p className="mt-3 text-sm text-slate-500">Add items from the list to start a sale.</p>
         ) : (
@@ -351,31 +398,33 @@ export function PosContent() {
           </ul>
         )}
 
-        <fieldset className="mt-4 border-t border-slate-200 pt-4">
-          <legend className="float-left mb-2 w-full text-sm font-medium text-slate-700">
-            Payment
-          </legend>
-          <div className="clear-both flex gap-2">
-            {PAYMENT_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={method === option.value}
-                onClick={() => {
-                  setMethod(option.value);
-                  setError(null);
-                }}
-                className={`min-h-11 flex-1 border px-3 text-sm font-semibold ${
-                  method === option.value
-                    ? 'border-brand-950 bg-brand-950 text-white'
-                    : 'border-slate-300 text-slate-800 hover:border-brand-950'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        {creditCovers ? null : (
+          <fieldset className="mt-4 border-t border-slate-200 pt-4">
+            <legend className="float-left mb-2 w-full text-sm font-medium text-slate-700">
+              Payment
+            </legend>
+            <div className="clear-both flex gap-2">
+              {PAYMENT_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={method === option.value}
+                  onClick={() => {
+                    setMethod(option.value);
+                    setError(null);
+                  }}
+                  className={`min-h-11 flex-1 border px-3 text-sm font-semibold ${
+                    method === option.value
+                      ? 'border-brand-950 bg-brand-950 text-white'
+                      : 'border-slate-300 text-slate-800 hover:border-brand-950'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
@@ -463,6 +512,24 @@ export function PosContent() {
             <dt>Total</dt>
             <dd>{formatPrice(fromCents(totalCents))}</dd>
           </div>
+          {credit ? (
+            <>
+              <div className="flex justify-between">
+                <dt className="text-slate-600">Exchange credit</dt>
+                <dd className="text-emerald-700">-{formatPrice(credit.refundAmount)}</dd>
+              </div>
+              <div className="flex justify-between font-semibold">
+                <dt>To pay</dt>
+                <dd>{formatPrice(fromCents(dueCents))}</dd>
+              </div>
+              {creditCents > totalCents && lines.length > 0 ? (
+                <div className="flex justify-between font-semibold text-emerald-700">
+                  <dt>Give back from credit</dt>
+                  <dd>{formatPrice(fromCents(creditCents - totalCents))}</dd>
+                </div>
+              ) : null}
+            </>
+          ) : null}
           {isCash && cashValid && lines.length > 0 ? (
             <div
               className={`flex justify-between font-semibold ${

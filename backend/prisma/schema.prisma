@@ -107,6 +107,8 @@ model User {
   reviewedTransactions PaymentTransaction[] @relation("TransactionReviewer")
 
   // Admin customer list: filter by role, newest first.
+  orderReturns OrderReturn[]
+
   @@index([role, createdAt])
   @@map("users")
 }
@@ -331,6 +333,8 @@ model Order {
   couponCode     String? // snapshot of the coupon code used
   // POS only: cash handed over, for the change shown on the receipt.
   cashReceived   Decimal? @db.Decimal(12, 2)
+  // POS only: value carried over from returned items, paid towards this sale.
+  exchangeCredit Decimal  @default(0) @db.Decimal(12, 2)
 
   status        OrderStatus   @default(PENDING_PAYMENT)
   // Denormalized mirror of Payment.status so order lists can filter/sort without a join.
@@ -362,6 +366,8 @@ model Order {
   statusHistory OrderStatusHistory[]
   payment       Payment?
   couponUsages  CouponUsage[]
+  returns       OrderReturn[]        @relation("ReturnedOrder")
+  exchangeFrom  OrderReturn?         @relation("ExchangeOrder")
 
   @@unique([userId, idempotencyKey])
   @@index([userId, createdAt])
@@ -393,14 +399,57 @@ model OrderItem {
   discountAmount  Decimal @default(0) @db.Decimal(12, 2)
   totalPrice      Decimal @db.Decimal(12, 2)
 
-  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
-  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  order       Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant     ProductVariant?   @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  returnItems OrderReturnItem[]
 
   @@index([orderId])
   @@index([productId])
   @@index([variantId])
   @@map("order_items")
+}
+
+// Items brought back after a sale. refundMethod null = exchange: the value is credit for a new sale.
+model OrderReturn {
+  id              String         @id @default(cuid())
+  returnNumber    String         @unique
+  orderId         String
+  adminId         String
+  reason          String
+  refundAmount    Decimal        @db.Decimal(12, 2)
+  refundMethod    PaymentMethod?
+  // False for damaged items, which do not go back on sale.
+  restocked       Boolean
+  // The new sale that used this credit. Null until used.
+  exchangeOrderId String?        @unique
+  idempotencyKey  String?
+  createdAt       DateTime       @default(now())
+
+  order         Order             @relation("ReturnedOrder", fields: [orderId], references: [id], onDelete: Restrict)
+  admin         User              @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  exchangeOrder Order?            @relation("ExchangeOrder", fields: [exchangeOrderId], references: [id], onDelete: Restrict)
+  items         OrderReturnItem[]
+
+  @@unique([adminId, idempotencyKey])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("order_returns")
+}
+
+model OrderReturnItem {
+  id          String  @id @default(cuid())
+  returnId    String
+  orderItemId String
+  quantity    Int
+  amount      Decimal @db.Decimal(12, 2)
+
+  orderReturn OrderReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  orderItem   OrderItem   @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+
+  @@index([returnId])
+  @@index([orderItemId])
+  @@map("order_return_items")
 }
 
 model OrderStatusHistory {

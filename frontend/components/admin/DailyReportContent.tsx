@@ -81,6 +81,8 @@ export function DailyReportContent() {
   }, [date]);
 
   const cash = report?.pos.methods.find((entry) => entry.method === 'CASH');
+  const cashRefund = report?.returns.refunds.find((entry) => entry.method === 'CASH');
+  const drawer = (Number(cash?.total ?? 0) - Number(cashRefund?.total ?? 0)).toFixed(2);
 
   return (
     <div className="space-y-6">
@@ -107,17 +109,43 @@ export function DailyReportContent() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Card
               label="Cash in drawer from sales"
-              value={formatPrice(cash?.total ?? '0')}
-              note="Add your opening cash to compare with the drawer"
+              value={formatPrice(drawer)}
+              note="After cash refunds. Add your opening cash to compare with the drawer"
             />
-            <Card label="Total sales" value={formatPrice(report.total)} />
-            <Card label="Items sold" value={String(report.itemsSold)} />
+            <Card label="Total sales" value={formatPrice(report.total)} note="After returns" />
+            <Card label="Items sold" value={String(report.itemsSold)} note="Before returns" />
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
             <MethodTable title="Shop sales" methods={POS_METHODS} rows={report.pos} />
             <MethodTable title="Online sales" methods={ONLINE_METHODS} rows={report.online} />
           </div>
+
+          {report.returns.count > 0 ? (
+            <section className="rounded-xl border border-slate-200 bg-white p-5">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Returns ({report.returns.count})
+              </h2>
+              <dl className="mt-3 space-y-2 text-sm">
+                {report.returns.refunds.map((entry) => (
+                  <div key={entry.method} className="flex justify-between gap-3">
+                    <dt className="text-slate-600">
+                      Refunded by {paymentMethodLabel(entry.method)}
+                    </dt>
+                    <dd className="font-medium text-slate-900">{formatPrice(entry.total)}</dd>
+                  </div>
+                ))}
+                {Number(report.returns.credit) > 0 ? (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-600">Exchange credit</dt>
+                    <dd className="font-medium text-slate-900">
+                      {formatPrice(report.returns.credit)}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+            </section>
+          ) : null}
 
           {report.cancelledPos.sales > 0 ? (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">

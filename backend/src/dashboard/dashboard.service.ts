@@ -28,6 +28,10 @@ function money(value: Prisma.Decimal | null): string {
   return formatCents(value === null ? 0 : toCents(value));
 }
 
+function netSales(sales: Prisma.Decimal | null, returned: Prisma.Decimal | null): string {
+  return formatCents(toCents(sales ?? 0) - toCents(returned ?? 0));
+}
+
 /** Start of the current Dhaka calendar day, as a UTC instant. */
 function dhakaDayStart(now: Date = new Date()): Date {
   const shifted = now.getTime() + DHAKA_OFFSET_MS;
@@ -49,6 +53,8 @@ export class DashboardService {
     const [
       totalSales,
       todaySales,
+      allReturns,
+      todayReturns,
       totalOrders,
       pendingOrders,
       pendingPayments,
@@ -63,6 +69,11 @@ export class DashboardService {
       this.prisma.order.aggregate({
         where: { ...SALE_WHERE, createdAt: { gte: todayStart } },
         _sum: { totalAmount: true },
+      }),
+      this.prisma.orderReturn.aggregate({ _sum: { refundAmount: true } }),
+      this.prisma.orderReturn.aggregate({
+        where: { createdAt: { gte: todayStart } },
+        _sum: { refundAmount: true },
       }),
       this.prisma.order.count(),
       this.prisma.order.count({ where: { status: OrderStatus.PENDING_PAYMENT } }),
@@ -115,8 +126,9 @@ export class DashboardService {
 
     return {
       cards: {
-        totalSales: money(totalSales._sum.totalAmount),
-        todaySales: money(todaySales._sum.totalAmount),
+        // Net of returns, so an exchange counts only once.
+        totalSales: netSales(totalSales._sum.totalAmount, allReturns._sum.refundAmount),
+        todaySales: netSales(todaySales._sum.totalAmount, todayReturns._sum.refundAmount),
         totalOrders,
         pendingOrders,
         pendingPayments,
@@ -183,11 +195,18 @@ export class DashboardService {
       : dhakaDayStart();
     const end = new Date(start.getTime() + DAY_MS);
 
-    const [groups, cancelledPos, items] = await Promise.all([
+    const [groups, cancelledPos, items, returns] = await Promise.all([
       this.prisma.$queryRaw<
-        { channel: OrderChannel; method: PaymentMethod; sales: number; total: Prisma.Decimal }[]
+        {
+          channel: OrderChannel;
+          method: PaymentMethod;
+          sales: number;
+          total: Prisma.Decimal;
+          received: Prisma.Decimal;
+        }[]
       >`
-        SELECT o."channel", p."method", COUNT(*)::int AS sales, SUM(o."totalAmount") AS total
+        SELECT o."channel", p."method", COUNT(*)::int AS sales, SUM(o."totalAmount") AS total,
+          SUM(o."totalAmount" - o."exchangeCredit") AS received
         FROM "orders" o JOIN "payments" p ON p."orderId" = o."id"
         WHERE o."paymentStatus" = 'APPROVED' AND o."status" <> 'CANCELLED'
           AND o."createdAt" >= ${start} AND o."createdAt" < ${end}
@@ -211,24 +230,47 @@ export class DashboardService {
           AND o."createdAt" >= ${start} AND o."createdAt" < ${end}
         GROUP BY i."productId"
         ORDER BY quantity DESC, name ASC`,
+      this.prisma.orderReturn.groupBy({
+        by: ['refundMethod'],
+        where: { createdAt: { gte: start, lt: end } },
+        _count: true,
+        _sum: { refundAmount: true },
+      }),
     ]);
+
+    const returnedCents = returns.reduce(
+      (sum, row) => sum + toCents(row._sum.refundAmount ?? 0),
+      0,
+    );
 
     const channelReport = (channel: OrderChannel) => {
       const rows = groups.filter((row) => row.channel === channel);
       return {
         sales: rows.reduce((sum, row) => sum + row.sales, 0),
-        total: formatCents(rows.reduce((sum, row) => sum + toCents(row.total), 0)),
+        // Money actually taken: credit from returned items is not new money.
+        total: formatCents(rows.reduce((sum, row) => sum + toCents(row.received), 0)),
         methods: rows.map((row) => ({
           method: row.method,
           sales: row.sales,
-          total: money(row.total),
+          total: money(row.received),
         })),
       };
     };
 
     return {
       date: dhakaDayLabel(start),
-      total: formatCents(groups.reduce((sum, row) => sum + toCents(row.total), 0)),
+      // Sales minus everything brought back, so an exchange counts only once.
+      total: formatCents(groups.reduce((sum, row) => sum + toCents(row.total), 0) - returnedCents),
+      returns: {
+        count: returns.reduce((sum, row) => sum + row._count, 0),
+        total: formatCents(returnedCents),
+        credit: money(returns.find((row) => row.refundMethod === null)?._sum.refundAmount ?? null),
+        refunds: returns.flatMap((row) =>
+          row.refundMethod
+            ? [{ method: row.refundMethod, total: money(row._sum.refundAmount) }]
+            : [],
+        ),
+      },
       itemsSold: items.reduce((sum, item) => sum + item.quantity, 0),
       pos: channelReport(OrderChannel.POS),
       online: channelReport(OrderChannel.ONLINE),

@@ -354,3 +354,14 @@ Template:
   totals; test data removed.
 - Limitations: staff check the bKash/Nagad payment on their own phone; the system does not verify it. Report has no opening cash.
 - Next step: exchanges and returns (needs a migration).
+
+## 2026-10-30 — Returns and exchanges
+
+- Objective: take items back after a sale, as a refund or as credit for a new sale.
+- Files changed: migration `20261030170000_add_order_returns` (additive; applied to dev and `_test`, not to Neon), `orders/returns.*`,
+  `pos.service.ts` (`exchangeReturnId`), `dashboard.service.ts`, `ReturnContent`, `ReturnSlipContent`, `PosContent`, order page.
+- Tested: backend vitest 18 files / 168 tests (12 new), typecheck, lint, builds. Browser: sale with discount, exchange with credit,
+  cash refund with slip, report totals, cancel refused with returns; test data removed and stock checked.
+- Limitations: customers do not see returns on their own order page; the online shipping charge is not refunded; the 30-day sales
+  chart and best-seller lists are before returns. No time limit on returns (owner policy).
+- Next step: barcode labels, or real products and policies.
