@@ -385,3 +385,12 @@ Template:
   public API; test data removed and sample stock restored.
 - Limitations: one buying price per product, not per size; purchases cannot be edited or deleted; older sales have no cost; no expenses.
 - Next step: real products; finish deployment.
+
+## 2026-10-31 — Page guides in Bangla and English
+
+- Objective: a guide with steps and an example on every admin page, so the owner can check how a page works.
+- Files changed: `frontend/lib/admin-guides.ts` (22 guides covering all 24 admin pages), `PageGuide.tsx`, `AdminShell.tsx`.
+- Tested: script confirmed every admin route maps to a guide; typecheck, lint, build; browser: guide opens on 6 pages, language switch is
+  remembered, Bangla displays correctly.
+- Limitations: admin pages only. Bangla wording is for the owner to review. Update a page's guide whenever its behaviour changes.
+- Next step: daily expenses and opening cash (needs a migration).

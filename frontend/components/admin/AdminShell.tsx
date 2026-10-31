@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { PageGuide } from '@/components/admin/PageGuide';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
@@ -111,7 +112,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
             Sign out
           </button>
         </header>
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6">
+          <PageGuide />
+          {children}
+        </main>
       </div>
     </div>
   );
