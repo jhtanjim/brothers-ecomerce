@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  ExpenseCategory,
   OrderChannel,
   OrderStatus,
   PaymentMethod,
@@ -195,34 +196,36 @@ export class DashboardService {
       : dhakaDayStart();
     const end = new Date(start.getTime() + DAY_MS);
 
-    const [groups, cancelledPos, items, returns, profit, purchases] = await Promise.all([
-      this.prisma.$queryRaw<
-        {
-          channel: OrderChannel;
-          method: PaymentMethod;
-          sales: number;
-          total: Prisma.Decimal;
-          received: Prisma.Decimal;
-        }[]
-      >`
+    const day = dhakaDayLabel(start);
+    const [groups, cancelledPos, items, returns, profit, purchases, expenses, cashDay] =
+      await Promise.all([
+        this.prisma.$queryRaw<
+          {
+            channel: OrderChannel;
+            method: PaymentMethod;
+            sales: number;
+            total: Prisma.Decimal;
+            received: Prisma.Decimal;
+          }[]
+        >`
         SELECT o."channel", p."method", COUNT(*)::int AS sales, SUM(o."totalAmount") AS total,
           SUM(o."totalAmount" - o."exchangeCredit") AS received
         FROM "orders" o JOIN "payments" p ON p."orderId" = o."id"
         WHERE o."paymentStatus" = 'APPROVED' AND o."status" <> 'CANCELLED'
           AND o."createdAt" >= ${start} AND o."createdAt" < ${end}
         GROUP BY o."channel", p."method"`,
-      this.prisma.order.aggregate({
-        where: {
-          channel: OrderChannel.POS,
-          status: OrderStatus.CANCELLED,
-          createdAt: { gte: start, lt: end },
-        },
-        _count: true,
-        _sum: { totalAmount: true },
-      }),
-      this.prisma.$queryRaw<
-        { productId: string; name: string; quantity: number; total: Prisma.Decimal }[]
-      >`
+        this.prisma.order.aggregate({
+          where: {
+            channel: OrderChannel.POS,
+            status: OrderStatus.CANCELLED,
+            createdAt: { gte: start, lt: end },
+          },
+          _count: true,
+          _sum: { totalAmount: true },
+        }),
+        this.prisma.$queryRaw<
+          { productId: string; name: string; quantity: number; total: Prisma.Decimal }[]
+        >`
         SELECT i."productId", MAX(i."productName") AS name,
           SUM(i."quantity")::int AS quantity, SUM(i."totalPrice") AS total
         FROM "order_items" i JOIN "orders" o ON o."id" = i."orderId"
@@ -230,19 +233,27 @@ export class DashboardService {
           AND o."createdAt" >= ${start} AND o."createdAt" < ${end}
         GROUP BY i."productId"
         ORDER BY quantity DESC, name ASC`,
-      this.prisma.orderReturn.groupBy({
-        by: ['refundMethod'],
-        where: { createdAt: { gte: start, lt: end } },
-        _count: true,
-        _sum: { refundAmount: true },
-      }),
-      this.dayProfit(start, end),
-      this.prisma.stockPurchase.aggregate({
-        where: { createdAt: { gte: start, lt: end } },
-        _count: true,
-        _sum: { totalCost: true },
-      }),
-    ]);
+        this.prisma.orderReturn.groupBy({
+          by: ['refundMethod'],
+          where: { createdAt: { gte: start, lt: end } },
+          _count: true,
+          _sum: { refundAmount: true },
+        }),
+        this.dayProfit(start, end),
+        this.prisma.stockPurchase.aggregate({
+          where: { createdAt: { gte: start, lt: end } },
+          _count: true,
+          _sum: { totalCost: true },
+        }),
+        this.prisma.expense.findMany({
+          where: { day },
+          select: { category: true, amount: true, paidFromDrawer: true },
+        }),
+        this.prisma.cashDay.findUnique({
+          where: { day },
+          select: { openingCash: true, countedCash: true },
+        }),
+      ]);
 
     const returnedCents = returns.reduce(
       (sum, row) => sum + toCents(row._sum.refundAmount ?? 0),
@@ -263,8 +274,47 @@ export class DashboardService {
       };
     };
 
+    const centsOf = (rows: { amount: Prisma.Decimal }[]) =>
+      rows.reduce((sum, row) => sum + toCents(row.amount), 0);
+    const supplierPayments = expenses.filter(
+      (row) => row.category === ExpenseCategory.SUPPLIER_PAYMENT,
+    );
+    const runningCents = centsOf(expenses) - centsOf(supplierPayments);
+
+    // Only cash moves the drawer. Refunds count on the day they were given.
+    const cashSalesCents = groups
+      .filter((row) => row.method === PaymentMethod.CASH)
+      .reduce((sum, row) => sum + toCents(row.received), 0);
+    const cashRefundCents = toCents(
+      returns.find((row) => row.refundMethod === PaymentMethod.CASH)?._sum.refundAmount ?? 0,
+    );
+    const drawerExpenseCents = centsOf(expenses.filter((row) => row.paidFromDrawer));
+    const expectedCents =
+      cashDay?.openingCash != null
+        ? toCents(cashDay.openingCash) + cashSalesCents - cashRefundCents - drawerExpenseCents
+        : null;
+    const countedCents = cashDay?.countedCash != null ? toCents(cashDay.countedCash) : null;
+
     return {
-      date: dhakaDayLabel(start),
+      date: day,
+      expenses: {
+        count: expenses.length,
+        running: formatCents(runningCents),
+        supplierPayments: formatCents(centsOf(supplierPayments)),
+      },
+      takeHome: formatCents(toCents(profit.profit) - runningCents),
+      drawer: {
+        opening: cashDay?.openingCash != null ? money(cashDay.openingCash) : null,
+        cashSales: formatCents(cashSalesCents),
+        cashRefunds: formatCents(cashRefundCents),
+        drawerExpenses: formatCents(drawerExpenseCents),
+        expected: expectedCents === null ? null : formatCents(expectedCents),
+        counted: countedCents === null ? null : formatCents(countedCents),
+        difference:
+          expectedCents === null || countedCents === null
+            ? null
+            : formatCents(countedCents - expectedCents),
+      },
       // Sales minus everything brought back, so an exchange counts only once.
       total: formatCents(groups.reduce((sum, row) => sum + toCents(row.total), 0) - returnedCents),
       returns: {

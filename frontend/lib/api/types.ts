@@ -896,6 +896,20 @@ export interface DailyReport {
   online: DailyReportChannel;
   cancelledPos: { sales: number; total: string };
   profit: { revenue: string; cost: string; profit: string; unknownCostUnits: number };
+  expenses: { count: number; running: string; supplierPayments: string };
+  /** Profit after running costs. */
+  takeHome: string;
+  drawer: {
+    opening: string | null;
+    cashSales: string;
+    cashRefunds: string;
+    drawerExpenses: string;
+    /** null until the opening cash is entered. */
+    expected: string | null;
+    counted: string | null;
+    /** Counted minus expected; negative means the drawer is short. */
+    difference: string | null;
+  };
   purchases: { count: number; total: string };
   returns: {
     count: number;
@@ -954,4 +968,28 @@ export interface StockPurchase {
     quantity: number;
     unitCost: string;
   }[];
+}
+
+// ---------------------------------------------------------------------------
+// Expenses (matches /admin/expenses)
+// ---------------------------------------------------------------------------
+
+export type ExpenseCategory =
+  | 'RENT'
+  | 'SALARY'
+  | 'UTILITIES'
+  | 'TRANSPORT'
+  | 'SUPPLIES'
+  | 'MARKETING'
+  | 'OTHER'
+  | 'SUPPLIER_PAYMENT';
+
+export interface Expense {
+  id: string;
+  day: string;
+  category: ExpenseCategory;
+  description: string | null;
+  amount: string;
+  paidFromDrawer: boolean;
+  createdAt: string;
 }

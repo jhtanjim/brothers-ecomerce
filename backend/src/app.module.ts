@@ -16,6 +16,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { validateEnv } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ExpensesModule } from './expenses/expenses.module';
 import { OrdersModule } from './orders/orders.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { PaymentsModule } from './payments/payments.module';
@@ -36,6 +37,7 @@ import { UploadsModule } from './uploads/uploads.module';
     AddressesModule,
     SettingsModule,
     OrdersModule,
+    ExpensesModule,
     PurchasesModule,
     PaymentsModule,
     CouponsModule,

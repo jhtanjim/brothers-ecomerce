@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { CashDrawerPanel } from '@/components/admin/CashDrawerPanel';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { getDailyReport } from '@/lib/api/admin-dashboard';
 import type { DailyReport, PaymentMethod } from '@/lib/api/types';
@@ -63,26 +64,24 @@ export function DailyReportContent() {
   const [date, setDate] = useState(dhakaToday);
   const [report, setReport] = useState<DailyReport | null>(null);
   const [failed, setFailed] = useState(false);
+  const latestDay = useRef('');
+
+  const load = useCallback(async (day: string) => {
+    try {
+      const result = await getDailyReport(day);
+      // A slow answer for a date that is no longer selected must not replace the current one.
+      setReport((current) => (day === latestDay.current ? result : current));
+      setFailed(false);
+    } catch {
+      if (day === latestDay.current) setFailed(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!date) return;
-    let cancelled = false;
-    setFailed(false);
-    getDailyReport(date)
-      .then((result) => {
-        if (!cancelled) setReport(result);
-      })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [date]);
-
-  const cash = report?.pos.methods.find((entry) => entry.method === 'CASH');
-  const cashRefund = report?.returns.refunds.find((entry) => entry.method === 'CASH');
-  const drawer = (Number(cash?.total ?? 0) - Number(cashRefund?.total ?? 0)).toFixed(2);
+    latestDay.current = date;
+    void load(date);
+  }, [date, load]);
 
   return (
     <div className="space-y-6">
@@ -108,13 +107,21 @@ export function DailyReportContent() {
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             <Card
-              label="Cash in drawer from sales"
-              value={formatPrice(drawer)}
-              note="After cash refunds. Add your opening cash to compare with the drawer"
+              label="Take-home"
+              value={formatPrice(report.takeHome)}
+              note="Profit after running expenses"
             />
             <Card label="Total sales" value={formatPrice(report.total)} note="After returns" />
             <Card label="Items sold" value={String(report.itemsSold)} note="Before returns" />
           </div>
+
+          {/* The key reloads the fields when the date or saved values change. */}
+          <CashDrawerPanel
+            key={`${report.date}-${report.drawer.opening}-${report.drawer.counted}`}
+            date={report.date}
+            drawer={report.drawer}
+            onSaved={() => void load(report.date)}
+          />
 
           <div className="grid gap-6 md:grid-cols-2">
             <MethodTable title="Shop sales" methods={POS_METHODS} rows={report.pos} />
@@ -136,9 +143,23 @@ export function DailyReportContent() {
                 <dt>Profit</dt>
                 <dd>{formatPrice(report.profit.profit)}</dd>
               </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-slate-600">
+                  <Link href="/admin/expenses" className="underline hover:text-slate-900">
+                    Running expenses
+                  </Link>
+                </dt>
+                <dd className="font-medium text-slate-900">
+                  -{formatPrice(report.expenses.running)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3 border-t border-slate-200 pt-2 text-base font-bold">
+                <dt>Take-home</dt>
+                <dd>{formatPrice(report.takeHome)}</dd>
+              </div>
             </dl>
             <p className="mt-2 text-xs text-slate-500">
-              Before rent, salaries and other expenses. Delivery charges are not counted.
+              Delivery charges are not counted. Supplier payments reduce the drawer, not take-home.
             </p>
             {report.profit.unknownCostUnits > 0 ? (
               <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -150,7 +171,7 @@ export function DailyReportContent() {
               <p className="mt-2 text-sm text-slate-600">
                 Stock bought this day: {formatPrice(report.purchases.total)} (
                 {report.purchases.count} {report.purchases.count === 1 ? 'purchase' : 'purchases'}).
-                This is not taken from the drawer figure above.
+                To take it off the drawer, add a Supplier payment under Expenses.
               </p>
             ) : null}
           </section>

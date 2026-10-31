@@ -144,30 +144,63 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
       en: {
         title: 'Daily report',
         summary:
-          'What was sold on one day, how it was paid, and the profit. Use it at closing time.',
+          'What was sold on one day, the profit, what you take home, and whether the drawer is right.',
         steps: [
           'Pick the date. It opens on today.',
-          'Add your opening cash to "Cash in drawer from sales", and compare it with the money in the drawer.',
+          'In the morning, enter Opening cash under Cash drawer, and click Save.',
+          'At closing, count the money, enter Cash counted, and click Save. It tells you if the drawer matches.',
           'Check shop and online sales, split by payment method.',
-          'Read Profit, returns and best sellers lower down.',
+          'Read Profit, Take-home, returns and best sellers lower down.',
         ],
         example:
-          'You started with 2,000 taka in the drawer, and the report shows 8,500 cash from sales. The drawer should hold 10,500 taka, unless you paid for something from it.',
-        tip: 'Profit is before rent, salaries and other expenses. Items with no buying price are left out, and the page warns you how many.',
+          'Opening cash 2,000, cash sales 8,500, 300 spent on transport from the drawer. It should hold 10,200. You count 10,150, so the page says the drawer is short by 50 taka.',
+        tip: 'Take-home is profit minus running expenses. Items with no buying price are left out, and the page warns you how many, so the real figure may differ.',
       },
       bn: {
         title: 'দৈনিক রিপোর্ট',
         summary:
-          'একদিনে কী বিক্রি হলো, কীভাবে পেমেন্ট হলো এবং লাভ কত। দোকান বন্ধের সময় ব্যবহার করুন।',
+          'একদিনে কী বিক্রি হলো, লাভ কত, হাতে কত থাকল, এবং ক্যাশ ড্রয়ারের হিসাব মিলছে কি না।',
         steps: [
           'তারিখ বেছে নিন। শুরুতে আজকের তারিখ থাকে।',
-          '"Cash in drawer from sales"-এর সাথে সকালের শুরুর টাকা যোগ করে ক্যাশ ড্রয়ারের টাকার সাথে মিলিয়ে দেখুন।',
+          'সকালে Cash drawer অংশে Opening cash লিখে Save করুন।',
+          'দোকান বন্ধের সময় টাকা গুনে Cash counted লিখে Save করুন। হিসাব মিলছে কি না পেজেই দেখাবে।',
           'দোকান ও অনলাইনের বিক্রি পেমেন্টের ধরন অনুযায়ী দেখুন।',
-          'নিচে লাভ (Profit), রিটার্ন এবং সবচেয়ে বেশি বিক্রি হওয়া পণ্য দেখুন।',
+          'নিচে লাভ (Profit), Take-home, রিটার্ন এবং সবচেয়ে বেশি বিক্রি হওয়া পণ্য দেখুন।',
         ],
         example:
-          'সকালে ড্রয়ারে ২,০০০ টাকা ছিল, রিপোর্টে বিক্রির নগদ ৮,৫০০ টাকা। তাহলে ড্রয়ারে ১০,৫০০ টাকা থাকার কথা, যদি না সেখান থেকে কোনো খরচ করে থাকেন।',
-        tip: 'লাভের হিসাবে দোকান ভাড়া, বেতন বা অন্য খরচ ধরা হয়নি। কেনা দাম না দেওয়া পণ্য বাদ থাকে, এবং কয়টি বাদ গেছে তা পেজেই দেখাবে।',
+          'সকালে ২,০০০ টাকা, নগদ বিক্রি ৮,৫০০ টাকা, ড্রয়ার থেকে যাতায়াতে ৩০০ টাকা খরচ। থাকার কথা ১০,২০০ টাকা। গুনে পেলেন ১০,১৫০ টাকা, তাই পেজে দেখাবে ৫০ টাকা কম আছে।',
+        tip: 'Take-home হলো লাভ থেকে চলতি খরচ বাদ দিয়ে যা থাকে। কেনা দাম না দেওয়া পণ্য বাদ থাকে, এবং কয়টি বাদ গেছে তা পেজেই দেখাবে, তাই আসল হিসাব কিছুটা আলাদা হতে পারে।',
+      },
+    },
+  },
+  {
+    path: /^\/admin\/expenses$/,
+    guide: {
+      en: {
+        title: 'Expenses',
+        summary: 'Record what the shop spends each day, such as rent, salary and transport.',
+        steps: [
+          'Check the date. It opens on today, and you can choose a past day.',
+          'Choose the type, and enter the amount and a note if you want.',
+          'Keep "Paid with cash from the drawer" ticked if the money came from the drawer. Untick it if you paid from elsewhere, such as your own bKash.',
+          'Click "Add expense". Use Remove to fix a mistake.',
+        ],
+        example:
+          'You pay 300 taka from the drawer for a van. Type: Transport and delivery. Amount: 300. Note: Van to Mirpur. Keep the box ticked and add it. Take-home falls by 300, and the drawer should hold 300 less.',
+        tip: 'When you pay a supplier, choose "Supplier payment". It reduces the drawer but not take-home, because the buying cost already comes off profit when the goods sell.',
+      },
+      bn: {
+        title: 'খরচ',
+        summary: 'দোকানের প্রতিদিনের খরচ লিখে রাখুন, যেমন ভাড়া, বেতন ও যাতায়াত।',
+        steps: [
+          'তারিখ দেখে নিন। শুরুতে আজকের তারিখ থাকে, চাইলে আগের দিনও বেছে নিতে পারেন।',
+          'ধরন বেছে নিন, টাকার পরিমাণ লিখুন, চাইলে নোট দিন।',
+          'টাকা ড্রয়ার থেকে গেলে "Paid with cash from the drawer" টিক দেওয়া রাখুন। অন্য জায়গা থেকে দিলে, যেমন নিজের bKash, টিক তুলে দিন।',
+          '"Add expense" ক্লিক করুন। ভুল হলে Remove দিয়ে ঠিক করুন।',
+        ],
+        example:
+          'ড্রয়ার থেকে ভ্যান ভাড়া ৩০০ টাকা দিলেন। Type: Transport and delivery। Amount: 300। Note: মিরপুরে ভ্যান। টিক রেখে যোগ করুন। Take-home ৩০০ টাকা কমবে, এবং ড্রয়ারেও ৩০০ টাকা কম থাকার কথা।',
+        tip: 'সরবরাহকারীকে টাকা দিলে "Supplier payment" বেছে নিন। এতে ড্রয়ারের টাকা কমবে, কিন্তু Take-home কমবে না, কারণ পণ্য বিক্রির সময়ই কেনা দাম লাভ থেকে বাদ যায়।',
       },
     },
   },

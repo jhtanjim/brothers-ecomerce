@@ -10,6 +10,8 @@ export const ACTIVITY_ACTIONS = {
   posSaleVoided: 'POS_SALE_VOIDED',
   orderReturned: 'ORDER_RETURNED',
   stockPurchased: 'STOCK_PURCHASED',
+  expenseAdded: 'EXPENSE_ADDED',
+  expenseDeleted: 'EXPENSE_DELETED',
   couponCreated: 'COUPON_CREATED',
   couponUpdated: 'COUPON_UPDATED',
   couponStatusChanged: 'COUPON_STATUS_CHANGED',

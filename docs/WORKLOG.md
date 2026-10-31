@@ -394,3 +394,13 @@ Template:
   remembered, Bangla displays correctly.
 - Limitations: admin pages only. Bangla wording is for the owner to review. Update a page's guide whenever its behaviour changes.
 - Next step: daily expenses and opening cash (needs a migration).
+
+## 2026-10-31 — Expenses, drawer check and take-home
+
+- Objective: record daily spending, check the cash drawer and show what the shop really earned.
+- Files changed: migration `20261031130000_add_expenses_cash_days` (additive; applied to dev and `_test`, not to Neon), `backend/src/expenses`,
+  `dashboard.service.ts`, `ExpensesContent`, `CashDrawerPanel`, `DailyReportContent`, `admin-guides.ts`, `format.ts` (negative amounts).
+- Tested: backend vitest 20 files / 182 tests (5 new), typecheck, lint, builds. Browser: sale, expenses, opening cash, count, difference,
+  take-home, expenses guide; test data removed.
+- Limitations: no recurring expenses; cash refunds count on the day given; supplier payments are entered by hand, not linked to purchases.
+- Next step: low-stock list by size; finish deployment; real products.

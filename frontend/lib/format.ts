@@ -12,7 +12,7 @@ export function formatPrice(value: string | number): string {
   const amount = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(amount)) return '';
   const fractionDigits = Number.isInteger(amount) ? 0 : 2;
-  return `${TAKA}${amount.toLocaleString('en-US', {
+  return `${amount < 0 ? '-' : ''}${TAKA}${Math.abs(amount).toLocaleString('en-US', {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: 2,
   })}`;
