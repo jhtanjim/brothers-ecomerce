@@ -413,3 +413,11 @@ Template:
 - Tested: backend vitest 21 files / 185 tests (3 new), typecheck, lint, builds. Browser: low-stock list, monthly report, dashboard section; temp admin removed.
 - Limitations: the product's alert level applies to each option; monthly report runs the daily report per day; no export or print.
 - Next step: owner tries a real day; real products; finish deployment.
+
+## 2026-10-31 — First live deployment (demo)
+
+- Live: website https://brothers-ecomerce.vercel.app (Vercel), API on Render `brothers-api`, database on Neon `brothers` (Singapore). `main` deploys both.
+- Fixed: `pg_trgm` migration for empty databases; 45-second timeout on server API calls, so a sleeping API cannot fail the Vercel build.
+- Tested: storefront pages, images, filters, 404 and auth guards on the live site, phone width. Sign-in, cart, checkout and admin were not tested live.
+- Limitations: demo data; the Render build runs the sample seed (remove it in `render.yaml` before real products); free Render sleeps when idle; no email provider.
+- Next step: owner signs in live, then real products and policies.
