@@ -19,6 +19,12 @@ function baseUrl(): string {
   return typeof window === 'undefined' ? (process.env.BACKEND_URL ?? 'http://localhost:4000') : '';
 }
 
+/**
+ * Server calls only. Long enough for a sleeping API host to usually wake up,
+ * but a dead API must not hang page rendering or fail the whole build.
+ */
+const SERVER_TIMEOUT_MS = 45_000;
+
 interface SuccessEnvelope<T> {
   data: T;
   meta?: PaginationMeta;
@@ -67,6 +73,7 @@ async function send<T>(
       ...init,
       headers,
       credentials: 'include',
+      ...(typeof window === 'undefined' ? { signal: AbortSignal.timeout(SERVER_TIMEOUT_MS) } : {}),
     });
   } catch {
     throw new ApiError('Unable to reach the server', 0, 'NETWORK_ERROR');
