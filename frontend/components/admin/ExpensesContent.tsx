@@ -23,7 +23,7 @@ const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: 'SUPPLIER_PAYMENT', label: 'Supplier payment' },
 ];
 
-function categoryLabel(category: ExpenseCategory): string {
+export function categoryLabel(category: ExpenseCategory): string {
   return CATEGORIES.find((entry) => entry.value === category)?.label ?? category;
 }
 

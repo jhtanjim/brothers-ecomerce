@@ -2,7 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { DashboardService } from './dashboard.service';
-import { DailyReportQueryDto } from './dto/daily-report-query.dto';
+import { DailyReportQueryDto, MonthlyReportQueryDto } from './dto/daily-report-query.dto';
 import { SalesQueryDto } from './dto/sales-query.dto';
 import { TopProductsQueryDto } from './dto/top-products-query.dto';
 
@@ -20,6 +20,16 @@ export class DashboardController {
   @Get('daily')
   daily(@Query() query: DailyReportQueryDto) {
     return this.dashboard.dailyReport(query.date);
+  }
+
+  @Get('monthly')
+  monthly(@Query() query: MonthlyReportQueryDto) {
+    return this.dashboard.monthlyReport(query.month);
+  }
+
+  @Get('low-stock')
+  lowStock() {
+    return this.dashboard.lowStock();
   }
 
   @Get('sales')

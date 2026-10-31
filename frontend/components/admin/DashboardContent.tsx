@@ -8,7 +8,7 @@ import { OrderStatusBadge, PaymentStatusBadge } from '@/components/order/StatusB
 import { ErrorState } from '@/components/ui/ErrorState';
 import { getDashboardOverview } from '@/lib/api/admin-dashboard';
 import type { DashboardOverview } from '@/lib/api/types';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, optionLabel } from '@/lib/format';
 import { formatDateTime } from '@/lib/format-date';
 
 type LoadState =
@@ -147,7 +147,7 @@ export function DashboardContent() {
         <Card label="Total customers" value={String(cards.totalCustomers)} />
         <Card label="Total products" value={String(cards.totalProducts)} />
         <Card
-          label="Low stock products"
+          label="Low stock items"
           value={String(cards.lowStockProducts)}
           highlight={cards.lowStockProducts > 0}
         />
@@ -239,18 +239,23 @@ export function DashboardContent() {
           )}
         </Section>
 
-        <Section title="Low stock">
+        <Section title="Low stock" href="/admin/low-stock" linkLabel="View all">
           {lowStock.length === 0 ? (
             <Empty text="No products are running low." />
           ) : (
             <ul className="divide-y divide-slate-100">
               {lowStock.map((product) => (
                 <li
-                  key={product.id}
+                  key={product.sku}
                   className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium text-slate-900">{product.name}</p>
+                    {optionLabel(product.size, product.color) ? (
+                      <p className="text-xs text-slate-600">
+                        {optionLabel(product.size, product.color)}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-slate-500">{product.sku}</p>
                   </div>
                   <p

@@ -404,3 +404,12 @@ Template:
   take-home, expenses guide; test data removed.
 - Limitations: no recurring expenses; cash refunds count on the day given; supplier payments are entered by hand, not linked to purchases.
 - Next step: low-stock list by size; finish deployment; real products.
+
+## 2026-10-31 — Low stock by size and monthly report
+
+- Objective: show exactly what to reorder, and what the shop earned over a month.
+- Files changed: `dashboard.service.ts` (`lowStock`, `monthlyReport`), `LowStockContent`, `MonthlyReportContent`, `DashboardContent`, `admin-guides.ts`.
+  No migration.
+- Tested: backend vitest 21 files / 185 tests (3 new), typecheck, lint, builds. Browser: low-stock list, monthly report, dashboard section; temp admin removed.
+- Limitations: the product's alert level applies to each option; monthly report runs the daily report per day; no export or print.
+- Next step: owner tries a real day; real products; finish deployment.

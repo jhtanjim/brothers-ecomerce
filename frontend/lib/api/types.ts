@@ -846,6 +846,8 @@ export interface DashboardLowStockItem {
   id: string;
   name: string;
   sku: string;
+  size: string | null;
+  color: string | null;
   stockQuantity: number;
   lowStockThreshold: number;
 }
@@ -992,4 +994,23 @@ export interface Expense {
   amount: string;
   paidFromDrawer: boolean;
   createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Monthly report (matches /admin/dashboard/monthly)
+// ---------------------------------------------------------------------------
+
+export interface MonthlyReport {
+  month: string;
+  total: string;
+  profit: string;
+  running: string;
+  supplierPayments: string;
+  takeHome: string;
+  returns: string;
+  purchases: string;
+  itemsSold: number;
+  unknownCostUnits: number;
+  byCategory: { category: ExpenseCategory; total: string }[];
+  days: { date: string; total: string; profit: string; running: string; takeHome: string }[];
 }

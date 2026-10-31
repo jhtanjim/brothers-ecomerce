@@ -28,7 +28,7 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
         ],
         example:
           'You open the dashboard in the morning and see 2 pending payments. Click one, check it, and approve it.',
-        tip: 'Low stock looks at the total of each product. One size can run out while the total still looks fine.',
+        tip: 'Each size and colour is checked separately. "View all" on Low stock opens the full list.',
       },
       bn: {
         title: 'ড্যাশবোর্ড',
@@ -40,7 +40,7 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
         ],
         example:
           'সকালে ড্যাশবোর্ড খুলে দেখলেন ২টি পেমেন্ট অপেক্ষায় আছে। একটিতে ক্লিক করে যাচাই করুন, তারপর approve করুন।',
-        tip: 'Low stock প্রতিটি পণ্যের মোট স্টক দেখে। মোট ঠিক দেখালেও কোনো একটি সাইজ শেষ হয়ে যেতে পারে।',
+        tip: 'প্রতিটি সাইজ ও রঙ আলাদাভাবে দেখা হয়। পুরো তালিকা দেখতে Low stock-এর "View all" ক্লিক করুন।',
       },
     },
   },
@@ -150,7 +150,7 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
           'In the morning, enter Opening cash under Cash drawer, and click Save.',
           'At closing, count the money, enter Cash counted, and click Save. It tells you if the drawer matches.',
           'Check shop and online sales, split by payment method.',
-          'Read Profit, Take-home, returns and best sellers lower down.',
+          'Read Profit, Take-home, returns and best sellers lower down. "Monthly report" at the top shows a whole month.',
         ],
         example:
           'Opening cash 2,000, cash sales 8,500, 300 spent on transport from the drawer. It should hold 10,200. You count 10,150, so the page says the drawer is short by 50 taka.',
@@ -165,7 +165,7 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
           'সকালে Cash drawer অংশে Opening cash লিখে Save করুন।',
           'দোকান বন্ধের সময় টাকা গুনে Cash counted লিখে Save করুন। হিসাব মিলছে কি না পেজেই দেখাবে।',
           'দোকান ও অনলাইনের বিক্রি পেমেন্টের ধরন অনুযায়ী দেখুন।',
-          'নিচে লাভ (Profit), Take-home, রিটার্ন এবং সবচেয়ে বেশি বিক্রি হওয়া পণ্য দেখুন।',
+          'নিচে লাভ (Profit), Take-home, রিটার্ন এবং সবচেয়ে বেশি বিক্রি হওয়া পণ্য দেখুন। উপরের "Monthly report" দিলে পুরো মাস দেখা যাবে।',
         ],
         example:
           'সকালে ২,০০০ টাকা, নগদ বিক্রি ৮,৫০০ টাকা, ড্রয়ার থেকে যাতায়াতে ৩০০ টাকা খরচ। থাকার কথা ১০,২০০ টাকা। গুনে পেলেন ১০,১৫০ টাকা, তাই পেজে দেখাবে ৫০ টাকা কম আছে।',
@@ -201,6 +201,68 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
         example:
           'ড্রয়ার থেকে ভ্যান ভাড়া ৩০০ টাকা দিলেন। Type: Transport and delivery। Amount: 300। Note: মিরপুরে ভ্যান। টিক রেখে যোগ করুন। Take-home ৩০০ টাকা কমবে, এবং ড্রয়ারেও ৩০০ টাকা কম থাকার কথা।',
         tip: 'সরবরাহকারীকে টাকা দিলে "Supplier payment" বেছে নিন। এতে ড্রয়ারের টাকা কমবে, কিন্তু Take-home কমবে না, কারণ পণ্য বিক্রির সময়ই কেনা দাম লাভ থেকে বাদ যায়।',
+      },
+    },
+  },
+  {
+    path: /^\/admin\/reports\/monthly$/,
+    guide: {
+      en: {
+        title: 'Monthly report',
+        summary:
+          'What the shop earned over a whole month. Rent and salary look fair here, unlike on a single day.',
+        steps: [
+          'Pick the month. It opens on this month, which counts up to today.',
+          'Read Take-home, Total sales and Profit at the top.',
+          'See where the money went under Expenses by type.',
+          'Check Day by day to find unusually good or bad days.',
+        ],
+        example:
+          'In March, profit was 80,000 taka. Rent was 25,000 and salary 20,000. Take-home shows 35,000 taka, which is what the shop really earned that month.',
+        tip: 'If the page warns that items had no buying price, the real profit and take-home are usually higher than shown.',
+      },
+      bn: {
+        title: 'মাসিক রিপোর্ট',
+        summary:
+          'পুরো মাসে দোকান কত আয় করল। একদিনের হিসাবে ভাড়া ও বেতন বেশি মনে হয়, মাসের হিসাবে ঠিকভাবে বোঝা যায়।',
+        steps: [
+          'মাস বেছে নিন। শুরুতে চলতি মাস থাকে, আজ পর্যন্ত হিসাব দেখায়।',
+          'উপরে Take-home, Total sales ও Profit দেখুন।',
+          'Expenses by type-এ দেখুন টাকা কোথায় খরচ হলো।',
+          'Day by day দেখে কোন দিন খুব ভালো বা খারাপ গেছে তা খুঁজুন।',
+        ],
+        example:
+          'মার্চে লাভ ৮০,০০০ টাকা। ভাড়া ২৫,০০০ ও বেতন ২০,০০০ টাকা। Take-home দেখাবে ৩৫,০০০ টাকা, এটাই সেই মাসে দোকানের আসল আয়।',
+        tip: 'কেনা দাম না থাকার সতর্কবার্তা দেখালে আসল লাভ ও Take-home সাধারণত দেখানো অঙ্কের চেয়ে বেশি হয়।',
+      },
+    },
+  },
+  {
+    path: /^\/admin\/low-stock$/,
+    guide: {
+      en: {
+        title: 'Low stock',
+        summary: 'What to reorder. Each size and colour has its own line, emptiest first.',
+        steps: [
+          'Read the list from the top: sold-out items come first.',
+          'Click an item to see the product.',
+          'When the new stock arrives, click "Add purchase" to record it.',
+        ],
+        example:
+          'Polo has 22 in total, but the list shows "L / White: 2 left". Order more L before it runs out, even though the total looks fine.',
+        tip: 'An item appears at or below the product\'s "Low-stock alert at" number, which applies to each size. Change that number on the product page.',
+      },
+      bn: {
+        title: 'কম স্টক',
+        summary: 'কী আবার কিনতে হবে। প্রতিটি সাইজ ও রঙ আলাদা সারিতে থাকে, সবচেয়ে কম স্টক আগে।',
+        steps: [
+          'উপর থেকে দেখুন: যেগুলো শেষ হয়ে গেছে সেগুলো আগে থাকে।',
+          'পণ্যটি দেখতে তাতে ক্লিক করুন।',
+          'নতুন স্টক এলে "Add purchase" ক্লিক করে হিসাব রাখুন।',
+        ],
+        example:
+          'পোলোর মোট স্টক ২২, কিন্তু তালিকায় দেখাচ্ছে "L / White: 2 left"। মোট ঠিক দেখালেও, শেষ হওয়ার আগেই L সাইজ অর্ডার করুন।',
+        tip: 'পণ্যের "Low-stock alert at" সংখ্যা বা তার নিচে নামলে তালিকায় আসে, এবং এটি প্রতিটি সাইজে আলাদাভাবে প্রযোজ্য। সংখ্যাটি পণ্যের পেজে বদলাতে পারবেন।',
       },
     },
   },

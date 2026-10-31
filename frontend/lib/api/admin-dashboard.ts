@@ -1,5 +1,12 @@
 import { apiFetch } from './client';
-import type { DailyReport, DashboardOverview, DashboardSales, DashboardTopProduct } from './types';
+import type {
+  DailyReport,
+  DashboardLowStockItem,
+  DashboardOverview,
+  DashboardSales,
+  DashboardTopProduct,
+  MonthlyReport,
+} from './types';
 
 export function getDashboardOverview(): Promise<DashboardOverview> {
   return apiFetch<DashboardOverview>('/admin/dashboard');
@@ -15,4 +22,12 @@ export function getDashboardTopProducts(limit: number): Promise<DashboardTopProd
 
 export function getDailyReport(date: string): Promise<DailyReport> {
   return apiFetch<DailyReport>(`/admin/dashboard/daily?date=${encodeURIComponent(date)}`);
+}
+
+export function getMonthlyReport(month: string): Promise<MonthlyReport> {
+  return apiFetch<MonthlyReport>(`/admin/dashboard/monthly?month=${encodeURIComponent(month)}`);
+}
+
+export function getLowStock(): Promise<DashboardLowStockItem[]> {
+  return apiFetch<DashboardLowStockItem[]>('/admin/dashboard/low-stock');
 }

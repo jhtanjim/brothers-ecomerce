@@ -24,6 +24,7 @@ const SALE_WHERE: Prisma.OrderWhereInput = {
 };
 
 const TOP_ITEMS = 10;
+const LOW_STOCK_MAX = 500;
 
 function money(value: Prisma.Decimal | null): string {
   return formatCents(value === null ? 0 : toCents(value));
@@ -82,8 +83,10 @@ export class DashboardService {
       this.prisma.user.count({ where: { role: Role.CUSTOMER } }),
       this.prisma.product.count({ where: { status: ProductStatus.ACTIVE } }),
       this.prisma.$queryRaw<{ count: number }[]>`
-        SELECT COUNT(*)::int AS count FROM "products"
-        WHERE "status" = 'ACTIVE' AND "stockQuantity" <= "lowStockThreshold"`,
+        SELECT COUNT(*)::int AS count
+        FROM "products" p LEFT JOIN "product_variants" v ON v."productId" = p."id"
+        WHERE p."status" = 'ACTIVE'
+          AND COALESCE(v."stockQuantity", p."stockQuantity") <= p."lowStockThreshold"`,
       this.prisma.order.findMany({
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: LIST_SIZE,
@@ -110,19 +113,7 @@ export class DashboardService {
           payment: { select: { id: true, method: true } },
         },
       }),
-      this.prisma.$queryRaw<
-        {
-          id: string;
-          name: string;
-          sku: string;
-          stockQuantity: number;
-          lowStockThreshold: number;
-        }[]
-      >`
-        SELECT "id", "name", "sku", "stockQuantity", "lowStockThreshold" FROM "products"
-        WHERE "status" = 'ACTIVE' AND "stockQuantity" <= "lowStockThreshold"
-        ORDER BY "stockQuantity" ASC, "name" ASC
-        LIMIT ${LIST_SIZE}`,
+      this.lowStock(LIST_SIZE),
     ]);
 
     return {
@@ -396,6 +387,79 @@ export class DashboardService {
       cost: formatCents(costCents),
       profit: formatCents(revenueCents - costCents),
       unknownCostUnits,
+    };
+  }
+
+  /**
+   * Every size and colour on its own line, because one size can run out while the product total
+   * looks fine. The product's alert level applies to each option. Emptiest first.
+   */
+  async lowStock(limit = LOW_STOCK_MAX) {
+    return this.prisma.$queryRaw<
+      {
+        id: string;
+        name: string;
+        sku: string;
+        size: string | null;
+        color: string | null;
+        stockQuantity: number;
+        lowStockThreshold: number;
+      }[]
+    >`
+      SELECT p."id", p."name", COALESCE(v."sku", p."sku") AS sku,
+        NULLIF(v."size", '') AS size, NULLIF(v."color", '') AS color,
+        COALESCE(v."stockQuantity", p."stockQuantity")::int AS "stockQuantity",
+        p."lowStockThreshold"
+      FROM "products" p LEFT JOIN "product_variants" v ON v."productId" = p."id"
+      WHERE p."status" = 'ACTIVE'
+        AND COALESCE(v."stockQuantity", p."stockQuantity") <= p."lowStockThreshold"
+      ORDER BY 6 ASC, p."name" ASC, 3 ASC
+      LIMIT ${limit}`;
+  }
+
+  /** A whole month, built from the daily reports so both always agree. Future days are left out. */
+  async monthlyReport(month: string) {
+    const [year, monthNumber] = month.split('-').map(Number) as [number, number];
+    const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+    const today = dhakaDayLabel(dhakaDayStart());
+    const dates = Array.from(
+      { length: daysInMonth },
+      (_, index) => `${month}-${String(index + 1).padStart(2, '0')}`,
+    ).filter((date) => date <= today);
+
+    const days: Awaited<ReturnType<DashboardService['dailyReport']>>[] = [];
+    for (const date of dates) days.push(await this.dailyReport(date));
+
+    const sum = (pick: (day: (typeof days)[number]) => string) =>
+      formatCents(days.reduce((total, day) => total + toCents(pick(day)), 0));
+
+    const byCategory = await this.prisma.expense.groupBy({
+      by: ['category'],
+      where: { day: { startsWith: `${month}-` } },
+      _sum: { amount: true },
+    });
+
+    return {
+      month,
+      total: sum((day) => day.total),
+      profit: sum((day) => day.profit.profit),
+      running: sum((day) => day.expenses.running),
+      supplierPayments: sum((day) => day.expenses.supplierPayments),
+      takeHome: sum((day) => day.takeHome),
+      returns: sum((day) => day.returns.total),
+      purchases: sum((day) => day.purchases.total),
+      itemsSold: days.reduce((total, day) => total + day.itemsSold, 0),
+      unknownCostUnits: days.reduce((total, day) => total + day.profit.unknownCostUnits, 0),
+      byCategory: byCategory
+        .map((row) => ({ category: row.category, total: money(row._sum.amount) }))
+        .sort((a, b) => toCents(b.total) - toCents(a.total)),
+      days: days.map((day) => ({
+        date: day.date,
+        total: day.total,
+        profit: day.profit.profit,
+        running: day.expenses.running,
+        takeHome: day.takeHome,
+      })),
     };
   }
 
