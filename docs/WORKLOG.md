@@ -374,3 +374,14 @@ Template:
   and label preview in the browser.
 - Limitations: not tried on a real label printer or scanner. Long SKUs give thin bars; the screen warns only below 0.19 mm.
 - Next step: test on real hardware; finish deployment; real products and policies.
+
+## 2026-10-31 — Stock purchases and profit
+
+- Objective: record stock from suppliers and show real profit.
+- Files changed: migration `20261031090000_add_stock_purchases` (additive; applied to dev and `_test`, not to Neon), `backend/src/purchases`,
+  `reserveLine` snapshots `OrderItem.unitCost`, `dashboard.service.ts` (`dayProfit`), `NewPurchaseContent`, `PurchasesListContent`,
+  `ProductForm` (buying price), `DailyReportContent`.
+- Tested: backend vitest 19 files / 177 tests (9 new), typecheck, lint, builds. Browser: purchase, sale, report profit, cost hidden from the
+  public API; test data removed and sample stock restored.
+- Limitations: one buying price per product, not per size; purchases cannot be edited or deleted; older sales have no cost; no expenses.
+- Next step: real products; finish deployment.

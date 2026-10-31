@@ -34,6 +34,7 @@ interface Values {
   description: string;
   price: string;
   discountPrice: string;
+  costPrice: string;
   stockQuantity: string;
   lowStockThreshold: string;
   featured: boolean;
@@ -62,6 +63,7 @@ function initialValues(product: AdminProduct | null): Values {
     description: product?.description ?? '',
     price: moneyText(product?.price),
     discountPrice: moneyText(product?.discountPrice),
+    costPrice: moneyText(product?.costPrice),
     stockQuantity: String(product?.stockQuantity ?? 0),
     lowStockThreshold: String(product?.lowStockThreshold ?? 5),
     featured: product?.featured ?? false,
@@ -105,6 +107,9 @@ function validate(v: Values, editing: boolean): Errors {
     } else if (!errors.price && Number(v.discountPrice) >= Number(v.price)) {
       errors.discountPrice = 'The sale price must be lower than the regular price';
     }
+  }
+  if (v.costPrice !== '' && !MONEY_PATTERN.test(v.costPrice)) {
+    errors.costPrice = 'Enter an amount with up to 2 decimals, or leave empty';
   }
   if (!isWholeNumber(v.stockQuantity, MAX_STOCK)) {
     errors.stockQuantity = 'Enter a whole number from 0 to 1,000,000';
@@ -230,6 +235,7 @@ export function ProductForm({
           ...(description ? { description } : {}),
           ...(material ? { material } : {}),
           ...(values.discountPrice ? { discountPrice: Number(values.discountPrice) } : {}),
+          ...(values.costPrice ? { costPrice: Number(values.costPrice) } : {}),
         };
         const created = await createAdminProduct(input);
         router.push(`${LIST_PATH}/${encodeURIComponent(created.id)}/edit?created=1`);
@@ -241,6 +247,7 @@ export function ProductForm({
         description: description || null,
         material: material || null,
         discountPrice: values.discountPrice ? Number(values.discountPrice) : null,
+        costPrice: values.costPrice ? Number(values.costPrice) : null,
         ...(slugChanged ? { slug } : {}),
       };
       const saved = await updateAdminProduct(product.id, input);
@@ -332,6 +339,20 @@ export function ProductForm({
             inputMode="decimal"
             value={values.discountPrice}
             onChange={(e) => set('discountPrice', e.target.value.trim())}
+            className={INPUT_CLASS}
+          />
+        </Field>
+        <Field
+          label="Buying price (BDT)"
+          htmlFor="costPrice"
+          error={errors.costPrice}
+          hint="Optional, for the profit report. Never shown to customers. Stock purchases update it"
+        >
+          <input
+            id="costPrice"
+            inputMode="decimal"
+            value={values.costPrice}
+            onChange={(e) => set('costPrice', e.target.value.trim())}
             className={INPUT_CLASS}
           />
         </Field>

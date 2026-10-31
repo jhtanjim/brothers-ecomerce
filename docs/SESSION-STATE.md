@@ -20,7 +20,7 @@ Updated: **2026-10-30** — BROTHERS storefront design on branch `feat/brothers-
 
 ## Exact next action
 
-BROTHERS (D37, D38, D39). POS (cash, bKash, Nagad), daily report (`/admin/reports`), returns and exchanges are built. Deployment is paused: Render keeps failing because its
+BROTHERS (D37, D38, D39). POS (cash, bKash, Nagad), daily report (`/admin/reports`), returns and exchanges, barcode labels, stock purchases and profit are built. Deployment is paused: Render keeps failing because its
 `DATABASE_URL` still resolves to localhost; Neon project `brothers` and the Vercel project exist. Done: brand, storefront, men's sample catalog with stock photos, sizes/colours with their own stock,
 subcategories, material, new/bestseller flags, filters and admin screens. Next: (1) owner supplies real products, photos,
 policies, size guide, contact and social details, then replaces the sample catalog

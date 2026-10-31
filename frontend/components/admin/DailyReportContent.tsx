@@ -121,6 +121,40 @@ export function DailyReportContent() {
             <MethodTable title="Online sales" methods={ONLINE_METHODS} rows={report.online} />
           </div>
 
+          <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="text-lg font-semibold text-slate-900">Profit</h2>
+            <dl className="mt-3 space-y-2 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-slate-600">Sales, after returns</dt>
+                <dd className="font-medium text-slate-900">{formatPrice(report.profit.revenue)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-slate-600">Buying cost of those items</dt>
+                <dd className="font-medium text-slate-900">-{formatPrice(report.profit.cost)}</dd>
+              </div>
+              <div className="flex justify-between gap-3 border-t border-slate-200 pt-2 text-base font-bold">
+                <dt>Profit</dt>
+                <dd>{formatPrice(report.profit.profit)}</dd>
+              </div>
+            </dl>
+            <p className="mt-2 text-xs text-slate-500">
+              Before rent, salaries and other expenses. Delivery charges are not counted.
+            </p>
+            {report.profit.unknownCostUnits > 0 ? (
+              <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {report.profit.unknownCostUnits} item(s) sold had no buying price, so they are left
+                out of this profit. Add buying prices on the product page or with a stock purchase.
+              </p>
+            ) : null}
+            {report.purchases.count > 0 ? (
+              <p className="mt-2 text-sm text-slate-600">
+                Stock bought this day: {formatPrice(report.purchases.total)} (
+                {report.purchases.count} {report.purchases.count === 1 ? 'purchase' : 'purchases'}).
+                This is not taken from the drawer figure above.
+              </p>
+            ) : null}
+          </section>
+
           {report.returns.count > 0 ? (
             <section className="rounded-xl border border-slate-200 bg-white p-5">
               <h2 className="text-lg font-semibold text-slate-900">

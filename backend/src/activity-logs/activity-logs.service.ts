@@ -9,6 +9,7 @@ export const ACTIVITY_ACTIONS = {
   posSaleCreated: 'POS_SALE_CREATED',
   posSaleVoided: 'POS_SALE_VOIDED',
   orderReturned: 'ORDER_RETURNED',
+  stockPurchased: 'STOCK_PURCHASED',
   couponCreated: 'COUPON_CREATED',
   couponUpdated: 'COUPON_UPDATED',
   couponStatusChanged: 'COUPON_STATUS_CHANGED',

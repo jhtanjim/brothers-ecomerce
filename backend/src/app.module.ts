@@ -17,6 +17,7 @@ import { validateEnv } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { OrdersModule } from './orders/orders.module';
+import { PurchasesModule } from './purchases/purchases.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ProductsModule } from './products/products.module';
 import { SettingsModule } from './settings/settings.module';
@@ -35,6 +36,7 @@ import { UploadsModule } from './uploads/uploads.module';
     AddressesModule,
     SettingsModule,
     OrdersModule,
+    PurchasesModule,
     PaymentsModule,
     CouponsModule,
     CustomersModule,

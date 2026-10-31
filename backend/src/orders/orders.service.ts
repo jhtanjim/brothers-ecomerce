@@ -222,6 +222,7 @@ interface ProductSnapshot {
   variantId: string | null;
   size: string | null;
   color: string | null;
+  unitCost: Prisma.Decimal | null;
 }
 
 @Injectable()
@@ -473,6 +474,7 @@ export class OrdersService {
             variantId: snapshots[index]?.variantId ?? null,
             size: snapshots[index]?.size ?? null,
             color: snapshots[index]?.color ?? null,
+            unitCost: snapshots[index]?.unitCost ?? null,
             unitPrice: formatCents(line.unitPriceCents),
             quantity: line.quantity,
             discountAmount: formatCents(line.discountCents),
@@ -558,6 +560,7 @@ export class OrdersService {
         sku: true,
         price: true,
         discountPrice: true,
+        costPrice: true,
         images: { orderBy: IMAGE_ORDER, take: 1, select: { url: true } },
         _count: { select: { variants: true } },
       },
@@ -589,6 +592,7 @@ export class OrdersService {
         variantId: item.variantId,
         size: variant?.size || null,
         color: variant?.color || null,
+        unitCost: product.costPrice,
       },
     };
   }

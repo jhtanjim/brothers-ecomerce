@@ -110,4 +110,11 @@ export class UpdateProductDto {
   @IsString()
   @MaxLength(120)
   material?: string | null;
+
+  /** Buying price per unit, for profit. Stock purchases keep it up to date. */
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2, allowNaN: false, allowInfinity: false })
+  @Min(0)
+  @Max(MAX_PRICE)
+  costPrice?: number | null;
 }

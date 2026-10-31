@@ -110,6 +110,10 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
   null = exchange credit, used once by a new POS sale (`Order.exchangeCredit`). Value is what was paid, including the share of a
   sale discount; shipping is not refunded. Sales totals are net of returns. A sale with returns cannot be cancelled.
 
+- **D41 — Profit.** `Product.costPrice` is the average buying price of stock on hand, kept per product, updated by stock purchases and
+  editable on the product. Each sale keeps its `OrderItem.unitCost`, so later price changes do not alter past profit. Items with no known
+  cost are left out of profit and counted on the report. Delivery charges and expenses are not included.
+
 ## Workflow (owner answers, 2026-10-29)
 
 - **D25 — Git:** initialize a local repo with a baseline commit of the existing state; no remote yet. Pushing still needs approval.

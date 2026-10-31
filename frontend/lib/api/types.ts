@@ -705,6 +705,8 @@ export interface AdminProduct {
   price: string;
   discountPrice: string | null;
   discountPercent: number;
+  /** Average buying price per unit; null until known. */
+  costPrice: string | null;
   stockQuantity: number;
   lowStockThreshold: number;
   status: ProductStatus;
@@ -730,6 +732,7 @@ export interface CreateProductInput {
   description?: string;
   price: number;
   discountPrice?: number;
+  costPrice?: number;
   stockQuantity?: number;
   lowStockThreshold?: number;
   status?: 'ACTIVE' | 'INACTIVE';
@@ -749,6 +752,7 @@ export interface UpdateProductInput {
   description?: string | null;
   price?: number;
   discountPrice?: number | null;
+  costPrice?: number | null;
   stockQuantity?: number;
   lowStockThreshold?: number;
   featured?: boolean;
@@ -891,6 +895,8 @@ export interface DailyReport {
   pos: DailyReportChannel;
   online: DailyReportChannel;
   cancelledPos: { sales: number; total: string };
+  profit: { revenue: string; cost: string; profit: string; unknownCostUnits: number };
+  purchases: { count: number; total: string };
   returns: {
     count: number;
     total: string;
@@ -925,5 +931,27 @@ export interface OrderReturn {
     color: string | null;
     quantity: number;
     amount: string;
+  }[];
+}
+
+// ---------------------------------------------------------------------------
+// Stock purchases (matches /admin/purchases)
+// ---------------------------------------------------------------------------
+
+export interface StockPurchase {
+  id: string;
+  purchaseNumber: string;
+  supplierName: string;
+  note: string | null;
+  totalCost: string;
+  createdAt: string;
+  items: {
+    id: string;
+    name: string;
+    sku: string;
+    size: string | null;
+    color: string | null;
+    quantity: number;
+    unitCost: string;
   }[];
 }

@@ -246,6 +246,7 @@ export class PosService {
               variantId: snapshot?.variantId ?? null,
               size: snapshot?.size ?? null,
               color: snapshot?.color ?? null,
+              unitCost: snapshot?.unitCost ?? null,
               unitPrice: formatCents(line.unitPriceCents),
               quantity: line.quantity,
               discountAmount: formatCents(line.discountCents),

@@ -108,6 +108,7 @@ const adminSelect = {
   discountPercent: true,
   stockQuantity: true,
   lowStockThreshold: true,
+  costPrice: true,
   status: true,
   featured: true,
   newArrival: true,
@@ -270,6 +271,7 @@ export class ProductsService {
           shortDescription: dto.shortDescription || null,
           description: dto.description || null,
           price: dto.price,
+          costPrice: dto.costPrice ?? null,
           discountPrice: dto.discountPrice ?? null,
           discountPercent: calcDiscountPercent(dto.price, dto.discountPrice),
           // undefined = let the database default apply (0, 5, ACTIVE, false)
@@ -322,6 +324,7 @@ export class ProductsService {
     if (dto.shortDescription !== undefined) data.shortDescription = dto.shortDescription || null;
     if (dto.description !== undefined) data.description = dto.description || null;
     if (dto.price !== undefined) data.price = dto.price;
+    if (dto.costPrice !== undefined) data.costPrice = dto.costPrice;
     if (dto.discountPrice !== undefined) data.discountPrice = dto.discountPrice;
     if (dto.stockQuantity !== undefined) data.stockQuantity = dto.stockQuantity;
     if (dto.lowStockThreshold !== undefined) data.lowStockThreshold = dto.lowStockThreshold;

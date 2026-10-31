@@ -195,7 +195,7 @@ export class DashboardService {
       : dhakaDayStart();
     const end = new Date(start.getTime() + DAY_MS);
 
-    const [groups, cancelledPos, items, returns] = await Promise.all([
+    const [groups, cancelledPos, items, returns, profit, purchases] = await Promise.all([
       this.prisma.$queryRaw<
         {
           channel: OrderChannel;
@@ -236,6 +236,12 @@ export class DashboardService {
         _count: true,
         _sum: { refundAmount: true },
       }),
+      this.dayProfit(start, end),
+      this.prisma.stockPurchase.aggregate({
+        where: { createdAt: { gte: start, lt: end } },
+        _count: true,
+        _sum: { totalCost: true },
+      }),
     ]);
 
     const returnedCents = returns.reduce(
@@ -274,6 +280,8 @@ export class DashboardService {
       itemsSold: items.reduce((sum, item) => sum + item.quantity, 0),
       pos: channelReport(OrderChannel.POS),
       online: channelReport(OrderChannel.ONLINE),
+      profit,
+      purchases: { count: purchases._count, total: money(purchases._sum.totalCost) },
       cancelledPos: { sales: cancelledPos._count, total: money(cancelledPos._sum.totalAmount) },
       topItems: items.slice(0, TOP_ITEMS).map((item) => ({
         productId: item.productId,
@@ -281,6 +289,63 @@ export class DashboardService {
         quantity: item.quantity,
         total: money(item.total),
       })),
+    };
+  }
+
+  /**
+   * Profit from items whose buying price is known; the others are counted so the owner can see the
+   * figure is incomplete. A sale discount is shared across the items by value. A returned item is
+   * taken out on the day it came back, but a damaged one keeps its cost, because that money is lost.
+   */
+  private async dayProfit(start: Date, end: Date) {
+    const [orders, returned] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { ...SALE_WHERE, createdAt: { gte: start, lt: end } },
+        select: {
+          couponDiscount: true,
+          items: { select: { totalPrice: true, quantity: true, unitCost: true } },
+        },
+      }),
+      this.prisma.orderReturnItem.findMany({
+        where: { orderReturn: { createdAt: { gte: start, lt: end } } },
+        select: {
+          quantity: true,
+          amount: true,
+          orderReturn: { select: { restocked: true } },
+          orderItem: { select: { unitCost: true } },
+        },
+      }),
+    ]);
+
+    let revenueCents = 0;
+    let costCents = 0;
+    let unknownCostUnits = 0;
+    for (const order of orders) {
+      const itemsCents = order.items.reduce((sum, item) => sum + toCents(item.totalPrice), 0);
+      const discountCents = toCents(order.couponDiscount);
+      for (const item of order.items) {
+        if (item.unitCost === null) {
+          unknownCostUnits += item.quantity;
+          continue;
+        }
+        const lineCents = toCents(item.totalPrice);
+        const share = itemsCents > 0 ? Math.round((discountCents * lineCents) / itemsCents) : 0;
+        revenueCents += lineCents - share;
+        costCents += toCents(item.unitCost) * item.quantity;
+      }
+    }
+    for (const item of returned) {
+      if (item.orderItem.unitCost === null) continue;
+      revenueCents -= toCents(item.amount);
+      if (item.orderReturn.restocked) {
+        costCents -= toCents(item.orderItem.unitCost) * item.quantity;
+      }
+    }
+    return {
+      revenue: formatCents(revenueCents),
+      cost: formatCents(costCents),
+      profit: formatCents(revenueCents - costCents),
+      unknownCostUnits,
     };
   }
 
