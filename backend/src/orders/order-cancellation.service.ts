@@ -54,6 +54,7 @@ export class OrderCancellationService {
         channel: true,
         status: true,
         paymentStatus: true,
+        codDue: true,
         expiresAt: true,
         items: {
           orderBy: [{ productId: 'asc' }, { variantId: 'asc' }],
@@ -149,7 +150,9 @@ export class OrderCancellationService {
       },
     });
 
-    return { orderNumber: order.orderNumber, restoredUnits, refundNeeded: wasPaid };
+    // A refused parcel: the shop keeps the advance, because the delivery was already paid for.
+    const refused = order.status === OrderStatus.SHIPPED;
+    return { orderNumber: order.orderNumber, restoredUnits, refundNeeded: wasPaid && !refused };
   }
 
   private assertEligible(
@@ -157,6 +160,7 @@ export class OrderCancellationService {
       channel: OrderChannel;
       status: OrderStatus;
       paymentStatus: PaymentStatus;
+      codDue: Prisma.Decimal;
       expiresAt: Date | null;
     },
     source: CancelSource,
@@ -164,7 +168,9 @@ export class OrderCancellationService {
     if (source === 'ADMIN') {
       // A counter sale is complete from the start, but can still be undone at the counter.
       const voidable = order.channel === OrderChannel.POS && order.status === OrderStatus.DELIVERED;
-      if (!voidable && !ADMIN_CANCELLABLE.includes(order.status)) {
+      // A customer can refuse a cash on delivery parcel at the door.
+      const refused = order.status === OrderStatus.SHIPPED && order.codDue.gt(0);
+      if (!voidable && !refused && !ADMIN_CANCELLABLE.includes(order.status)) {
         throw notCancellable('This order can no longer be cancelled', 'ORDER_NOT_CANCELLABLE');
       }
       return;

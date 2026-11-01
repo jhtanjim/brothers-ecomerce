@@ -443,3 +443,8 @@ Template:
 
 - Contact details in the footer. New pages: /delivery, /returns, /size-guide, /privacy. Receipt shows the exchange rule; the admin return page warns past 2 days; product page links the size guide.
 - Not done: cash on delivery, real size chart, delivery values in live Settings (owner).
+
+## 2026-11-01 - Cash on delivery
+
+- Checkout choice, advance via the existing payment review, Collect on delivery on the order, Customer refused the parcel button, daily report line. Migration `20261101120000_add_cash_on_delivery` (additive).
+- Tested: 24 backend files / 199 tests including new COD flows, typecheck, lint, build. Not run with a real order on the live site.

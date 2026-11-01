@@ -47,6 +47,19 @@ export function calculateDeliveryCents(
 }
 
 /**
+ * Cash on delivery: the advance is the normal delivery charge for that city, even when delivery is
+ * free, so every order has a real payment behind it. On a free-delivery order it comes off the total.
+ */
+export function codAdvanceCents(
+  totalCents: number,
+  shippingCity: string,
+  delivery: DeliveryConfig,
+): number {
+  const charge = calculateDeliveryCents(0, shippingCity, { ...delivery, freeThreshold: null });
+  return Math.min(charge, totalCents);
+}
+
+/**
  * Single source of truth for order totals. Works only in integer cents.
  * `couponDiscountCents` is always 0 until the coupon phase; it is clamped to the payable amount.
  */

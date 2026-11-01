@@ -241,7 +241,9 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
 
   const { order } = state;
   const step = NEXT_STEP[order.status];
-  const canCancel = CANCELLABLE.includes(order.status);
+  const isCod = Number(order.codDue) > 0;
+  // A customer can refuse a cash on delivery parcel at the door.
+  const canCancel = CANCELLABLE.includes(order.status) || (isCod && order.status === 'SHIPPED');
   const hasActions = Boolean(step) || canCancel;
   const underReview = order.paymentStatus === 'PENDING';
   const paid = order.paymentStatus === 'APPROVED';
@@ -425,7 +427,7 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
                 disabled={busy}
                 className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-60"
               >
-                Cancel order
+                {order.status === 'SHIPPED' ? 'Customer refused the parcel' : 'Cancel order'}
               </button>
             )}
           </div>
@@ -518,6 +520,18 @@ export function OrderManageContent({ orderId }: { orderId: string }) {
                   {formatPrice(order.totalAmount)}
                 </dd>
               </div>
+              {isCod ? (
+                <>
+                  <div className="flex justify-between">
+                    <dt className="text-slate-600">Advance</dt>
+                    <dd>{formatPrice(Number(order.totalAmount) - Number(order.codDue))}</dd>
+                  </div>
+                  <div className="flex justify-between font-semibold text-amber-800">
+                    <dt>Collect on delivery</dt>
+                    <dd>{formatPrice(order.codDue)}</dd>
+                  </div>
+                </>
+              ) : null}
             </dl>
           </section>
 

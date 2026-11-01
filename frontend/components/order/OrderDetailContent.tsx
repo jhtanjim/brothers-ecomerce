@@ -56,7 +56,7 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
         <PaymentPanel
           orderId={order.id}
           method={order.payment.method}
-          amount={order.totalAmount}
+          amount={(Number(order.totalAmount) - Number(order.codDue)).toFixed(2)}
           expiresAt={order.expiresAt}
           paymentStatus={order.paymentStatus}
           info={order.paymentInfo}
@@ -168,6 +168,20 @@ function OrderBody({ order, onRefresh }: { order: OrderDetail; onRefresh: () => 
                   {formatPrice(order.totalAmount)}
                 </dd>
               </div>
+              {Number(order.codDue) > 0 ? (
+                <>
+                  <div className="flex justify-between">
+                    <dt className="text-slate-600">Advance</dt>
+                    <dd className="text-slate-900">
+                      {formatPrice(Number(order.totalAmount) - Number(order.codDue))}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between font-semibold">
+                    <dt className="text-slate-900">Pay in cash on delivery</dt>
+                    <dd className="text-slate-900">{formatPrice(order.codDue)}</dd>
+                  </div>
+                </>
+              ) : null}
             </dl>
             {order.payment ? (
               <p className="mt-3 text-xs text-slate-500">

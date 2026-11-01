@@ -4,9 +4,10 @@
  */
 export const store = {
   name: 'BROTHERS',
-  description: "Men's fashion and lifestyle. Order online and pay with bKash or Nagad.",
+  description: "Men's fashion and lifestyle. Pay with bKash or Nagad, or cash on delivery.",
   themeColor: '#141413',
-  announcement: 'Pay with bKash or Nagad. Track every order from your account.' as string | null,
+  announcement: 'bKash, Nagad or cash on delivery. Track every order from your account.' as
+    string | null,
   hero: {
     eyebrow: "Men's fashion and lifestyle",
     title: 'Dress like you mean it',

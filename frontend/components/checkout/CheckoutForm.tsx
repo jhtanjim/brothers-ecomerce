@@ -172,6 +172,7 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
   const [addresses, setAddresses] = useState<AddressView[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [cashOnDelivery, setCashOnDelivery] = useState(false);
   const [saveAddress, setSaveAddress] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<FormError | null>(null);
@@ -289,6 +290,7 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
       area: values.area.trim(),
       postalCode: values.postalCode.trim(),
       paymentMethod,
+      ...(cashOnDelivery ? { cashOnDelivery } : {}),
       ...(notes ? { notes } : {}),
       ...(coupon ? { couponCode: coupon.code } : {}),
     };
@@ -464,7 +466,44 @@ export function CheckoutForm({ user, cart, onPlaced }: CheckoutFormProps) {
         </section>
 
         <fieldset>
-          <legend className="text-lg font-semibold text-slate-900">Payment method</legend>
+          <legend className="text-lg font-semibold text-slate-900">How do you want to pay?</legend>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {[
+              { value: false, label: 'Pay in full now' },
+              { value: true, label: 'Cash on delivery' },
+            ].map((option) => (
+              <label
+                key={option.label}
+                className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium ${
+                  cashOnDelivery === option.value
+                    ? 'border-brand-600 bg-brand-50 text-brand-900'
+                    : 'border-slate-300 text-slate-700 hover:border-slate-400'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="cashOnDelivery"
+                  checked={cashOnDelivery === option.value}
+                  onChange={() => setCashOnDelivery(option.value)}
+                  className="h-4 w-4 accent-brand-600"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+          {cashOnDelivery ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Pay the delivery charge for your area now as an advance, and the rest in cash when the
+              parcel arrives. On free delivery orders, the advance comes off your total. The advance
+              is not returned if you refuse the parcel.
+            </p>
+          ) : null}
+        </fieldset>
+
+        <fieldset>
+          <legend className="text-lg font-semibold text-slate-900">
+            {cashOnDelivery ? 'Pay the advance with' : 'Payment method'}
+          </legend>
           <p className="mt-1 text-sm text-slate-600">
             You pay manually with the method you choose. Your order is confirmed once the payment is
             verified.

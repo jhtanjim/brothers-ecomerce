@@ -17,10 +17,14 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const DHAKA_OFFSET_MS = 6 * 60 * 60 * 1000;
 const LIST_SIZE = 5;
 
-/** A sale is a paid order that was not cancelled. */
+/**
+ * A sale is a paid order that was not cancelled. A cash on delivery order becomes a sale only once
+ * delivered, because until then only the advance has been paid. The raw queries below repeat this.
+ */
 const SALE_WHERE: Prisma.OrderWhereInput = {
   paymentStatus: PaymentStatus.APPROVED,
   status: { not: OrderStatus.CANCELLED },
+  OR: [{ codDue: 0 }, { status: OrderStatus.DELIVERED }],
 };
 
 const TOP_ITEMS = 10;
@@ -161,7 +165,8 @@ export class DashboardService {
         COALESCE(SUM("totalAmount"), 0)::text AS total,
         COUNT(*)::int AS orders
       FROM "orders"
-      WHERE "paymentStatus" = 'APPROVED' AND "status" <> 'CANCELLED' AND "createdAt" >= ${since}
+      WHERE "paymentStatus" = 'APPROVED' AND "status" <> 'CANCELLED'
+        AND ("codDue" = 0 OR "status" = 'DELIVERED') AND "createdAt" >= ${since}
       GROUP BY 1
       ORDER BY 1`;
     const byDay = new Map(rows.map((row) => [row.day, row]));
@@ -197,12 +202,15 @@ export class DashboardService {
             sales: number;
             total: Prisma.Decimal;
             received: Prisma.Decimal;
+            cod: Prisma.Decimal;
           }[]
         >`
         SELECT o."channel", p."method", COUNT(*)::int AS sales, SUM(o."totalAmount") AS total,
-          SUM(o."totalAmount" - o."exchangeCredit") AS received
+          SUM(o."totalAmount" - o."exchangeCredit" - o."codDue") AS received,
+          SUM(o."codDue") AS cod
         FROM "orders" o JOIN "payments" p ON p."orderId" = o."id"
         WHERE o."paymentStatus" = 'APPROVED' AND o."status" <> 'CANCELLED'
+          AND (o."codDue" = 0 OR o."status" = 'DELIVERED')
           AND o."createdAt" >= ${start} AND o."createdAt" < ${end}
         GROUP BY o."channel", p."method"`,
         this.prisma.order.aggregate({
@@ -221,6 +229,7 @@ export class DashboardService {
           SUM(i."quantity")::int AS quantity, SUM(i."totalPrice") AS total
         FROM "order_items" i JOIN "orders" o ON o."id" = i."orderId"
         WHERE o."paymentStatus" = 'APPROVED' AND o."status" <> 'CANCELLED'
+          AND (o."codDue" = 0 OR o."status" = 'DELIVERED')
           AND o."createdAt" >= ${start} AND o."createdAt" < ${end}
         GROUP BY i."productId"
         ORDER BY quantity DESC, name ASC`,
@@ -256,7 +265,11 @@ export class DashboardService {
       return {
         sales: rows.reduce((sum, row) => sum + row.sales, 0),
         // Money actually taken: credit from returned items is not new money.
-        total: formatCents(rows.reduce((sum, row) => sum + toCents(row.received), 0)),
+        total: formatCents(
+          rows.reduce((sum, row) => sum + toCents(row.received) + toCents(row.cod), 0),
+        ),
+        // Collected at the door, usually by the courier: it never passes through the drawer.
+        cashOnDelivery: formatCents(rows.reduce((sum, row) => sum + toCents(row.cod), 0)),
         methods: rows.map((row) => ({
           method: row.method,
           sales: row.sales,

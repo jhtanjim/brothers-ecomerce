@@ -215,6 +215,7 @@ export interface CreateOrderInput {
   notes?: string;
   couponCode?: string;
   paymentMethod: PaymentMethod;
+  cashOnDelivery?: boolean;
 }
 
 export interface OrderItemView {
@@ -260,6 +261,8 @@ export interface OrderView {
   couponDiscount: string;
   deliveryCharge: string;
   totalAmount: string;
+  /** Cash on delivery: the part of the total collected at the door. */
+  codDue: string;
   shipping: OrderShipping;
   notes: string | null;
   expiresAt: string | null;
@@ -465,6 +468,8 @@ export interface AdminOrderDetail {
   /** POS sales only. Already included in couponDiscount. */
   memberDiscount: string;
   memberNumber: number | null;
+  /** Cash on delivery: the part of the total collected at the door. */
+  codDue: string;
   returns: {
     id: string;
     returnNumber: string;
@@ -890,6 +895,7 @@ export interface DashboardTopProduct {
 export interface DailyReportChannel {
   sales: number;
   total: string;
+  cashOnDelivery: string;
   methods: { method: PaymentMethod; sales: number; total: string }[];
 }
 

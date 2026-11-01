@@ -25,7 +25,7 @@ subcategories, material, new/bestseller flags, filters and admin screens. Next: 
 policies, size guide, contact and social details, then replaces the sample catalog
 Q7/Q8 still open.
 
-POS quick cash buttons and customer history by phone are pushed to `main`. Backend tests: 22 files / 188 pass (2026-11-01). Membership (D43) is built and pushed; printed cards are not. Backend tests: 23 files / 193 pass. Shop details, delivery, return, size and privacy pages are live (D44). Next: owner sets delivery in Admin Settings, confirms D44 defaults, sends real size chart and Facebook link. Cash on delivery is wanted but not built; it needs a rule for fake orders first.
+POS quick cash buttons and customer history by phone are pushed to `main`. Backend tests: 22 files / 188 pass (2026-11-01). Membership (D43) is built and pushed; printed cards are not. Backend tests: 23 files / 193 pass. Shop details, delivery, return, size and privacy pages are live (D44). Next: owner sets delivery in Admin Settings, confirms D44 defaults, sends real size chart and Facebook link. Cash on delivery is built and pushed (D45); no real order has been run through it live. Backend tests: 24 files / 199 pass.
 
 `prisma migrate dev` fails on its shadow DB (pg_trgm missing). Generate with `prisma migrate diff --from-url` and apply with
 `prisma migrate deploy`.

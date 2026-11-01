@@ -32,7 +32,7 @@ import {
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderCancellationService } from './order-cancellation.service';
 import { evaluateCoupon } from '../coupons/coupon-calculator';
-import { calculateOrderPricing } from './order-pricing';
+import { calculateOrderPricing, codAdvanceCents } from './order-pricing';
 import type { PricingLineInput } from './order-pricing';
 
 /** Primary image first, then by sortOrder. */
@@ -52,6 +52,7 @@ const orderViewSelect = {
   couponDiscount: true,
   deliveryCharge: true,
   totalAmount: true,
+  codDue: true,
   shippingName: true,
   shippingPhone: true,
   shippingEmail: true,
@@ -146,6 +147,7 @@ function toView(order: OrderRow) {
     couponDiscount: money(order.couponDiscount),
     deliveryCharge: money(order.deliveryCharge),
     totalAmount: money(order.totalAmount),
+    codDue: money(order.codDue),
     shipping: {
       name: order.shippingName,
       phone: order.shippingPhone,
@@ -441,6 +443,15 @@ export class OrdersService {
       couponDiscountCents = result.discountCents;
     }
     const pricing = calculateOrderPricing(inputs, dto.city, delivery, couponDiscountCents);
+    const payNowCents = dto.cashOnDelivery
+      ? codAdvanceCents(pricing.totalCents, dto.city, delivery)
+      : pricing.totalCents;
+    if (payNowCents <= 0) {
+      throw new ConflictException({
+        message: 'Cash on delivery is not available for this order',
+        code: 'COD_UNAVAILABLE',
+      });
+    }
 
     // 6. Order, items (snapshots), status history and payment record.
     const order = await tx.order.create({
@@ -452,6 +463,7 @@ export class OrdersService {
         couponDiscount: formatCents(pricing.couponDiscountCents),
         deliveryCharge: formatCents(pricing.deliveryCents),
         totalAmount: formatCents(pricing.totalCents),
+        codDue: formatCents(pricing.totalCents - payNowCents),
         status: OrderStatus.PENDING_PAYMENT,
         paymentStatus: PaymentStatus.UNPAID,
         shippingName: dto.fullName,
@@ -492,7 +504,7 @@ export class OrdersService {
         payment: {
           create: {
             method: dto.paymentMethod,
-            amount: formatCents(pricing.totalCents),
+            amount: formatCents(payNowCents),
             status: PaymentStatus.UNPAID,
           },
         },

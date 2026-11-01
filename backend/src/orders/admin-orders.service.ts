@@ -32,6 +32,7 @@ const detailSelect = {
   cashReceived: true,
   exchangeCredit: true,
   memberDiscount: true,
+  codDue: true,
   member: { select: { number: true } },
   status: true,
   paymentStatus: true,
@@ -180,12 +181,16 @@ export class AdminOrdersService {
         await tx.$queryRaw`SELECT id FROM "orders" WHERE id = ${id} FOR UPDATE`;
         const order = await tx.order.findUnique({
           where: { id },
-          select: { id: true, orderNumber: true, status: true, paymentStatus: true },
+          select: { id: true, orderNumber: true, status: true, paymentStatus: true, codDue: true },
         });
         if (!order) {
           throw new NotFoundException({ message: 'Order not found', code: 'ORDER_NOT_FOUND' });
         }
-        if (!ALLOWED_TRANSITIONS[order.status].includes(dto.status)) {
+        const refused =
+          order.status === OrderStatus.SHIPPED &&
+          dto.status === OrderStatus.CANCELLED &&
+          order.codDue.gt(0);
+        if (!refused && !ALLOWED_TRANSITIONS[order.status].includes(dto.status)) {
           throw new ConflictException({
             message: `An order that is ${order.status} cannot be changed to ${dto.status}`,
             code: 'INVALID_STATUS_TRANSITION',
@@ -272,6 +277,7 @@ export class AdminOrdersService {
       cashReceived: order.cashReceived ? money(order.cashReceived) : null,
       exchangeCredit: money(order.exchangeCredit),
       memberDiscount: money(order.memberDiscount),
+      codDue: money(order.codDue),
       memberNumber: order.member?.number ?? null,
       returns: order.returns.map((entry) => ({
         id: entry.id,

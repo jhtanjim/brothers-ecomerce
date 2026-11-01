@@ -50,6 +50,12 @@ function MethodTable({
             </div>
           );
         })}
+        {Number(rows.cashOnDelivery) > 0 ? (
+          <div className="flex justify-between gap-3">
+            <dt className="text-slate-600">Cash on delivery</dt>
+            <dd className="font-medium text-slate-900">{formatPrice(rows.cashOnDelivery)}</dd>
+          </div>
+        ) : null}
         <div className="flex justify-between gap-3 border-t border-slate-200 pt-2 font-semibold">
           <dt>Total ({rows.sales})</dt>
           <dd>{formatPrice(rows.total)}</dd>

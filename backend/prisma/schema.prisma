@@ -382,6 +382,8 @@ model Order {
   // POS only: the member on this sale. Their discount is also inside couponDiscount.
   memberId       String?
   memberDiscount Decimal  @default(0) @db.Decimal(12, 2)
+  // Cash on delivery: the part of totalAmount collected at the door. Payment.amount is the advance.
+  codDue         Decimal  @default(0) @db.Decimal(12, 2)
 
   status        OrderStatus   @default(PENDING_PAYMENT)
   // Denormalized mirror of Payment.status so order lists can filter/sort without a join.

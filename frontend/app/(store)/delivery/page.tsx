@@ -24,6 +24,14 @@ export default function DeliveryPage() {
         </li>
       </ul>
       <p>Checkout shows the exact charge for your address before you place the order.</p>
+      <section>
+        <h2 className="text-lg font-semibold text-slate-900">Cash on delivery</h2>
+        <p className="mt-2">
+          Pay the delivery charge for your area as an advance with bKash or Nagad, and the rest in
+          cash when the parcel arrives. On free delivery orders, the advance comes off your total.
+          The advance is not returned if you refuse the parcel.
+        </p>
+      </section>
       <p>You can follow your order at any time from your account, under Track my orders.</p>
     </InfoPage>
   );

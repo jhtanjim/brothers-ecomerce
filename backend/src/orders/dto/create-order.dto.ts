@@ -1,5 +1,6 @@
 import { PaymentMethod } from '@prisma/client';
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
   IsOptional,
@@ -71,4 +72,9 @@ export class CreateOrderDto {
     message: 'paymentMethod must be BKASH or NAGAD',
   })
   paymentMethod!: PaymentMethod;
+
+  /** Pay only the delivery charge now (with paymentMethod) and the rest in cash at the door. */
+  @IsOptional()
+  @IsBoolean()
+  cashOnDelivery?: boolean;
 }

@@ -334,6 +334,7 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
           'Use the buttons in Actions to move it to the next step.',
           'You can cancel before it is shipped. Stock goes back automatically.',
           'Once delivered, use "Return or exchange" if the customer brings something back.',
+          'Cash on delivery: approve the advance as usual. "Collect on delivery" shows what the courier must collect. Click Delivered only when the money is collected. If the customer refuses, click "Customer refused the parcel": stock goes back and you keep the advance.',
         ],
         example:
           'You handed a parcel to the courier: click Shipped. When the customer receives it: click Delivered.',
@@ -347,6 +348,7 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
           'Actions-এর বাটন দিয়ে পরের ধাপে নিন।',
           'Shipped হওয়ার আগে বাতিল করা যায়। স্টক নিজে থেকে ফিরে যাবে।',
           'Delivered হওয়ার পর কাস্টমার পণ্য ফেরত আনলে "Return or exchange" ব্যবহার করুন।',
+          'ক্যাশ অন ডেলিভারি: অগ্রিম টাকা আগের মতোই approve করুন। "Collect on delivery"-তে দেখাবে কুরিয়ার কত টাকা নেবে। টাকা পাওয়ার পরেই Delivered ক্লিক করুন। কাস্টমার না নিলে "Customer refused the parcel" ক্লিক করুন: স্টক ফিরে যাবে, অগ্রিম টাকা আপনার থাকবে।',
         ],
         example:
           'পার্সেল কুরিয়ারে দিলেন: Shipped ক্লিক করুন। কাস্টমার পেয়ে গেলে: Delivered ক্লিক করুন।',

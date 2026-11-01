@@ -76,6 +76,7 @@ export class PosService {
       shippingPhone: { in: phoneVariants(phone) },
       paymentStatus: PaymentStatus.APPROVED,
       status: { not: OrderStatus.CANCELLED },
+      OR: [{ codDue: 0 }, { status: OrderStatus.DELIVERED }],
     };
     const [member, summary, recent, named] = await Promise.all([
       this.prisma.member.findFirst({
