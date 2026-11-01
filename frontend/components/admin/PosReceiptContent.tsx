@@ -254,6 +254,8 @@ export function PosReceiptContent({ id, autoPrint }: { id: string; autoPrint: bo
 
         <p className="mt-3 border-t border-dashed border-black pt-2 text-center">
           Thank you for shopping with {SITE_NAME}
+          <br />
+          Exchange within {store.returnDays} days with tag and receipt
         </p>
       </div>
     </div>

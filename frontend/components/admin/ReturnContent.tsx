@@ -9,6 +9,7 @@ import { createOrderReturn } from '@/lib/api/admin-returns';
 import { ApiError } from '@/lib/api/client';
 import type { AdminOrderDetail, PaymentMethod } from '@/lib/api/types';
 import { formatPrice, optionLabel } from '@/lib/format';
+import { store } from '@/lib/store';
 
 type Outcome = 'EXCHANGE' | PaymentMethod;
 
@@ -85,6 +86,10 @@ export function ReturnContent({ orderId }: { orderId: string }) {
     (sum, item) => sum + estimateCents(order, item.id, quantities[item.id] ?? 0),
     0,
   );
+  const deliveredAt =
+    order.timeline.find((entry) => entry.toStatus === 'DELIVERED')?.createdAt ?? order.createdAt;
+  const pastLimit =
+    Date.now() - new Date(deliveredAt).getTime() > store.returnDays * 24 * 60 * 60 * 1000;
   const canSubmit = eligible && chosen.length > 0 && reason.trim().length >= 3 && !busy;
 
   async function onSubmit() {
@@ -142,6 +147,13 @@ export function ReturnContent({ orderId }: { orderId: string }) {
       <p className="text-sm text-slate-600">
         Order {order.orderNumber}, {order.shipping.name}
       </p>
+
+      {pastLimit ? (
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          This order is older than the {store.returnDays}-day limit. You can still take it back if
+          you choose to.
+        </p>
+      ) : null}
 
       <ul className="divide-y divide-slate-100">
         {order.items.map((item) => {

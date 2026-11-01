@@ -18,12 +18,12 @@ async function loadCategories(): Promise<CategorySummary[]> {
 
 export async function Footer() {
   const categories = await loadCategories();
-  const { phone, email, address, facebook, instagram } = store.contact;
+  const { phone, whatsapp, email, address, hours, facebook, instagram } = store.contact;
   const hasContact = Boolean(phone || email || address || facebook || instagram);
 
   return (
     <footer className="mt-16 bg-brand-950 text-sm text-brand-200 sm:mt-24">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-5 lg:px-8">
         <div>
           <p className="font-display text-2xl font-semibold tracking-[0.25em] text-white">
             {SITE_NAME}
@@ -70,6 +70,31 @@ export async function Footer() {
             </li>
           </ul>
         </nav>
+        <nav aria-label="Help">
+          <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Help</h2>
+          <ul className="mt-2">
+            <li>
+              <Link href="/delivery" className={LINK_CLASS}>
+                Delivery
+              </Link>
+            </li>
+            <li>
+              <Link href="/returns" className={LINK_CLASS}>
+                Exchange and return
+              </Link>
+            </li>
+            <li>
+              <Link href="/size-guide" className={LINK_CLASS}>
+                Size guide
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className={LINK_CLASS}>
+                Privacy
+              </Link>
+            </li>
+          </ul>
+        </nav>
         {hasContact ? (
           <div>
             <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Contact</h2>
@@ -81,6 +106,17 @@ export async function Footer() {
                   </a>
                 </li>
               ) : null}
+              {whatsapp ? (
+                <li>
+                  <a
+                    href={`https://wa.me/${whatsapp}`}
+                    rel="noopener noreferrer"
+                    className={LINK_CLASS}
+                  >
+                    WhatsApp
+                  </a>
+                </li>
+              ) : null}
               {email ? (
                 <li>
                   <a href={`mailto:${email}`} className={LINK_CLASS}>
@@ -89,6 +125,7 @@ export async function Footer() {
                 </li>
               ) : null}
               {address ? <li className="py-2">{address}</li> : null}
+              {hours ? <li className="py-2">Open {hours}</li> : null}
               {facebook ? (
                 <li>
                   <a href={facebook} rel="noopener noreferrer" className={LINK_CLASS}>

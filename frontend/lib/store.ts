@@ -15,10 +15,16 @@ export const store = {
     image: '/brand/hero.jpg' as string | null,
   },
   contact: {
-    phone: null as string | null,
-    email: null as string | null,
-    address: null as string | null,
+    phone: '01758516069' as string | null,
+    whatsapp: '8801758516069' as string | null,
+    email: 'jh.tanjim.4@gmail.com' as string | null,
+    address: 'Nimtala, Bandar, Chattogram' as string | null,
+    hours: '10 AM to 11 PM' as string | null,
     facebook: null as string | null,
     instagram: null as string | null,
   },
+  /** Days a customer has to return or exchange an item. */
+  returnDays: 2,
+  /** For the delivery page. Checkout charges what Admin > Settings says, so keep the two the same. */
+  delivery: { insideDhaka: 60, outsideDhaka: 129, freeFrom: 3000 },
 };

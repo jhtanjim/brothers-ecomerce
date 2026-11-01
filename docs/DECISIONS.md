@@ -136,3 +136,5 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
 - Q10 — Is there a phase plan or requirements document (README mentions Phases 1–3)?
 
 - **D43 (2026-11-01):** Membership, confirmed by the owner: free, 5% off, shop only, known by phone number; printed cards later. The 5% is taken after sale prices and any manual discount, rounded down, and sits inside `couponDiscount` so returns refund the right share. Members are turned off, never deleted.
+
+- **D44 (2026-11-01):** Owner gave contact details, delivery 60 inside Dhaka / 129 outside / free from 3000, and a 2-day return limit, and asked me to choose the rest for now. My defaults, for owner review: not worn, washed or altered, tags on, receipt or order number; shop pays delivery only for wrong or faulty items; general size measurements. The limit warns staff but does not block a return.

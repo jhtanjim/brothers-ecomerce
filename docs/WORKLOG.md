@@ -438,3 +438,8 @@ Template:
 
 - Members page, `/admin/members`, migration `20261101100000_add_members` (additive). POS applies 5% when the phone is a member and can make a member; the receipt shows the saving.
 - Tested: typecheck, lint, frontend build, backend 23 files / 193 tests. Not clicked through on the signed-in pages.
+
+## 2026-11-01 - Shop details and info pages
+
+- Contact details in the footer. New pages: /delivery, /returns, /size-guide, /privacy. Receipt shows the exchange rule; the admin return page warns past 2 days; product page links the size guide.
+- Not done: cash on delivery, real size chart, delivery values in live Settings (owner).

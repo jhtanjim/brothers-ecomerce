@@ -155,6 +155,15 @@ export function AddToCartButton({
 
   return (
     <div className="mt-4">
+      {sizes.length > 0 ? (
+        <a
+          href="/size-guide"
+          target="_blank"
+          className="mb-2 inline-flex min-h-11 items-center text-sm font-medium text-slate-700 underline"
+        >
+          Size guide
+        </a>
+      ) : null}
       <OptionGroup
         label="Size"
         options={sizes}
