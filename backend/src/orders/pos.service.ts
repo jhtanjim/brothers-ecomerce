@@ -18,10 +18,12 @@ import {
   TRANSACTION_TIMEOUT_MS,
 } from './orders.constants';
 import { generateOrderNumber, isOrderNumberCollision, OrdersService } from './orders.service';
+import { phoneVariants } from './phone-variants';
 
 const POS_ORDER_PREFIX = 'POS';
 const WALK_IN_NAME = 'Walk-in customer';
 const IN_STORE = 'In store';
+const RECENT_PURCHASES = 5;
 /** Counter sales have no delivery. */
 const NO_DELIVERY = { homeCity: '', homeCityCharge: 0, otherCityCharge: 0, freeThreshold: null };
 
@@ -65,6 +67,45 @@ export class PosService {
         throw error;
       }
     }
+  }
+
+  /** What a customer has bought, shop and online. Only paid orders that were not cancelled. */
+  async customerHistory(phone: string) {
+    const where: Prisma.OrderWhereInput = {
+      shippingPhone: { in: phoneVariants(phone) },
+      paymentStatus: PaymentStatus.APPROVED,
+      status: { not: OrderStatus.CANCELLED },
+    };
+    const [summary, recent, named] = await Promise.all([
+      this.prisma.order.aggregate({ where, _count: true, _sum: { totalAmount: true } }),
+      this.prisma.order.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: RECENT_PURCHASES,
+        select: {
+          id: true,
+          orderNumber: true,
+          channel: true,
+          createdAt: true,
+          totalAmount: true,
+          items: { select: { productName: true, size: true, color: true, quantity: true } },
+        },
+      }),
+      this.prisma.order.findFirst({
+        where: { ...where, shippingName: { not: WALK_IN_NAME } },
+        orderBy: { createdAt: 'desc' },
+        select: { shippingName: true },
+      }),
+    ]);
+    return {
+      name: named?.shippingName ?? null,
+      purchaseCount: summary._count,
+      totalSpent: formatCents(toCents(summary._sum.totalAmount ?? 0)),
+      recent: recent.map((order) => ({
+        ...order,
+        totalAmount: formatCents(toCents(order.totalAmount)),
+      })),
+    };
   }
 
   /** Cancels a counter sale and puts its stock back. Giving the cash back is up to the shop. */

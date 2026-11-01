@@ -115,6 +115,37 @@ describe('POS sales (integration)', () => {
     expect((await prisma.product.findUniqueOrThrow({ where: { id: shirt } })).soldCount).toBe(2);
   });
 
+  it('shows what a customer bought, leaving out cancelled sales', async () => {
+    const sell = (customerPhone: string, customerName?: string) =>
+      pos.createSale(
+        adminId,
+        {
+          items: [{ productId: watch, quantity: 1 }],
+          paymentMethod: 'CASH',
+          cashReceived: 500,
+          customerPhone,
+          ...(customerName ? { customerName } : {}),
+        },
+        randomUUID(),
+      );
+    await sell('01712345678', 'Rahim');
+    const cancelled = await sell('+8801712345678');
+    await pos.voidSale(adminId, cancelled.id, 'Mistake', null);
+
+    await expect(pos.customerHistory('8801712345678')).resolves.toMatchObject({
+      name: 'Rahim',
+      purchaseCount: 1,
+      totalSpent: '500.00',
+      recent: [{ totalAmount: '500.00', items: [{ productName: 'Watch', quantity: 1 }] }],
+    });
+    await expect(pos.customerHistory('01811111111')).resolves.toMatchObject({
+      name: null,
+      purchaseCount: 0,
+      totalSpent: '0.00',
+      recent: [],
+    });
+  });
+
   it('does not sell twice when the same sale is submitted again', async () => {
     const key = randomUUID();
     const dto = {

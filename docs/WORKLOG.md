@@ -427,3 +427,9 @@ Template:
 - POS cash and discount now accept commas (7,550). They were refused without any message, which kept the sale button disabled.
 - The sale screen now says what is missing while the button is disabled.
 - Tested: frontend typecheck, lint, prettier, amount cleaning in Node. Not tested on the signed-in POS page. Not committed or live.
+
+## 2026-11-01 - POS quick cash and customer history
+
+- Quick cash buttons (Exact and the next round amounts).
+- Typing a phone shows earlier paid purchases, shop and online, and fills a known name. New route GET /admin/pos/customers; no migration.
+- Guide updated in both languages.

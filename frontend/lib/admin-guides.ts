@@ -53,9 +53,9 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
           'Use this when a customer buys in person. Stock goes down as soon as the sale is complete.',
         steps: [
           'Search by name or SKU, or scan a barcode. Click the right size and colour.',
-          'Change quantities if needed, and add a discount or customer details if you want.',
+          'Change quantities if needed, and add a discount if you want. Enter the phone number to see what the customer bought before; a known name fills in by itself.',
           'Choose Cash, bKash or Nagad.',
-          'For cash, enter the amount received, and the screen shows the change. For bKash or Nagad, enter the transaction ID.',
+          'For cash, enter the amount received or tap a quick button such as Exact, and the screen shows the change. For bKash or Nagad, enter the transaction ID.',
           'Click "Complete sale and print".',
         ],
         example:
@@ -68,9 +68,9 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
           'কাস্টমার সরাসরি দোকান থেকে কিনলে এই পেজ ব্যবহার করুন। বিক্রি শেষ হলেই স্টক কমে যাবে।',
         steps: [
           'নাম বা SKU দিয়ে খুঁজুন, অথবা বারকোড স্ক্যান করুন। সঠিক সাইজ ও রঙে ক্লিক করুন।',
-          'দরকার হলে পরিমাণ বদলান। চাইলে ডিসকাউন্ট বা কাস্টমারের তথ্য দিন।',
+          'দরকার হলে পরিমাণ বদলান। চাইলে ডিসকাউন্ট দিন। ফোন নম্বর লিখলে কাস্টমার আগে কী কিনেছেন তা দেখাবে, আর নাম জানা থাকলে নিজে থেকেই বসে যাবে।',
           'Cash, bKash বা Nagad বেছে নিন।',
-          'নগদ টাকা হলে কত টাকা পেলেন তা লিখুন, স্ক্রিনে ফেরত দেওয়ার টাকা দেখাবে। bKash বা Nagad হলে Transaction ID লিখুন।',
+          'নগদ টাকা হলে কত টাকা পেলেন তা লিখুন অথবা Exact-এর মতো দ্রুত বাটনে চাপ দিন, স্ক্রিনে ফেরত দেওয়ার টাকা দেখাবে। bKash বা Nagad হলে Transaction ID লিখুন।',
           '"Complete sale and print" ক্লিক করুন।',
         ],
         example:

@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { getAdminProducts } from '@/lib/api/admin-products';
 import { getOrderReturn } from '@/lib/api/admin-returns';
-import { createPosSale } from '@/lib/api/admin-pos';
+import { createPosSale, getPosCustomer } from '@/lib/api/admin-pos';
+import type { PosCustomerHistory } from '@/lib/api/admin-pos';
 import { ApiError } from '@/lib/api/client';
 import type {
   AdminProduct,
@@ -20,6 +21,9 @@ const RESULT_LIMIT = 12;
 const SEARCH_DELAY_MS = 250;
 const MONEY_PATTERN = /^\d{1,10}(\.\d{1,2})?$/;
 const TRANSACTION_PATTERN = /^[A-Z0-9]{6,30}$/;
+const PHONE_PATTERN = /^\+?[0-9]{7,15}$/;
+/** Round amounts a customer is likely to hand over: the next 100, 500 and 1000 taka. */
+const CASH_ROUNDING_CENTS = [10_000, 50_000, 100_000];
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
   { value: 'CASH', label: 'Cash' },
   { value: 'BKASH', label: 'bKash' },
@@ -52,6 +56,52 @@ function fromCents(cents: number): string {
 /** People type amounts the way they read them, such as 7,550. */
 function cleanAmount(value: string): string {
   return value.replace(/[,\s]/g, '');
+}
+
+function quickCashCents(dueCents: number): number[] {
+  const rounded = CASH_ROUNDING_CENTS.map((step) => Math.ceil(dueCents / step) * step);
+  return [...new Set(rounded)].filter((cents) => cents > dueCents);
+}
+
+function formatDay(iso: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Dhaka',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(iso));
+}
+
+function CustomerHistory({ history }: { history: PosCustomerHistory }) {
+  if (history.purchaseCount === 0) {
+    return <p className="text-sm text-slate-500">New customer: no earlier purchases.</p>;
+  }
+  return (
+    <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
+      <p className="font-semibold text-slate-900">
+        {history.purchaseCount} earlier purchase{history.purchaseCount === 1 ? '' : 's'},{' '}
+        {formatPrice(history.totalSpent)} in total
+      </p>
+      <ul className="mt-2 space-y-2">
+        {history.recent.map((order) => (
+          <li key={order.id} className="text-slate-600">
+            <span className="flex justify-between gap-3 font-medium text-slate-800">
+              <span>
+                {formatDay(order.createdAt)} ({order.channel === 'POS' ? 'Shop' : 'Online'})
+              </span>
+              <span>{formatPrice(order.totalAmount)}</span>
+            </span>
+            {order.items
+              .map((item) => {
+                const option = optionLabel(item.size, item.color);
+                return `${item.productName}${option ? ` (${option})` : ''} x ${item.quantity}`;
+              })
+              .join(', ')}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function newSaleKey(): string {
@@ -138,6 +188,8 @@ export function PosContent({ creditId }: { creditId?: string }) {
   const [transactionId, setTransactionId] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [history, setHistory] = useState<PosCustomerHistory | null>(null);
+  const [historyFailed, setHistoryFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // Kept across retries, so a repeated submit can never record the sale twice.
@@ -192,6 +244,30 @@ export function PosContent({ creditId }: { creditId?: string }) {
       clearTimeout(timer);
     };
   }, [search]);
+
+  useEffect(() => {
+    setHistory(null);
+    setHistoryFailed(false);
+    if (!PHONE_PATTERN.test(customerPhone)) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      getPosCustomer(customerPhone)
+        .then((result) => {
+          if (cancelled) return;
+          setHistory(result);
+          // Never replaces a name the cashier has typed.
+          if (result.name) setCustomerName((current) => current || (result.name ?? ''));
+        })
+        .catch(() => {
+          // The sale can go ahead without the history.
+          if (!cancelled) setHistoryFailed(true);
+        });
+    }, SEARCH_DELAY_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [customerPhone]);
 
   function add(line: Line) {
     setError(null);
@@ -474,6 +550,15 @@ export function PosContent({ creditId }: { creditId?: string }) {
               className={INPUT_CLASS}
             />
           </div>
+          {history || historyFailed ? (
+            <div aria-live="polite" className="sm:col-span-2">
+              {history ? (
+                <CustomerHistory history={history} />
+              ) : (
+                <p className="text-sm text-slate-500">Could not load the customer history.</p>
+              )}
+            </div>
+          ) : null}
           <div>
             <label htmlFor="posDiscount" className="mb-1 block text-sm font-medium text-slate-700">
               Discount (BDT)
@@ -498,6 +583,20 @@ export function PosContent({ creditId }: { creditId?: string }) {
                 onChange={(e) => setCash(cleanAmount(e.target.value))}
                 className={INPUT_CLASS}
               />
+              {lines.length > 0 && dueCents > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[dueCents, ...quickCashCents(dueCents)].map((cents) => (
+                    <button
+                      key={cents}
+                      type="button"
+                      onClick={() => setCash(fromCents(cents))}
+                      className="min-h-11 border border-slate-300 px-3 text-sm font-medium text-slate-800 hover:border-brand-950"
+                    >
+                      {cents === dueCents ? 'Exact' : formatPrice(fromCents(cents))}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : (
             <div>

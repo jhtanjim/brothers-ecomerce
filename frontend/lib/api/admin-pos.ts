@@ -27,6 +27,24 @@ export function createPosSale(
   });
 }
 
+export interface PosCustomerHistory {
+  name: string | null;
+  purchaseCount: number;
+  totalSpent: string;
+  recent: {
+    id: string;
+    orderNumber: string;
+    channel: 'ONLINE' | 'POS';
+    createdAt: string;
+    totalAmount: string;
+    items: { productName: string; size: string | null; color: string | null; quantity: number }[];
+  }[];
+}
+
+export function getPosCustomer(phone: string): Promise<PosCustomerHistory> {
+  return apiFetch<PosCustomerHistory>(`/admin/pos/customers?phone=${encodeURIComponent(phone)}`);
+}
+
 /** Cancels a counter sale and puts its items back into stock. */
 export function voidPosSale(id: string, reason: string): Promise<AdminOrderDetail> {
   return apiFetch<AdminOrderDetail>(`/admin/pos/sales/${encodeURIComponent(id)}/void`, {

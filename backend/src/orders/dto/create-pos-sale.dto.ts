@@ -90,6 +90,13 @@ export class CreatePosSaleDto {
   customerPhone?: string;
 }
 
+/** ?phone=01712345678 */
+export class PosCustomerQueryDto {
+  @Trim()
+  @Matches(/^\+?[0-9]{7,15}$/, { message: 'phone must be a valid phone number' })
+  phone!: string;
+}
+
 export class VoidPosSaleDto {
   @Trim()
   @IsString()

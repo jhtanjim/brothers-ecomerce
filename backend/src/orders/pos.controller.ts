@@ -1,20 +1,25 @@
-import { Body, Controller, Headers, Param, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { Request } from 'express';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
-import { CreatePosSaleDto, VoidPosSaleDto } from './dto/create-pos-sale.dto';
+import { CreatePosSaleDto, PosCustomerQueryDto, VoidPosSaleDto } from './dto/create-pos-sale.dto';
 import { parseIdempotencyKey } from './idempotency-key';
 import { PosService } from './pos.service';
 
 /** Admin-only (JwtAuthGuard is global; RolesGuard enforces ADMIN here). */
 @Roles(Role.ADMIN)
-@Controller('admin/pos/sales')
+@Controller('admin/pos')
 export class PosController {
   constructor(private readonly pos: PosService) {}
 
-  @Post()
+  @Get('customers')
+  customer(@Query() query: PosCustomerQueryDto) {
+    return this.pos.customerHistory(query.phone);
+  }
+
+  @Post('sales')
   create(
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreatePosSaleDto,
@@ -23,7 +28,7 @@ export class PosController {
     return this.pos.createSale(user.sub, dto, parseIdempotencyKey(idempotencyKey));
   }
 
-  @Patch(':id/void')
+  @Patch('sales/:id/void')
   void(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
