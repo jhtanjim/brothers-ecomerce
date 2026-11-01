@@ -49,6 +49,11 @@ function fromCents(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
+/** People type amounts the way they read them, such as 7,550. */
+function cleanAmount(value: string): string {
+  return value.replace(/[,\s]/g, '');
+}
+
 function newSaleKey(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -255,6 +260,23 @@ export function PosContent({ creditId }: { creditId?: string }) {
       ? (cashValid || cash === '') && (cash === '' ? dueCents === 0 : changeCents >= 0)
       : transactionValid) &&
     !submitting;
+  // Says what is missing, so a greyed-out button is never a mystery.
+  const blockedReason =
+    lines.length === 0
+      ? 'Add an item to start the sale.'
+      : !discountValid || discountCents > subtotalCents
+        ? null
+        : !isCash
+          ? transactionValid
+            ? null
+            : 'Enter the transaction ID (6 to 30 letters or numbers).'
+          : cash !== '' && !cashValid
+            ? 'Enter the cash received as a number, such as 7550.'
+            : cash === '' && dueCents > 0
+              ? 'Enter the cash received.'
+              : cash !== '' && changeCents < 0
+                ? 'The cash received is less than the amount to pay.'
+                : null;
 
   async function onComplete() {
     if (!canComplete) return;
@@ -460,7 +482,7 @@ export function PosContent({ creditId }: { creditId?: string }) {
               id="posDiscount"
               inputMode="decimal"
               value={discount}
-              onChange={(e) => setDiscount(e.target.value.trim())}
+              onChange={(e) => setDiscount(cleanAmount(e.target.value))}
               className={INPUT_CLASS}
             />
           </div>
@@ -473,7 +495,7 @@ export function PosContent({ creditId }: { creditId?: string }) {
                 id="posCash"
                 inputMode="decimal"
                 value={cash}
-                onChange={(e) => setCash(e.target.value.trim())}
+                onChange={(e) => setCash(cleanAmount(e.target.value))}
                 className={INPUT_CLASS}
               />
             </div>
@@ -552,6 +574,7 @@ export function PosContent({ creditId }: { creditId?: string }) {
             {error}
           </p>
         ) : null}
+        {blockedReason ? <p className="mt-3 text-sm text-slate-600">{blockedReason}</p> : null}
 
         <button
           type="button"

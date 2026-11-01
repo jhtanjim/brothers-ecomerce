@@ -421,3 +421,9 @@ Template:
 - Tested: storefront pages, images, filters, 404 and auth guards on the live site, phone width. Sign-in, cart, checkout and admin were not tested live.
 - Limitations: demo data; the Render build runs the sample seed (remove it in `render.yaml` before real products); free Render sleeps when idle; no email provider.
 - Next step: owner signs in live, then real products and policies.
+
+## 2026-11-01 - POS amount fix
+
+- POS cash and discount now accept commas (7,550). They were refused without any message, which kept the sale button disabled.
+- The sale screen now says what is missing while the button is disabled.
+- Tested: frontend typecheck, lint, prettier, amount cleaning in Node. Not tested on the signed-in POS page. Not committed or live.

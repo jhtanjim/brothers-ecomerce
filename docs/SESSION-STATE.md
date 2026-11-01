@@ -25,6 +25,8 @@ subcategories, material, new/bestseller flags, filters and admin screens. Next: 
 policies, size guide, contact and social details, then replaces the sample catalog
 Q7/Q8 still open.
 
+POS amount fix (commas accepted, button says what is missing) is local and uncommitted until approved. Owner asked for a membership card; not designed or built yet.
+
 `prisma migrate dev` fails on its shadow DB (pg_trgm missing). Generate with `prisma migrate diff --from-url` and apply with
 `prisma migrate deploy`.
 
