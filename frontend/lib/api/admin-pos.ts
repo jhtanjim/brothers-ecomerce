@@ -11,6 +11,7 @@ export interface PosSaleInput {
   discount?: number;
   /** A return whose exchange credit pays towards this sale. */
   exchangeReturnId?: string;
+  memberId?: string;
   customerName?: string;
   customerPhone?: string;
 }
@@ -29,6 +30,7 @@ export function createPosSale(
 
 export interface PosCustomerHistory {
   name: string | null;
+  member: { id: string; number: number; name: string; discountPercent: number } | null;
   purchaseCount: number;
   totalSpent: string;
   recent: {

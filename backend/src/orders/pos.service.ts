@@ -10,6 +10,7 @@ import { formatCents, toCents } from '../common/utils/money';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdminOrdersService } from './admin-orders.service';
 import { CreatePosSaleDto } from './dto/create-pos-sale.dto';
+import { MEMBER_DISCOUNT_PERCENT, memberDiscountCents } from './member-discount';
 import { OrderCancellationService } from './order-cancellation.service';
 import { calculateOrderPricing } from './order-pricing';
 import {
@@ -76,7 +77,11 @@ export class PosService {
       paymentStatus: PaymentStatus.APPROVED,
       status: { not: OrderStatus.CANCELLED },
     };
-    const [summary, recent, named] = await Promise.all([
+    const [member, summary, recent, named] = await Promise.all([
+      this.prisma.member.findFirst({
+        where: { phone: { in: phoneVariants(phone) }, active: true },
+        select: { id: true, number: true, name: true },
+      }),
       this.prisma.order.aggregate({ where, _count: true, _sum: { totalAmount: true } }),
       this.prisma.order.findMany({
         where,
@@ -98,7 +103,8 @@ export class PosService {
       }),
     ]);
     return {
-      name: named?.shippingName ?? null,
+      name: member?.name ?? named?.shippingName ?? null,
+      member: member ? { ...member, discountPercent: MEMBER_DISCOUNT_PERCENT } : null,
       purchaseCount: summary._count,
       totalSpent: formatCents(toCents(summary._sum.totalAmount ?? 0)),
       recent: recent.map((order) => ({
@@ -148,6 +154,24 @@ export class PosService {
       { timeout: TRANSACTION_TIMEOUT_MS, maxWait: TRANSACTION_MAX_WAIT_MS },
     );
     return this.adminOrders.findOne(id);
+  }
+
+  private async memberDiscountFor(
+    tx: Prisma.TransactionClient,
+    memberId: string,
+    payableCents: number,
+  ): Promise<number> {
+    const member = await tx.member.findFirst({
+      where: { id: memberId, active: true },
+      select: { id: true },
+    });
+    if (!member) {
+      throw new ConflictException({
+        message: 'This membership does not exist or is turned off',
+        code: 'POS_MEMBER_INVALID',
+      });
+    }
+    return memberDiscountCents(payableCents);
   }
 
   /** The value of an unused exchange. A refunded return has already been paid out. */
@@ -226,7 +250,15 @@ export class PosService {
         code: 'POS_DISCOUNT_TOO_LARGE',
       });
     }
-    const pricing = calculateOrderPricing(inputs, IN_STORE, NO_DELIVERY, discountCents);
+    const memberCents = dto.memberId
+      ? await this.memberDiscountFor(tx, dto.memberId, before.totalCents - discountCents)
+      : 0;
+    const pricing = calculateOrderPricing(
+      inputs,
+      IN_STORE,
+      NO_DELIVERY,
+      discountCents + memberCents,
+    );
 
     const creditCents = dto.exchangeReturnId ? await this.creditFor(tx, dto.exchangeReturnId) : 0;
     const dueCents = Math.max(0, pricing.totalCents - creditCents);
@@ -266,6 +298,8 @@ export class PosService {
         totalAmount: formatCents(pricing.totalCents),
         cashReceived: cashCents === null ? null : formatCents(cashCents),
         exchangeCredit: formatCents(creditCents),
+        memberId: dto.memberId ?? null,
+        memberDiscount: formatCents(memberCents),
         status: OrderStatus.DELIVERED,
         paymentStatus: PaymentStatus.APPROVED,
         shippingName: dto.customerName || WALK_IN_NAME,

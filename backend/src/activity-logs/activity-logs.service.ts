@@ -8,6 +8,8 @@ export const ACTIVITY_ACTIONS = {
   orderCancelled: 'ORDER_CANCELLED',
   posSaleCreated: 'POS_SALE_CREATED',
   posSaleVoided: 'POS_SALE_VOIDED',
+  memberAdded: 'MEMBER_ADDED',
+  memberUpdated: 'MEMBER_UPDATED',
   orderReturned: 'ORDER_RETURNED',
   stockPurchased: 'STOCK_PURCHASED',
   expenseAdded: 'EXPENSE_ADDED',

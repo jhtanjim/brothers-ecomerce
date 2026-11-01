@@ -146,6 +146,50 @@ describe('POS sales (integration)', () => {
     });
   });
 
+  it('gives an active member 5 percent, after any other discount', async () => {
+    const member = await prisma.member.create({ data: { name: 'Rahim', phone: '01712345678' } });
+    const sale = await pos.createSale(
+      adminId,
+      {
+        items: [{ productId: watch, quantity: 2 }],
+        discount: 100,
+        memberId: member.id,
+        paymentMethod: 'CASH',
+        cashReceived: 855,
+      },
+      randomUUID(),
+    );
+    expect(sale).toMatchObject({
+      totalAmount: '855.00',
+      couponDiscount: '145.00',
+      memberDiscount: '45.00',
+      memberNumber: member.number,
+    });
+    await expect(pos.customerHistory('+8801712345678')).resolves.toMatchObject({
+      name: 'Rahim',
+      member: { id: member.id, discountPercent: 5 },
+    });
+  });
+
+  it('refuses a turned-off member and takes no stock', async () => {
+    const member = await prisma.member.create({
+      data: { name: 'Karim', phone: '01812345678', active: false },
+    });
+    await expect(
+      pos.createSale(
+        adminId,
+        {
+          items: [{ productId: watch, quantity: 1 }],
+          memberId: member.id,
+          paymentMethod: 'CASH',
+          cashReceived: 500,
+        },
+        randomUUID(),
+      ),
+    ).rejects.toMatchObject({ response: { code: 'POS_MEMBER_INVALID' } });
+    expect(await stockOf(watch)).toBe(2);
+  });
+
   it('does not sell twice when the same sale is submitted again', async () => {
     const key = randomUUID();
     const dto = {

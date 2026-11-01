@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { getAdminProducts } from '@/lib/api/admin-products';
+import { createMember, memberCode } from '@/lib/api/admin-members';
 import { getOrderReturn } from '@/lib/api/admin-returns';
 import { createPosSale, getPosCustomer } from '@/lib/api/admin-pos';
 import type { PosCustomerHistory } from '@/lib/api/admin-pos';
@@ -190,6 +191,8 @@ export function PosContent({ creditId }: { creditId?: string }) {
   const [customerPhone, setCustomerPhone] = useState('');
   const [history, setHistory] = useState<PosCustomerHistory | null>(null);
   const [historyFailed, setHistoryFailed] = useState(false);
+  const [memberBusy, setMemberBusy] = useState(false);
+  const [memberError, setMemberError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // Kept across retries, so a repeated submit can never record the sale twice.
@@ -248,6 +251,7 @@ export function PosContent({ creditId }: { creditId?: string }) {
   useEffect(() => {
     setHistory(null);
     setHistoryFailed(false);
+    setMemberError(null);
     if (!PHONE_PATTERN.test(customerPhone)) return;
     let cancelled = false;
     const timer = setTimeout(() => {
@@ -317,7 +321,11 @@ export function PosContent({ creditId }: { creditId?: string }) {
   const subtotalCents = lines.reduce((sum, line) => sum + line.priceCents * line.quantity, 0);
   const discountValid = discount === '' || MONEY_PATTERN.test(discount);
   const discountCents = discountValid && discount !== '' ? toCents(discount) : 0;
-  const totalCents = Math.max(0, subtotalCents - discountCents);
+  const member = history?.member ?? null;
+  const afterDiscountCents = Math.max(0, subtotalCents - discountCents);
+  // Preview only, same formula as the backend, which decides the real amount.
+  const memberCents = member ? Math.floor((afterDiscountCents * member.discountPercent) / 100) : 0;
+  const totalCents = afterDiscountCents - memberCents;
   const creditCents = credit ? toCents(credit.refundAmount) : 0;
   const dueCents = Math.max(0, totalCents - creditCents);
   // Credit covers it all, so nothing is paid by phone; any difference goes back as cash.
@@ -354,6 +362,19 @@ export function PosContent({ creditId }: { creditId?: string }) {
                 ? 'The cash received is less than the amount to pay.'
                 : null;
 
+  async function onMakeMember() {
+    setMemberBusy(true);
+    setMemberError(null);
+    try {
+      await createMember({ name: customerName.trim(), phone: customerPhone });
+      setHistory(await getPosCustomer(customerPhone));
+    } catch (err) {
+      setMemberError(describeError(err));
+    } finally {
+      setMemberBusy(false);
+    }
+  }
+
   async function onComplete() {
     if (!canComplete) return;
     setSubmitting(true);
@@ -369,6 +390,7 @@ export function PosContent({ creditId }: { creditId?: string }) {
           paymentMethod: isCash ? 'CASH' : method,
           ...(isCash ? { cashReceived: Number(cash || 0) } : { transactionId: cleanTransactionId }),
           ...(credit ? { exchangeReturnId: credit.id } : {}),
+          ...(member ? { memberId: member.id } : {}),
           ...(discountCents > 0 ? { discount: Number(discount) } : {}),
           ...(customerName.trim() ? { customerName: customerName.trim() } : {}),
           ...(customerPhone.trim() ? { customerPhone: customerPhone.trim() } : {}),
@@ -551,7 +573,26 @@ export function PosContent({ creditId }: { creditId?: string }) {
             />
           </div>
           {history || historyFailed ? (
-            <div aria-live="polite" className="sm:col-span-2">
+            <div aria-live="polite" className="space-y-2 sm:col-span-2">
+              {member ? (
+                <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+                  Member {memberCode(member.number)}: {member.discountPercent}% off applied
+                </p>
+              ) : history ? (
+                <button
+                  type="button"
+                  disabled={memberBusy || customerName.trim().length < 2}
+                  onClick={() => void onMakeMember()}
+                  className="min-h-11 border border-slate-300 px-3 text-sm font-medium text-slate-800 hover:border-brand-950 disabled:cursor-not-allowed disabled:text-slate-400"
+                >
+                  {customerName.trim().length < 2 ? 'Enter a name to make a member' : 'Make member'}
+                </button>
+              ) : null}
+              {memberError ? (
+                <p role="alert" className="text-sm text-rose-700">
+                  {memberError}
+                </p>
+              ) : null}
               {history ? (
                 <CustomerHistory history={history} />
               ) : (
@@ -627,6 +668,12 @@ export function PosContent({ creditId }: { creditId?: string }) {
             <div className="flex justify-between">
               <dt className="text-slate-600">Discount</dt>
               <dd className="text-rose-600">-{formatPrice(fromCents(discountCents))}</dd>
+            </div>
+          ) : null}
+          {memberCents > 0 ? (
+            <div className="flex justify-between">
+              <dt className="text-slate-600">Member discount</dt>
+              <dd className="text-rose-600">-{formatPrice(fromCents(memberCents))}</dd>
             </div>
           ) : null}
           <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">

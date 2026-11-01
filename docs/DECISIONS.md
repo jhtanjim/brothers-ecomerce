@@ -134,3 +134,5 @@ Add new entries at the bottom with a date. Unresolved items go under "Open quest
 - Q8 — Deployment target and production database setup?
 - Q9 — When (if ever) to add a payment gateway?
 - Q10 — Is there a phase plan or requirements document (README mentions Phases 1–3)?
+
+- **D43 (2026-11-01):** Membership, confirmed by the owner: free, 5% off, shop only, known by phone number; printed cards later. The 5% is taken after sale prices and any manual discount, rounded down, and sits inside `couponDiscount` so returns refund the right share. Members are turned off, never deleted.

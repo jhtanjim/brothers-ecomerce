@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { paymentMethodLabel } from '@/components/order/StatusBadges';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { memberCode } from '@/lib/api/admin-members';
 import { getAdminOrder } from '@/lib/api/admin-orders';
 import { voidPosSale } from '@/lib/api/admin-pos';
 import { ApiError } from '@/lib/api/client';
@@ -227,6 +228,12 @@ export function PosReceiptContent({ id, autoPrint }: { id: string; autoPrint: bo
                 )}
               />
               <Row label="Discount" value={`-${formatPrice(sale.couponDiscount)}`} />
+              {sale.memberNumber !== null ? (
+                <Row
+                  label={`Member ${memberCode(sale.memberNumber)} saved`}
+                  value={formatPrice(sale.memberDiscount)}
+                />
+              ) : null}
             </>
           ) : null}
           <Row label="Total" value={formatPrice(sale.totalAmount)} strong />

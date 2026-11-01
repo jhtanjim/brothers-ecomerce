@@ -70,6 +70,12 @@ export class CreatePosSaleDto {
   @MaxLength(50)
   exchangeReturnId?: string;
 
+  /** A member on this sale. The backend works out their discount. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  memberId?: string;
+
   /** Taka off the whole sale, on top of any product sale prices. */
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2, allowNaN: false, allowInfinity: false })

@@ -462,6 +462,9 @@ export interface AdminOrderDetail {
   cashReceived: string | null;
   /** POS sales only: value from returned items, paid towards this sale. */
   exchangeCredit: string;
+  /** POS sales only. Already included in couponDiscount. */
+  memberDiscount: string;
+  memberNumber: number | null;
   returns: {
     id: string;
     returnNumber: string;

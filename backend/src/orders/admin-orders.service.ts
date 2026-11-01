@@ -31,6 +31,8 @@ const detailSelect = {
   channel: true,
   cashReceived: true,
   exchangeCredit: true,
+  memberDiscount: true,
+  member: { select: { number: true } },
   status: true,
   paymentStatus: true,
   subtotal: true,
@@ -269,6 +271,8 @@ export class AdminOrdersService {
       channel: order.channel,
       cashReceived: order.cashReceived ? money(order.cashReceived) : null,
       exchangeCredit: money(order.exchangeCredit),
+      memberDiscount: money(order.memberDiscount),
+      memberNumber: order.member?.number ?? null,
       returns: order.returns.map((entry) => ({
         id: entry.id,
         returnNumber: entry.returnNumber,

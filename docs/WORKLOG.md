@@ -433,3 +433,8 @@ Template:
 - Quick cash buttons (Exact and the next round amounts).
 - Typing a phone shows earlier paid purchases, shop and online, and fills a known name. New route GET /admin/pos/customers; no migration.
 - Guide updated in both languages.
+
+## 2026-11-01 - Membership
+
+- Members page, `/admin/members`, migration `20261101100000_add_members` (additive). POS applies 5% when the phone is a member and can make a member; the receipt shows the saving.
+- Tested: typecheck, lint, frontend build, backend 23 files / 193 tests. Not clicked through on the signed-in pages.

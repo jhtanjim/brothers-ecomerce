@@ -45,6 +45,35 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
     },
   },
   {
+    path: /^\/admin\/members$/,
+    guide: {
+      en: {
+        title: 'Members',
+        summary: 'Regular customers who get 5% off in the shop. The card is free.',
+        steps: [
+          'Enter the name and phone number, then click "Add member". They get a number like M-0001.',
+          'At the POS, enter their phone number. The 5% comes off by itself.',
+          'Use "Turn off" to stop a membership. Their old sales stay safe.',
+        ],
+        example:
+          'Rahim buys often. Add him with his phone number. Next time he buys a 2,000 taka shirt, enter his number on the POS and he pays 1,900.',
+        tip: 'The 5% is taken after any sale price or discount, so check your profit on items already on sale. Members get it in the shop only, not online.',
+      },
+      bn: {
+        title: 'মেম্বার',
+        summary: 'নিয়মিত কাস্টমার, যারা দোকানে ৫% ছাড় পান। কার্ড ফ্রি।',
+        steps: [
+          'নাম ও ফোন নম্বর লিখে "Add member" ক্লিক করুন। তিনি M-0001-এর মতো একটি নম্বর পাবেন।',
+          'POS-এ তার ফোন নম্বর লিখুন। ৫% ছাড় নিজে থেকেই কেটে যাবে।',
+          'মেম্বারশিপ বন্ধ করতে "Turn off" ক্লিক করুন। তার পুরোনো বিক্রির হিসাব থেকে যাবে।',
+        ],
+        example:
+          'রহিম প্রায়ই কেনেন। তার ফোন নম্বর দিয়ে তাকে যোগ করুন। পরের বার ২,০০০ টাকার শার্ট কিনলে POS-এ তার নম্বর লিখুন, তিনি ১,৯০০ টাকা দেবেন।',
+        tip: 'সেল প্রাইস বা ডিসকাউন্টের পরে ৫% কাটা হয়, তাই সেলের পণ্যে লাভ দেখে নিন। এই ছাড় শুধু দোকানে, অনলাইনে নয়।',
+      },
+    },
+  },
+  {
     path: /^\/admin\/pos$/,
     guide: {
       en: {
@@ -53,7 +82,7 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
           'Use this when a customer buys in person. Stock goes down as soon as the sale is complete.',
         steps: [
           'Search by name or SKU, or scan a barcode. Click the right size and colour.',
-          'Change quantities if needed, and add a discount if you want. Enter the phone number to see what the customer bought before; a known name fills in by itself.',
+          'Change quantities if needed, and add a discount if you want. Enter the phone number to see what the customer bought before; a known name fills in by itself. A member gets 5% off automatically.',
           'Choose Cash, bKash or Nagad.',
           'For cash, enter the amount received or tap a quick button such as Exact, and the screen shows the change. For bKash or Nagad, enter the transaction ID.',
           'Click "Complete sale and print".',
@@ -68,7 +97,7 @@ const GUIDES: { path: RegExp; guide: AdminGuide }[] = [
           'কাস্টমার সরাসরি দোকান থেকে কিনলে এই পেজ ব্যবহার করুন। বিক্রি শেষ হলেই স্টক কমে যাবে।',
         steps: [
           'নাম বা SKU দিয়ে খুঁজুন, অথবা বারকোড স্ক্যান করুন। সঠিক সাইজ ও রঙে ক্লিক করুন।',
-          'দরকার হলে পরিমাণ বদলান। চাইলে ডিসকাউন্ট দিন। ফোন নম্বর লিখলে কাস্টমার আগে কী কিনেছেন তা দেখাবে, আর নাম জানা থাকলে নিজে থেকেই বসে যাবে।',
+          'দরকার হলে পরিমাণ বদলান। চাইলে ডিসকাউন্ট দিন। ফোন নম্বর লিখলে কাস্টমার আগে কী কিনেছেন তা দেখাবে, আর নাম জানা থাকলে নিজে থেকেই বসে যাবে। মেম্বার হলে ৫% ছাড় নিজে থেকেই কাটবে।',
           'Cash, bKash বা Nagad বেছে নিন।',
           'নগদ টাকা হলে কত টাকা পেলেন তা লিখুন অথবা Exact-এর মতো দ্রুত বাটনে চাপ দিন, স্ক্রিনে ফেরত দেওয়ার টাকা দেখাবে। bKash বা Nagad হলে Transaction ID লিখুন।',
           '"Complete sale and print" ক্লিক করুন।',

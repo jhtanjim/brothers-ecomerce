@@ -4,6 +4,8 @@ import { SettingsModule } from '../settings/settings.module';
 import { UploadsModule } from '../uploads/uploads.module';
 import { AdminOrdersController } from './admin-orders.controller';
 import { AdminOrdersService } from './admin-orders.service';
+import { MembersController } from './members.controller';
+import { MembersService } from './members.service';
 import { OrderCancellationService } from './order-cancellation.service';
 import { OrderExpiryService } from './order-expiry.service';
 import { OrderQuoteService } from './order-quote.service';
@@ -16,7 +18,13 @@ import { ReturnsService } from './returns.service';
 
 @Module({
   imports: [SettingsModule, UploadsModule, ActivityLogsModule],
-  controllers: [OrdersController, AdminOrdersController, PosController, ReturnsController],
+  controllers: [
+    OrdersController,
+    AdminOrdersController,
+    PosController,
+    ReturnsController,
+    MembersController,
+  ],
   providers: [
     OrdersService,
     OrderCancellationService,
@@ -25,6 +33,7 @@ import { ReturnsService } from './returns.service';
     AdminOrdersService,
     PosService,
     ReturnsService,
+    MembersService,
   ],
   exports: [OrdersService, OrderCancellationService],
 })

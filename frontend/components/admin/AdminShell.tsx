@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { href: '/admin/labels', label: 'Barcode labels' },
   { href: '/admin/categories', label: 'Categories' },
   { href: '/admin/customers', label: 'Customers' },
+  { href: '/admin/members', label: 'Members' },
   { href: '/admin/coupons', label: 'Coupons' },
   { href: '/admin/settings', label: 'Settings' },
 ];
